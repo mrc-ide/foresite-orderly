@@ -33,11 +33,11 @@ neonatal_mortality_full <- readRDS(
 )
 
 demography <- demography_full |>
-  dplyr::filter(iso3c == iso3c) |>
+  dplyr::filter(iso3c == {{iso3c}}) |>
   dplyr::select("iso3c", "year", "qx", "p")
 
 neonatal_mortality <- neonatal_mortality_full |>
-  dplyr::filter(iso3c == iso3c)
+  dplyr::filter(iso3c == {{iso3c}})
 
 saveRDS(demography, "demography.rds")
 saveRDS(neonatal_mortality, "neonatal_mortality.rds")
