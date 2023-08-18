@@ -6,12 +6,12 @@ orderly2::orderly_description(
 
 orderly2::orderly_parameters(iso3c = NULL)
 
-orderly_artefact(
+orderly2::orderly_artefact(
   description = "Demography data: UNWPP mortality rates and age-structure", 
   files = "demography.rds"
 )
 
-orderly_artefact(
+orderly2::orderly_artefact(
   description = "Neonatal mortality data: UNICEF neonatal mortality rates", 
   files = "neonatal_mortality.rds"
 )
