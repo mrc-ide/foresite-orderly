@@ -1,9 +1,10 @@
 # Mission control --------------------------------------------------------------
 
-# ISO3c country codes to run
+# ---- Parameters  ---- #
 isos <- c("NGA", "BEN")
+start_year <- 2000
 
-## Data processing
+# ---- Data processing ---- #
 for(iso in isos){
   orderly2::orderly_run(
     name = "process_data",
@@ -13,14 +14,15 @@ for(iso in isos){
   )
 }
 
-## Site file elements
+# ---- Site file elements ---- #
 
 # Demography
 for(iso in isos){
   orderly2::orderly_run(
     name = "demography",
     parameters = list(
-      iso3c = iso
+      iso3c = iso,
+      start_year = start_year
     )
   )
 }

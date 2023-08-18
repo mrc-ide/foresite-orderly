@@ -1,3 +1,4 @@
+# Orderly set-up ----------------------------------------------------------------
 orderly2::orderly_description(
   display = "Process data",
   long = "Processes raw input data by country in preparation for creation of
@@ -15,6 +16,7 @@ orderly2::orderly_artefact(
   description = "Neonatal mortality data: UNICEF neonatal mortality rates", 
   files = "neonatal_mortality_data.rds"
 )
+# ------------------------------------------------------------------------------
 
 external_data_address <- "C:/Users/pwinskil/OneDrive - Imperial College London/"
 

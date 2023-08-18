@@ -1,10 +1,14 @@
+# Orderly set-up ----------------------------------------------------------------
 orderly2::orderly_description(
   display = "Create site file demography",
   long = "Processes demography and neonatal mortality data by country for creation 
   of site-file demography element"
 )
 
-orderly2::orderly_parameters(iso3c = NULL)
+orderly2::orderly_parameters(
+  iso3c = NULL,
+  start_year = NULL
+)
 
 orderly2::orderly_dependency(
   name = "process_data",
@@ -16,10 +20,11 @@ orderly2::orderly_artefact(
   description = "Demography data: Site file demography", 
   files = "demography.rds"
 )
+# ------------------------------------------------------------------------------
 
 demography_data <- readRDS("demography_data.rds") |>
   dplyr::filter(
-    year > 2019,
+    year >= start_year,
     year < 2023
   )  |>
   dplyr::mutate(
@@ -28,7 +33,7 @@ demography_data <- readRDS("demography_data.rds") |>
 
 neonatal_mortality_data <- readRDS("neonatal_mortality_data.rds") |>
   dplyr::filter(
-    year > 2019,
+    year >= start_year,
     year < 2023
   ) |>
   dplyr::mutate(nnm = peeps::rescale_prob(nnm, 28, 365))
