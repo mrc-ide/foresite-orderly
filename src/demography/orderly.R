@@ -61,4 +61,7 @@ demography_matrix <- cbind(
   demography_sub_matrix
 )
 
+# Convert to daily for direct use in malariasimulation
+demography_matrix <- peeps::rescale_prob(demography_matrix, 365, 1)
+
 saveRDS(demography_matrix, "demography.rds")
