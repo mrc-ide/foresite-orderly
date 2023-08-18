@@ -5,7 +5,40 @@ orderly2::orderly_description(
   site-file elements"
 )
 
-orderly2::orderly_parameters(iso3c = NULL)
+orderly2::orderly_parameters(
+  iso3c = NULL,
+  admin_level = NULL
+)
+
+orderly2::orderly_artefact(
+  description = "Spatial simple features boundary", 
+  files = "gadm.rds"
+)
+
+orderly2::orderly_artefact(
+  description = "Spatial metadata data frame", 
+  files = "gadm_df.rds"
+)
+
+orderly2::orderly_artefact(
+  description = "Population rasters", 
+  files = "population_raster_stack.rds"
+)
+
+orderly2::orderly_artefact(
+  description = "Population raster pixel values", 
+  files = "population_pixel_values.RDS"
+)
+
+orderly2::orderly_artefact(
+  description = "PfPr rasters", 
+  files = "pfpr_raster_stack.rds"
+)
+
+orderly2::orderly_artefact(
+  description = "PfPr raster pixel values", 
+  files = "pfpr_pixel_values.RDS"
+)
 
 orderly2::orderly_artefact(
   description = "Demography data: UNWPP mortality rates and age-structure", 
@@ -19,6 +52,117 @@ orderly2::orderly_artefact(
 # ------------------------------------------------------------------------------
 
 external_data_address <- "C:/Users/pwinskil/OneDrive - Imperial College London/"
+
+# Spatial boundaries -----------------------------------------------------------
+library(sf)
+
+gadm <- readRDS(
+  file = paste0(
+    external_data_address,
+    "GADM/version_4.0.4/iso3c/",
+    iso3c,
+    "/",
+    iso3c,
+    "_",
+    admin_level,
+    ".RDS"
+  )
+) |>
+  dplyr::mutate(
+    continent = countrycode::countrycode(
+      sourcevar = iso3c,
+      origin = "iso3c",
+      destination = "continent"
+    ),
+    ID = 1:dplyr::n()
+  )
+
+gadm_spatvector <- methods::as(gadm, "SpatVector")
+gadm_df <- sf::st_drop_geometry(x = gadm)
+
+saveRDS(gadm, "gadm.rds")
+saveRDS(gadm_df, "gadm_df.rds")
+# ------------------------------------------------------------------------------
+
+# Population -------------------------------------------------------------------
+population_rasters <- list.files(
+  path = paste0(
+    external_data_address,
+    "malaria_sites_data/raster"
+  ),
+  pattern = paste0("population_", iso3c),
+  full.names = TRUE
+)
+
+population_raster_stack <- terra::rast(x = population_rasters) |>
+  terra::crop(y = gadm_spatvector) 
+
+names(population_raster_stack) <- as.numeric(gsub("\\D", "", population_rasters))
+
+population_pixel_values <- terra::extract(
+  x = population_raster_stack,
+  y = gadm_spatvector
+) |>
+  dplyr::mutate(
+    pixel = 1:dplyr::n()
+  ) |>
+  tidyr::pivot_longer(
+    cols = -c("ID", "pixel"),
+    names_to = "year",
+    values_to = "population",
+    names_transform = list(
+      year = as.integer
+    )
+  ) |>
+  tidyr::replace_na(
+    replace = list(
+      population = 0
+    )
+  )
+
+saveRDS(population_raster_stack, "population_raster_stack.RDS")
+saveRDS(population_pixel_values, "population_pixel_values.RDS")
+# ------------------------------------------------------------------------------
+
+# Plasmodium falciparum parasite rate in 2-10 year olds (PfPr_2_10) ------------
+pfpr_rasters <- list.files(
+  path = paste0(
+    external_data_address,
+    "malaria_sites_data/2023/202206_Global_Pf_Parasite_Rate_2000/"
+  ),
+  pattern = "*.tif",
+  full.names = TRUE
+)
+
+pfpr_raster_stack <- terra::rast(x = pfpr_rasters) |>
+  terra::crop(y = gadm_spatvector) |>
+  terra::resample(population_raster_stack)
+
+names(pfpr_raster_stack) <- gsub(
+  pattern = "202206_Global_Pf_Parasite_Rate_",
+  replacement = "",
+  names(pfpr_raster_stack)
+)
+
+pfpr_pixel_values <- terra::extract(
+  x = pfpr_raster_stack,
+  y = gadm_spatvector
+) |>
+  dplyr::mutate(
+    pixel = 1:dplyr::n()
+  ) |>
+  tidyr::pivot_longer(
+    cols = -c("ID", "pixel"),
+    names_to = "year",
+    values_to = "pfpr",
+    names_transform = list(
+      year = as.integer
+    )
+  )
+
+saveRDS(pfpr_raster_stack, "pfpr_raster_stack.RDS")
+saveRDS(pfpr_pixel_values, "pfpr_pixel_values.RDS")
+# ------------------------------------------------------------------------------
 
 # Demography -------------------------------------------------------------------
 demography_full <- readRDS(
