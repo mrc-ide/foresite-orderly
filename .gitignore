@@ -4,4 +4,6 @@
 .httr-oauth
 .DS_Store
 .outpack/
-
+archive/
+draft/
+orderly_envir.yml
