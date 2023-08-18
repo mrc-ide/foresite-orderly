@@ -8,12 +8,12 @@ orderly2::orderly_parameters(iso3c = NULL)
 
 orderly2::orderly_artefact(
   description = "Demography data: UNWPP mortality rates and age-structure", 
-  files = "demography.rds"
+  files = "demography_data.rds"
 )
 
 orderly2::orderly_artefact(
   description = "Neonatal mortality data: UNICEF neonatal mortality rates", 
-  files = "neonatal_mortality.rds"
+  files = "neonatal_mortality_data.rds"
 )
 
 external_data_address <- "C:/Users/pwinskil/OneDrive - Imperial College London/"
@@ -34,11 +34,11 @@ neonatal_mortality_full <- readRDS(
 
 demography <- demography_full |>
   dplyr::filter(iso3c == {{iso3c}}) |>
-  dplyr::select("iso3c", "year", "qx", "p")
+  dplyr::select("iso3c", "year", "age_lower", "age_upper", "qx", "p")
 
 neonatal_mortality <- neonatal_mortality_full |>
   dplyr::filter(iso3c == {{iso3c}})
 
-saveRDS(demography, "demography.rds")
-saveRDS(neonatal_mortality, "neonatal_mortality.rds")
+saveRDS(demography, "demography_data.rds")
+saveRDS(neonatal_mortality, "neonatal_mortality_data.rds")
 # ------------------------------------------------------------------------------

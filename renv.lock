@@ -214,6 +214,23 @@
       ],
       "Hash": "760c61d0701bed57b384f43d2206445a"
     },
+    "peeps": {
+      "Package": "peeps",
+      "Version": "0.0.3",
+      "Source": "GitHub",
+      "RemoteType": "github",
+      "RemoteHost": "api.github.com",
+      "RemoteUsername": "mrc-ide",
+      "RemoteRepo": "peeps",
+      "RemoteRef": "age_structure",
+      "RemoteSha": "374b9729e8a630d21d0521c0d8c7c71898c41a22",
+      "Remotes": "mrc-ide/malariasimulation",
+      "Requirements": [
+        "R",
+        "stats"
+      ],
+      "Hash": "ff9e8f1948a3f9324a2cf2f754682b77"
+    },
     "pillar": {
       "Package": "pillar",
       "Version": "1.9.0",
