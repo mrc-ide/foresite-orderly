@@ -286,12 +286,38 @@
       ],
       "Hash": "1d9e7ad3c8312a192dea7d3db0274fde"
     },
+    "farver": {
+      "Package": "farver",
+      "Version": "2.1.1",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Hash": "8106d78941f34855c440ddb946b8f7a5"
+    },
     "fastmap": {
       "Package": "fastmap",
       "Version": "1.1.1",
       "Source": "Repository",
       "Repository": "RSPM",
       "Hash": "f7736a18de97dea803bde0a2daaafb27"
+    },
+    "flodia": {
+      "Package": "flodia",
+      "Version": "0.0.12",
+      "Source": "GitHub",
+      "RemoteType": "github",
+      "RemoteHost": "api.github.com",
+      "RemoteUsername": "mrc-ide",
+      "RemoteRepo": "flodia",
+      "RemoteRef": "master",
+      "RemoteSha": "ff9886479d9f290b7bb9bdd4ed8508ed289af798",
+      "Requirements": [
+        "ghibli",
+        "grDevices",
+        "graphics",
+        "shape",
+        "withr"
+      ],
+      "Hash": "68c808ec4d32f205b2096d0a14b430aa"
     },
     "fontawesome": {
       "Package": "fontawesome",
@@ -341,6 +367,18 @@
         "zip"
       ],
       "Hash": "b544c397820e05a97d391b2d614a921a"
+    },
+    "ghibli": {
+      "Package": "ghibli",
+      "Version": "0.3.3",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Requirements": [
+        "R",
+        "grDevices",
+        "prismatic"
+      ],
+      "Hash": "75a7804724cdf06813838e529dcec452"
     },
     "glue": {
       "Package": "glue",
@@ -539,6 +577,19 @@
       ],
       "Hash": "01f28d4278f15c76cddbea05899c5d6f"
     },
+    "prismatic": {
+      "Package": "prismatic",
+      "Version": "1.1.1",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Requirements": [
+        "R",
+        "farver",
+        "grDevices",
+        "graphics"
+      ],
+      "Hash": "faa2193fdec94a45b4390aefc1280a62"
+    },
     "proxy": {
       "Package": "proxy",
       "Version": "0.4-27",
@@ -676,6 +727,19 @@
         "utils"
       ],
       "Hash": "e2111252a76984ca50bf8d6314348681"
+    },
+    "shape": {
+      "Package": "shape",
+      "Version": "1.4.6",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Requirements": [
+        "R",
+        "grDevices",
+        "graphics",
+        "stats"
+      ],
+      "Hash": "9067f962730f58b14d8ae54ca885509f"
     },
     "stringi": {
       "Package": "stringi",

@@ -9,6 +9,8 @@ knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>"
 )
+
+library("flodia")
 ```
 
 # foresite-orderly
@@ -18,3 +20,45 @@ An orderly2 implementation of malaria site files for the [malariaverse](https://
 # Structure
 Use `mission_control.R` to define parameters and run site file creation. Individual
 countries or site-file elements can be run and re-run in isolation using this script.
+
+The site file create process has the following steps:
+
+```{r, echo = FALSE, results = "hide", fig.width=10}
+
+sub_group <- function(data, raw_data, r, xgap){
+  # Site file elements
+  element <- node(x = data$x1 + xgap, y = raw_data$y + (2 * r), r = r, label = expression("Element"[" ISO, site"]), node_col  = light_palette(5))
+  # Calibration
+  calibrated <- node(x = data$x1 + xgap, y = raw_data$y - 2 * r, r = r, label = expression("EIR"[" ISO, site"]), node_col  = light_palette(7))
+  flow(from = element, to = calibrated, label = "Calibrate")
+  return(list(x0 = element$x0, x1 = element$x1, y0 = calibrated$y0, y1 = element$y1, element = element))
+}
+
+process <- function() {
+  # Node radius
+  r <- 0.1
+  # Node gap
+  xgap <- 0.3
+  
+  # Input data
+  raw_data <- node(x = 1, y = 1, r = r, label = "Raw\nData", node_col  = light_palette(1))
+  # Processed data
+  data <- node(x = raw_data$x1 + xgap, y = raw_data$y, r = r, label = expression("Data"[" ISO"]), node_col  = light_palette(3))
+  # Site files elements and calibration
+  g <- group(sub_group, 
+             args  = list(data = data, raw_data = raw_data, r = r, xgap = xgap), 
+             group_col = grey(0.9),
+             oma = c(0.05, 0.05, 0.05, 0.05))
+  # Final site file
+  site_file <- node(x = g$element$x1 + xgap, y = raw_data$y, r = r, label = expression("Sitefile"[" ISO"]), node_col  = light_palette(9))
+  
+  flow(from = raw_data, to = data, label = "Process", label_gap =  0.02)
+  flow(from = raw_data, to = data, label = "Extract", label_gap = - 0.02)
+  flowx(from = data, to = g, label = "Process", label_gap =  0.02)
+  flowx(from = g, to = site_file, label = "Combine", label_gap =  0.02)
+  list(x0 = raw_data$x0, x1 = site_file$x1, y0 = raw_data$y0 - 2 * r, y1 = raw_data$y1 + 2 * r)
+}
+
+flodia(process)
+
+```
