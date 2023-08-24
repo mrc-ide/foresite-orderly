@@ -164,6 +164,7 @@ saveRDS(pfpr_raster_stack, "pfpr_raster_stack.RDS")
 saveRDS(pfpr_pixel_values, "pfpr_pixel_values.RDS")
 # ------------------------------------------------------------------------------
 
+
 # Demography -------------------------------------------------------------------
 demography_full <- readRDS(
   file = paste0(
