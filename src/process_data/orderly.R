@@ -51,6 +51,16 @@ orderly2::orderly_artefact(
 )
 
 orderly2::orderly_artefact(
+  description = "Effective treatment coverage rasters", 
+  files = "treatment_raster_stack.rds"
+)
+
+orderly2::orderly_artefact(
+  description = "Effective treatment coverage raster pixel values", 
+  files = "treatment_pixel_values.RDS"
+)
+
+orderly2::orderly_artefact(
   description = "Bednet use rasters", 
   files = "bednet_raster_stack.rds"
 )
@@ -75,6 +85,7 @@ external_data_address <- "C:/Users/pwinskil/OneDrive - Imperial College London/"
 
 # Spatial boundaries -----------------------------------------------------------
 library(sf)
+library(terra)
 
 rename_vector <- c(
   iso3c = "ID_0",
@@ -239,6 +250,46 @@ pvpr_pixel_values <- terra::extract(
 
 saveRDS(pvpr_raster_stack, "pvpr_raster_stack.RDS")
 saveRDS(pvpr_pixel_values, "pvpr_pixel_values.RDS")
+# ------------------------------------------------------------------------------
+
+# Effective antimalarial treatment coverage ------------------------------------
+treatment_rasters <- list.files(
+  path = paste0(
+    external_data_address,
+    "malaria_sites_data/2023/202106_Global_Antimalarial_Effective_Treatment_2000/"
+  ),
+  pattern = "*.tif",
+  full.names = TRUE
+)
+
+treatment_raster_stack <- terra::rast(x = treatment_rasters) |>
+  terra::crop(y = gadm_spatvector) |>
+  terra::resample(population_raster_stack)
+
+names(treatment_raster_stack) <- gsub(
+  pattern = "202106_Global_Antimalarial_Effective_Treatment_",
+  replacement = "",
+  names(treatment_raster_stack)
+)
+
+treatment_pixel_values <- terra::extract(
+  x = treatment_raster_stack,
+  y = gadm_spatvector
+) |>
+  dplyr::mutate(
+    pixel = 1:dplyr::n()
+  ) |>
+  tidyr::pivot_longer(
+    cols = -c("ID", "pixel"),
+    names_to = "year",
+    values_to = "treatment",
+    names_transform = list(
+      year = as.integer
+    )
+  )
+
+saveRDS(treatment_raster_stack, "treatment_raster_stack.RDS")
+saveRDS(treatment_pixel_values, "treatment_pixel_values.RDS")
 # ------------------------------------------------------------------------------
 
 # Bed net usage in Africa ------------------------------------------------------
