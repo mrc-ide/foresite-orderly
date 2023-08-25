@@ -89,6 +89,22 @@ orderly2::orderly_artefact(
   description = "Neonatal mortality data: UNICEF neonatal mortality rates", 
   files = "neonatal_mortality_data.rds"
 )
+
+orderly2::orderly_artefact(
+  description = "World malaria report cases, deaths, incidence and mortality", 
+  files = "wmr_cases_deaths.rds"
+)
+
+orderly2::orderly_artefact(
+  description = "Proportion of treatment that are ACT, from DHS surveys", 
+  files = "proportion_act.rds"
+)
+
+orderly2::orderly_artefact(
+  description = "Proportion of treatment that are from public providers, from DHS surveys", 
+  files = "proportion_public.rds"
+)
+
 # ------------------------------------------------------------------------------
 
 external_data_address <- "C:/Users/pwinskil/OneDrive - Imperial College London/"
@@ -129,6 +145,7 @@ gadm <- readRDS(
   ) |>
   dplyr::select(
     "continent",
+    "country", 
     "iso3c",
     "name_1",
     dplyr::any_of("name_2"),
@@ -417,4 +434,69 @@ neonatal_mortality <- neonatal_mortality_full |>
 
 saveRDS(demography, "demography_data.rds")
 saveRDS(neonatal_mortality, "neonatal_mortality_data.rds")
+# ------------------------------------------------------------------------------
+
+# World malaria report burden summary ------------------------------------------
+wmr_cases_deaths <- read.csv(
+  file = paste0( 
+    external_data_address,
+    "malaria_sites_data/2023/wmr_cases_deaths.csv"
+  )
+) |>
+  dplyr::filter(
+    iso3c == {{iso3c}}
+  ) |>
+  dplyr::mutate(
+    country = gadm_df$country[1],
+    iso3c = iso3c
+  ) |>
+  dplyr::select(
+    c("country", "iso3c", "year", everything())
+  )
+
+saveRDS(wmr_cases_deaths, "wmr_cases_deaths.rds")
+# ------------------------------------------------------------------------------
+
+# Treatment service delivery ---------------------------------------------------
+proportion_act <- read.csv(
+  file = paste0( 
+    external_data_address,
+    "malaria_sites_data/2023/proportion_act.csv"
+  )
+) |>
+  dplyr::mutate(
+    prop_act = round(prop_act, 3)
+  )
+
+if(iso3c %in% proportion_act$iso3c){
+  proportion_act <- proportion_act |>
+    dplyr::filter(iso3c == iso) |>
+    dplyr::select("year", "prop_act")
+} else {
+  proportion_act <- proportion_act |>
+    dplyr::summarise(prop_act = mean(prop_act), .by = "year")
+}
+
+saveRDS(proportion_act, "proportion_act.rds")
+
+proportion_public <- read.csv( 
+  file = paste0( 
+    external_data_address,
+    "malaria_sites_data/2023/proportion_public.csv"
+  )
+) |>
+  dplyr::mutate(
+    prop_public = round(prop_public, 3)
+  )
+
+if(iso3c %in% proportion_public$iso3c){
+  proportion_public <- proportion_public |>
+    dplyr::filter(iso3c == iso) |>
+    dplyr::select("prop_public")
+} else {
+  proportion_public <- proportion_public |>
+    dplyr::summarise(prop_public = mean(prop_public))
+}
+
+saveRDS(proportion_public, "proportion_public.rds")
 # ------------------------------------------------------------------------------

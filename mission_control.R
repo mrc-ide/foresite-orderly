@@ -4,7 +4,7 @@
 isos <- c("NGA", "PNG")
 admin_level <- 1
 start_year <- 2000
-end_year <- 2030
+end_year <- 2002
 current_year <- 2023
 
 # ---- Data processing ---- #
@@ -14,7 +14,8 @@ for(iso in isos){
     parameters = list(
       iso3c = iso,
       admin_level = admin_level
-    )
+    ),
+    echo = FALSE
   )
 }
 
@@ -26,7 +27,9 @@ for(iso in isos){
     name = "demography",
     parameters = list(
       iso3c = iso,
-      start_year = start_year
-    )
+      start_year = start_year,
+      end_year = end_year
+    ),
+    echo = FALSE
   )
 }

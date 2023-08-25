@@ -7,7 +7,8 @@ orderly2::orderly_description(
 
 orderly2::orderly_parameters(
   iso3c = NULL,
-  start_year = NULL
+  start_year = NULL,
+  end_year = NULL
 )
 
 orderly2::orderly_dependency(
@@ -25,7 +26,7 @@ orderly2::orderly_artefact(
 demography_data <- readRDS("demography_data.rds") |>
   dplyr::filter(
     year >= start_year,
-    year < 2023
+    year <= end_year
   )  |>
   dplyr::mutate(
     adjusted_mortality_rates = peeps::estimate_mortality_rates(p, qx), .by = "year"
@@ -34,7 +35,7 @@ demography_data <- readRDS("demography_data.rds") |>
 neonatal_mortality_data <- readRDS("neonatal_mortality_data.rds") |>
   dplyr::filter(
     year >= start_year,
-    year < 2023
+    year <= end_year
   ) |>
   dplyr::mutate(nnm = peeps::rescale_prob(nnm, 28, 365))
 
