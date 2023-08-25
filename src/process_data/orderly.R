@@ -181,6 +181,45 @@ saveRDS(pfpr_raster_stack, "pfpr_raster_stack.RDS")
 saveRDS(pfpr_pixel_values, "pfpr_pixel_values.RDS")
 # ------------------------------------------------------------------------------
 
+# Plasmodium vivax parasite rate in 0-100 year olds (PvPr_0_100) ------------
+pvpr_rasters <- list.files(
+  path = paste0(
+    external_data_address,
+    "malaria_sites_data/2023/202206_Global_Pv_Parasite_Rate_2000/"
+  ),
+  pattern = "*.tif",
+  full.names = TRUE
+)
+
+pvpr_raster_stack <- terra::rast(x = pvpr_rasters) |>
+  terra::crop(y = gadm_spatvector) |>
+  terra::resample(population_raster_stack)
+
+names(pvpr_raster_stack) <- gsub(
+  pattern = "202206_Global_Pv_Parasite_Rate_",
+  replacement = "",
+  names(pvpr_raster_stack)
+)
+
+pvpr_pixel_values <- terra::extract(
+  x = pvpr_raster_stack,
+  y = gadm_spatvector
+) |>
+  dplyr::mutate(
+    pixel = 1:dplyr::n()
+  ) |>
+  tidyr::pivot_longer(
+    cols = -c("ID", "pixel"),
+    names_to = "year",
+    values_to = "pvpr",
+    names_transform = list(
+      year = as.integer
+    )
+  )
+
+saveRDS(pvpr_raster_stack, "pvpr_raster_stack.RDS")
+saveRDS(pvpr_pixel_values, "pvpr_pixel_values.RDS")
+# ------------------------------------------------------------------------------
 
 # Demography -------------------------------------------------------------------
 demography_full <- readRDS(
