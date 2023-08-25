@@ -1,7 +1,7 @@
 # Mission control --------------------------------------------------------------
 
 # ---- Parameters  ---- #
-isos <- c("NGA", "BEN")
+isos <- c("NGA", "PNG")
 admin_level <- 1
 start_year <- 2000
 end_year <- 2030

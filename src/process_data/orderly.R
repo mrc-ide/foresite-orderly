@@ -41,6 +41,26 @@ orderly2::orderly_artefact(
 )
 
 orderly2::orderly_artefact(
+  description = "PvPr rasters", 
+  files = "pvpr_raster_stack.rds"
+)
+
+orderly2::orderly_artefact(
+  description = "PvPr raster pixel values", 
+  files = "pvpr_pixel_values.RDS"
+)
+
+orderly2::orderly_artefact(
+  description = "Bednet use rasters", 
+  files = "bednet_raster_stack.rds"
+)
+
+orderly2::orderly_artefact(
+  description = "Bednet use raster pixel values", 
+  files = "bednet_pixel_values.RDS"
+)
+
+orderly2::orderly_artefact(
   description = "Demography data: UNWPP mortality rates and age-structure", 
   files = "demography_data.rds"
 )
@@ -181,7 +201,7 @@ saveRDS(pfpr_raster_stack, "pfpr_raster_stack.RDS")
 saveRDS(pfpr_pixel_values, "pfpr_pixel_values.RDS")
 # ------------------------------------------------------------------------------
 
-# Plasmodium vivax parasite rate in 0-100 year olds (PvPr_0_100) ------------
+# Plasmodium vivax parasite rate in 0-100 year olds (PvPr_0_100) ---------------
 pvpr_rasters <- list.files(
   path = paste0(
     external_data_address,
@@ -219,6 +239,52 @@ pvpr_pixel_values <- terra::extract(
 
 saveRDS(pvpr_raster_stack, "pvpr_raster_stack.RDS")
 saveRDS(pvpr_pixel_values, "pvpr_pixel_values.RDS")
+# ------------------------------------------------------------------------------
+
+# Bed net usage in Africa ------------------------------------------------------
+if(gadm_df$continent[1] == "Africa"){
+  
+  bednet_rasters <- list.files(
+    path = paste0(
+      external_data_address,
+      "malaria_sites_data/2023/202106_Africa_Insecticide_Treated_Net_Use_2000/"
+    ),
+    pattern = "*.tif",
+    full.names = TRUE
+  )
+  
+  bednet_raster_stack <- terra::rast(x = bednet_rasters) |>
+    terra::crop(y = gadm_spatvector) |>
+    terra::resample(population_raster_stack)
+  
+  names(bednet_raster_stack) <- gsub(
+    pattern = "202106_Africa_Insecticide_Treated_Net_Use_",
+    replacement = "",
+    names(bednet_raster_stack)
+  )
+  
+  bednet_pixel_values <- terra::extract(
+    x = bednet_raster_stack,
+    y = gadm_spatvector
+  ) |>
+    dplyr::mutate(
+      pixel = 1:dplyr::n()
+    ) |>
+    tidyr::pivot_longer(
+      cols = -c("ID", "pixel"),
+      names_to = "year",
+      values_to = "bednet_use",
+      names_transform = list(
+        year = as.integer
+      )
+    )
+  
+  saveRDS(bednet_raster_stack, "bednet_raster_stack.RDS")
+  saveRDS(bednet_pixel_values, "bednet_pixel_values.RDS")
+} else {
+  saveRDS(NA, "bednet_raster_stack.RDS")
+  saveRDS(NA, "bednet_pixel_values.RDS")
+}
 # ------------------------------------------------------------------------------
 
 # Demography -------------------------------------------------------------------
