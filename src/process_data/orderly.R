@@ -56,6 +56,13 @@ external_data_address <- "C:/Users/pwinskil/OneDrive - Imperial College London/"
 # Spatial boundaries -----------------------------------------------------------
 library(sf)
 
+rename_vector <- c(
+  iso3c = "ID_0",
+  country = "COUNTRY",
+  name_1 = "NAME_1",
+  name_2 = "NAME_2"
+)
+
 gadm <- readRDS(
   file = paste0(
     external_data_address,
@@ -68,13 +75,23 @@ gadm <- readRDS(
     ".RDS"
   )
 ) |>
+  dplyr::rename(
+    dplyr::any_of(rename_vector)
+  ) |>
   dplyr::mutate(
     continent = countrycode::countrycode(
       sourcevar = iso3c,
       origin = "iso3c",
       destination = "continent"
     ),
-    ID = 1:dplyr::n()
+    id = 1:dplyr::n()
+  ) |>
+  dplyr::select(
+    "continent",
+    "iso3c",
+    "name_1",
+    dplyr::any_of("name_2"),
+    "id"
   )
 
 gadm_spatvector <- methods::as(gadm, "SpatVector")
