@@ -71,6 +71,16 @@ orderly2::orderly_artefact(
 )
 
 orderly2::orderly_artefact(
+  description = "IRS coverage rasters", 
+  files = "irs_raster_stack.rds"
+)
+
+orderly2::orderly_artefact(
+  description = "IRS coverage raster pixel values", 
+  files = "irs_pixel_values.RDS"
+)
+
+orderly2::orderly_artefact(
   description = "Demography data: UNWPP mortality rates and age-structure", 
   files = "demography_data.rds"
 )
@@ -335,6 +345,52 @@ if(gadm_df$continent[1] == "Africa"){
 } else {
   saveRDS(NA, "bednet_raster_stack.RDS")
   saveRDS(NA, "bednet_pixel_values.RDS")
+}
+# ------------------------------------------------------------------------------
+
+# Indoor residual spraying coverage in Africa ----------------------------------
+if(gadm_df$continent[1] == "Africa"){
+  
+  irs_rasters <- list.files(
+    path = paste0(
+      external_data_address,
+      "malaria_sites_data/2023/202106_Africa_Indoor_Residual_Spraying_Coverage_2000/"
+    ),
+    pattern = "*.tif",
+    full.names = TRUE
+  )
+  
+  irs_raster_stack <- terra::rast(x = irs_rasters) |>
+    terra::crop(y = gadm_spatvector) |>
+    terra::resample(population_raster_stack)
+  
+  names(irs_raster_stack) <- gsub(
+    pattern = "202106_Africa_Indoor_Residual_Spraying_Coverage_",
+    replacement = "",
+    names(irs_raster_stack)
+  )
+  
+  irs_pixel_values <- terra::extract(
+    x = irs_raster_stack,
+    y = gadm_spatvector
+  ) |>
+    dplyr::mutate(
+      pixel = 1:dplyr::n()
+    ) |>
+    tidyr::pivot_longer(
+      cols = -c("ID", "pixel"),
+      names_to = "year",
+      values_to = "irs_use",
+      names_transform = list(
+        year = as.integer
+      )
+    )
+  
+  saveRDS(irs_raster_stack, "irs_raster_stack.RDS")
+  saveRDS(irs_pixel_values, "irs_pixel_values.RDS")
+} else {
+  saveRDS(NA, "irs_raster_stack.RDS")
+  saveRDS(NA, "irs_pixel_values.RDS")
 }
 # ------------------------------------------------------------------------------
 
