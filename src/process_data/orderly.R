@@ -81,16 +81,6 @@ orderly2::orderly_artefact(
 )
 
 orderly2::orderly_artefact(
-  description = "Demography data: UNWPP mortality rates and age-structure", 
-  files = "demography_data.rds"
-)
-
-orderly2::orderly_artefact(
-  description = "Neonatal mortality data: UNICEF neonatal mortality rates", 
-  files = "neonatal_mortality_data.rds"
-)
-
-orderly2::orderly_artefact(
   description = "World malaria report cases, deaths, incidence and mortality", 
   files = "wmr_cases_deaths.rds"
 )
@@ -103,6 +93,26 @@ orderly2::orderly_artefact(
 orderly2::orderly_artefact(
   description = "Proportion of treatment that are from public providers, from DHS surveys", 
   files = "proportion_public.rds"
+)
+
+orderly2::orderly_dependency(
+  name = "un_wpp",
+  query = "latest()",
+  files = c(
+    "un_wpp.RDS",
+    "unicef_neonatal_mortality.RDS"
+  )
+)
+
+orderly2::orderly_artefact(
+  description = "Population, death rates and proportion by single year age groups", 
+  files = "population_demography.rds"
+)
+
+
+orderly2::orderly_artefact(
+  description = "Neonatal mortality data: UNICEF neonatal mortality rates", 
+  files = "neonatal_mortality.rds"
 )
 
 # ------------------------------------------------------------------------------
@@ -411,31 +421,6 @@ if(gadm_df$continent[1] == "Africa"){
 }
 # ------------------------------------------------------------------------------
 
-# Demography -------------------------------------------------------------------
-demography_full <- readRDS(
-  file = paste0(
-    external_data_address,
-    "demography/data/demography.RDS"
-  )
-)
-neonatal_mortality_full <- readRDS(
-  file = paste0(
-    external_data_address,
-    "demography/data/neonatal_mortality.RDS"
-  )
-)
-
-demography <- demography_full |>
-  dplyr::filter(iso3c == {{iso3c}}) |>
-  dplyr::select("iso3c", "year", "age_lower", "age_upper", "qx", "p")
-
-neonatal_mortality <- neonatal_mortality_full |>
-  dplyr::filter(iso3c == {{iso3c}})
-
-saveRDS(demography, "demography_data.rds")
-saveRDS(neonatal_mortality, "neonatal_mortality_data.rds")
-# ------------------------------------------------------------------------------
-
 # World malaria report burden summary ------------------------------------------
 wmr_cases_deaths <- read.csv(
   file = paste0( 
@@ -499,4 +484,24 @@ if(iso3c %in% proportion_public$iso3c){
 }
 
 saveRDS(proportion_public, "proportion_public.rds")
+# ------------------------------------------------------------------------------
+
+# UN population projections, demography and unicef neonatal mortality ----------
+population_demography <- readRDS( 
+  file = "un_wpp.RDS"
+) |>
+  dplyr::filter(
+    iso3c == {{iso3c}}
+  )
+
+saveRDS(population_demography, "population_demography.rds") 
+
+neonatal_mortality <- readRDS(
+  file = "unicef_neonatal_mortality.RDS"
+) |>
+  dplyr::filter(
+    iso3c == {{iso3c}}
+  )
+
+saveRDS(neonatal_mortality, "neonatal_mortality.rds")
 # ------------------------------------------------------------------------------

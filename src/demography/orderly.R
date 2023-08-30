@@ -14,7 +14,7 @@ orderly2::orderly_parameters(
 orderly2::orderly_dependency(
   name = "process_data",
   query = "latest(parameter:iso3c == this:iso3c)",
-  files = c("demography_data.rds", "neonatal_mortality_data.rds")
+  files = c("population_demography.rds", "neonatal_mortality.rds")
 )
 
 orderly2::orderly_artefact(
@@ -23,21 +23,21 @@ orderly2::orderly_artefact(
 )
 # ------------------------------------------------------------------------------
 
-demography_data <- readRDS("demography_data.rds") |>
+demography_data <- readRDS("population_demography.rds") |>
   dplyr::filter(
     year >= start_year,
     year <= end_year
   )  |>
   dplyr::mutate(
-    adjusted_mortality_rates = peeps::estimate_mortality_rates(p, qx), .by = "year"
+    adjusted_mortality_rates = peeps::estimate_mortality_rates(population_proportion, qx), .by = "year"
   )
 
-neonatal_mortality_data <- readRDS("neonatal_mortality_data.rds") |>
+neonatal_mortality_data <- readRDS("neonatal_mortality.rds") |>
   dplyr::filter(
     year >= start_year,
     year <= end_year
   ) |>
-  dplyr::mutate(nnm = peeps::rescale_prob(nnm, 28, 365))
+  dplyr::mutate(neonatal_mortality = peeps::rescale_prob(neonatal_mortality, 28, 365))
 
 demography_sub_matrix <- matrix(
   demography_data$adjusted_mortality_rates,
@@ -47,7 +47,7 @@ demography_sub_matrix <- matrix(
 
 neonatal_mortality_sub_matrix <- matrix(
   c(
-    unlist(neonatal_mortality_data[,"nnm"]),
+    unlist(neonatal_mortality_data[,"neonatal_mortality"]),
     rep(NA, length(unique(demography_data$year)) - nrow(neonatal_mortality_data))
   ),
   ncol = 1

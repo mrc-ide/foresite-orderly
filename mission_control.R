@@ -7,7 +7,17 @@ start_year <- 2000
 end_year <- 2002
 current_year <- 2023
 
-# ---- Data processing ---- #
+# ---- UN WPP ---- # 
+orderly2::orderly_run(
+  name = "un_wpp",
+  parameters = list(
+    start_year = 2000,
+    end_year = 2002
+  ),
+  echo = FALSE
+)
+
+# ---- Data processing / Country split ---- #
 for(iso in isos){
   orderly2::orderly_run(
     name = "process_data",
