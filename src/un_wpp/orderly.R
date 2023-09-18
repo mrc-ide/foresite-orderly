@@ -7,12 +7,17 @@ orderly2::orderly_description(
 
 orderly2::orderly_artefact(
   description = "UN WPP population and demography data", 
-  files = "un_wpp.RDS"
+  files = "un_wpp.rds"
 )
 
 orderly2::orderly_artefact(
   description = "UNICEF neonatal mortality rates", 
-  files = "unicef_neonatal_mortality.RDS"
+  files = "unicef_neonatal_mortality.rds"
+)
+
+orderly2::orderly_artefact(
+  description = "UN WUP population urbanisation", 
+  files = "un_wup.rds"
 )
 
 orderly2::orderly_parameters(
@@ -127,7 +132,7 @@ un_wpp <- life_tables |>
     by = dplyr::join_by(iso3c, year, age_lower, age_upper)
   )
 
-saveRDS(un_wpp, "un_wpp.RDS")
+saveRDS(un_wpp, "un_wpp.rds")
 # ------------------------------------------------------------------------------
 
 # Neonatal mortality -----------------------------------------------------------
@@ -155,5 +160,49 @@ unicef_neonatal_mortality <- read.csv(
     neonatal_mortality = neonatal_mortality / 1000
   )
 
-saveRDS(unicef_neonatal_mortality, "unicef_neonatal_mortality.RDS")
+saveRDS(unicef_neonatal_mortality, "unicef_neonatal_mortality.rds")
+# ------------------------------------------------------------------------------
+
+# Urbanisation -----------------------------------------------------------------
+# Format and interpolate between 5 year bands
+un_wup <- read.csv(
+  file = paste0(
+    external_data_address,
+    "malaria_sites_data/2023/WUP2018-F02-Proportion_Urban.csv"
+  )
+) |>
+  dplyr::rename(name = `Region..subregion..country.or.area`) |>
+  dplyr::filter(
+    name %in% countrycode::codelist$country.name.en
+  ) |>
+  dplyr::mutate(
+    iso3c = countrycode::countrycode(name, "country.name", "iso3c", warn = FALSE)
+  ) |>
+  dplyr::select(-c("name", "Country.code")) |>
+  tidyr::pivot_longer(
+    cols = -"iso3c",
+    names_to = "year",
+    values_to = "percent_urban",
+    names_prefix = "X"
+  ) |>
+  dplyr::mutate(
+    year = as.integer(year),
+    proportion_urban = percent_urban / 100
+  ) |>
+  dplyr::filter(
+    year >= start_year,
+    year <= end_year
+  ) |>
+  dplyr::select(-"percent_urban") |>
+  tidyr::complete(year = min(year):max(year), tidyr::nesting(iso3c)) |>
+  dplyr::arrange(iso3c, year) |>
+  dplyr::mutate(
+    proportion_urban = ifelse(
+      is.na(proportion_urban),
+      approx(year, proportion_urban, year)$y,
+      proportion_urban
+    ),
+    .by = "iso3c"
+  )
+saveRDS(un_wup, "un_wup.rds")
 # ------------------------------------------------------------------------------

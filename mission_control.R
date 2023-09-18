@@ -1,18 +1,18 @@
 # Mission control --------------------------------------------------------------
 
 # ---- Parameters  ---- #
-isos <- c("NGA", "PNG")
+isos <- c("SDN")
 admin_level <- 1
 start_year <- 2000
-end_year <- 2002
+end_year <- 2050
 current_year <- 2023
 
 # ---- UN WPP ---- # 
 orderly2::orderly_run(
   name = "un_wpp",
   parameters = list(
-    start_year = 2000,
-    end_year = 2002
+    start_year = start_year,
+    end_year = end_year
   ),
   echo = FALSE
 )
@@ -25,9 +25,21 @@ for(iso in isos){
       iso3c = iso,
       admin_level = admin_level
     ),
-    echo = FALSE
+    echo = TRUE
   )
 }
+
+# ---- Aggregation of spatial data ---- #
+
+# This includes:
+## population
+## Populations at risk
+## PfPr
+## Pvpr
+## ITN use (Africa)
+## IRS coverage (Africa)
+## Treatment coverage
+
 
 # ---- Site file elements ---- #
 
@@ -43,3 +55,5 @@ for(iso in isos){
     echo = FALSE
   )
 }
+
+# TODO: Finish src/population

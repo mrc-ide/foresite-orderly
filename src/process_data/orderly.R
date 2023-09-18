@@ -27,7 +27,7 @@ orderly2::orderly_artefact(
 
 orderly2::orderly_artefact(
   description = "Population raster pixel values", 
-  files = "population_pixel_values.RDS"
+  files = "population_pixel_values.rds"
 )
 
 orderly2::orderly_artefact(
@@ -37,7 +37,7 @@ orderly2::orderly_artefact(
 
 orderly2::orderly_artefact(
   description = "PfPr raster pixel values", 
-  files = "pfpr_pixel_values.RDS"
+  files = "pfpr_pixel_values.rds"
 )
 
 orderly2::orderly_artefact(
@@ -47,7 +47,7 @@ orderly2::orderly_artefact(
 
 orderly2::orderly_artefact(
   description = "PvPr raster pixel values", 
-  files = "pvpr_pixel_values.RDS"
+  files = "pvpr_pixel_values.rds"
 )
 
 orderly2::orderly_artefact(
@@ -57,7 +57,7 @@ orderly2::orderly_artefact(
 
 orderly2::orderly_artefact(
   description = "Effective treatment coverage raster pixel values", 
-  files = "treatment_pixel_values.RDS"
+  files = "treatment_pixel_values.rds"
 )
 
 orderly2::orderly_artefact(
@@ -67,7 +67,7 @@ orderly2::orderly_artefact(
 
 orderly2::orderly_artefact(
   description = "Bednet use raster pixel values", 
-  files = "bednet_pixel_values.RDS"
+  files = "bednet_pixel_values.rds"
 )
 
 orderly2::orderly_artefact(
@@ -77,7 +77,7 @@ orderly2::orderly_artefact(
 
 orderly2::orderly_artefact(
   description = "IRS coverage raster pixel values", 
-  files = "irs_pixel_values.RDS"
+  files = "irs_pixel_values.rds"
 )
 
 orderly2::orderly_artefact(
@@ -99,8 +99,9 @@ orderly2::orderly_dependency(
   name = "un_wpp",
   query = "latest()",
   files = c(
-    "un_wpp.RDS",
-    "unicef_neonatal_mortality.RDS"
+    "un_wpp.rds",
+    "unicef_neonatal_mortality.rds", 
+    "un_wup.rds"
   )
 )
 
@@ -109,10 +110,14 @@ orderly2::orderly_artefact(
   files = "population_demography.rds"
 )
 
-
 orderly2::orderly_artefact(
   description = "Neonatal mortality data: UNICEF neonatal mortality rates", 
   files = "neonatal_mortality.rds"
+)
+
+orderly2::orderly_artefact(
+  description = "Proportion urban", 
+  files = "urbanisation.rds"
 )
 
 # ------------------------------------------------------------------------------
@@ -139,7 +144,7 @@ gadm <- readRDS(
     iso3c,
     "_",
     admin_level,
-    ".RDS"
+    ".rds"
   )
 ) |>
   dplyr::rename(
@@ -205,8 +210,8 @@ population_pixel_values <- terra::extract(
     )
   )
 
-saveRDS(population_raster_stack, "population_raster_stack.RDS")
-saveRDS(population_pixel_values, "population_pixel_values.RDS")
+saveRDS(population_raster_stack, "population_raster_stack.rds")
+saveRDS(population_pixel_values, "population_pixel_values.rds")
 # ------------------------------------------------------------------------------
 
 # Plasmodium falciparum parasite rate in 2-10 year olds (PfPr_2_10) ------------
@@ -245,8 +250,8 @@ pfpr_pixel_values <- terra::extract(
     )
   )
 
-saveRDS(pfpr_raster_stack, "pfpr_raster_stack.RDS")
-saveRDS(pfpr_pixel_values, "pfpr_pixel_values.RDS")
+saveRDS(pfpr_raster_stack, "pfpr_raster_stack.rds")
+saveRDS(pfpr_pixel_values, "pfpr_pixel_values.rds")
 # ------------------------------------------------------------------------------
 
 # Plasmodium vivax parasite rate in 0-100 year olds (PvPr_0_100) ---------------
@@ -285,8 +290,8 @@ pvpr_pixel_values <- terra::extract(
     )
   )
 
-saveRDS(pvpr_raster_stack, "pvpr_raster_stack.RDS")
-saveRDS(pvpr_pixel_values, "pvpr_pixel_values.RDS")
+saveRDS(pvpr_raster_stack, "pvpr_raster_stack.rds")
+saveRDS(pvpr_pixel_values, "pvpr_pixel_values.rds")
 # ------------------------------------------------------------------------------
 
 # Effective antimalarial treatment coverage ------------------------------------
@@ -325,8 +330,8 @@ treatment_pixel_values <- terra::extract(
     )
   )
 
-saveRDS(treatment_raster_stack, "treatment_raster_stack.RDS")
-saveRDS(treatment_pixel_values, "treatment_pixel_values.RDS")
+saveRDS(treatment_raster_stack, "treatment_raster_stack.rds")
+saveRDS(treatment_pixel_values, "treatment_pixel_values.rds")
 # ------------------------------------------------------------------------------
 
 # Bed net usage in Africa ------------------------------------------------------
@@ -367,11 +372,11 @@ if(gadm_df$continent[1] == "Africa"){
       )
     )
   
-  saveRDS(bednet_raster_stack, "bednet_raster_stack.RDS")
-  saveRDS(bednet_pixel_values, "bednet_pixel_values.RDS")
+  saveRDS(bednet_raster_stack, "bednet_raster_stack.rds")
+  saveRDS(bednet_pixel_values, "bednet_pixel_values.rds")
 } else {
-  saveRDS(NA, "bednet_raster_stack.RDS")
-  saveRDS(NA, "bednet_pixel_values.RDS")
+  saveRDS(NA, "bednet_raster_stack.rds")
+  saveRDS(NA, "bednet_pixel_values.rds")
 }
 # ------------------------------------------------------------------------------
 
@@ -413,11 +418,11 @@ if(gadm_df$continent[1] == "Africa"){
       )
     )
   
-  saveRDS(irs_raster_stack, "irs_raster_stack.RDS")
-  saveRDS(irs_pixel_values, "irs_pixel_values.RDS")
+  saveRDS(irs_raster_stack, "irs_raster_stack.rds")
+  saveRDS(irs_pixel_values, "irs_pixel_values.rds")
 } else {
-  saveRDS(NA, "irs_raster_stack.RDS")
-  saveRDS(NA, "irs_pixel_values.RDS")
+  saveRDS(NA, "irs_raster_stack.rds")
+  saveRDS(NA, "irs_pixel_values.rds")
 }
 # ------------------------------------------------------------------------------
 
@@ -488,7 +493,7 @@ saveRDS(proportion_public, "proportion_public.rds")
 
 # UN population projections, demography and unicef neonatal mortality ----------
 population_demography <- readRDS( 
-  file = "un_wpp.RDS"
+  file = "un_wpp.rds"
 ) |>
   dplyr::filter(
     iso3c == {{iso3c}}
@@ -497,11 +502,20 @@ population_demography <- readRDS(
 saveRDS(population_demography, "population_demography.rds") 
 
 neonatal_mortality <- readRDS(
-  file = "unicef_neonatal_mortality.RDS"
+  file = "unicef_neonatal_mortality.rds"
 ) |>
   dplyr::filter(
     iso3c == {{iso3c}}
   )
 
 saveRDS(neonatal_mortality, "neonatal_mortality.rds")
+
+urbanisation <- readRDS(
+  file = "un_wup.rds"
+) |>
+  dplyr::filter(
+    iso3c == {{iso3c}}
+  )
+
+saveRDS(urbanisation, "urbanisation.rds")
 # ------------------------------------------------------------------------------
