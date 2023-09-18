@@ -1,8 +1,7 @@
 # Orderly set-up ----------------------------------------------------------------
 orderly2::orderly_description(
-  display = "Create site file population",
-  long = "Processes population raster data by country for creation of site-file
-  population elements"
+  display = "Aggregation of pixel-level spatial data",
+  long = "Processes raster data by country"
 )
 
 orderly2::orderly_parameters(
@@ -19,7 +18,11 @@ orderly2::orderly_dependency(
     "pfpr_pixel_values.rds",
     "pvpr_pixel_values.rds",
     "population_demography.rds",
-    "urbanisation.rds"
+    "urbanisation.rds",
+    "bednet_pixel_values.rds",
+    "irs_pixel_values.rds",
+    "treatment_pixel_values.rds",
+    "gadm_df.rds"
   )
 )
 
@@ -31,7 +34,9 @@ orderly2::orderly_artefact(
 
 # Limits of transmission -------------------------------------------------------
 pfpr <- readRDS("pfpr_pixel_values.rds")
-pvpr <- readRDS("pvpr_pixel_values.rds")
+
+pvpr <- readRDS("pvpr_pixel_values.rds") |>
+  dplyr::mutate(pvpr = ifelse(pvpr == -1, NA, pvpr))
 
 limits <- pfpr |>
   dplyr::left_join(
@@ -122,3 +127,55 @@ population <- population |>
     ) |>
   dplyr::select(ID, pixel, urban_rural, year, dplyr::contains("population"))
 # ------------------------------------------------------------------------------
+
+# Add prevalence ---------------------------------------------------------------
+population_prevalence <- population |>
+  dplyr::left_join(pfpr, by = c("ID", "pixel", "year")) |>
+  dplyr::left_join(pvpr, by = c("ID", "pixel", "year"))
+
+rm(population)
+# ------------------------------------------------------------------------------
+
+# Add interventions ------------------------------------------------------------
+treatment_pixel_values <- readRDS("treatment_pixel_values.rds")
+population_prevalence_interventions <- population_prevalence |>
+  dplyr::left_join(treatment_pixel_values, by = c("ID", "pixel", "year"))
+rm(population_prevalence)
+
+continent <- countrycode::countrycode(iso3c, "iso3c", "continent")
+if(continent == "Africa"){
+  bednet_pixel_values <- readRDS("bednet_pixel_values.rds")
+  irs_pixel_values <- readRDS("irs_pixel_values.rds")
+  population_prevalence_interventions <- population_prevalence_interventions |>
+    dplyr::left_join(bednet_pixel_values, by = c("ID", "pixel", "year")) |>
+    dplyr::left_join(irs_pixel_values, by = c("ID", "pixel", "year"))
+} else {
+  population_prevalence_interventions <- population_prevalence_interventions |>
+    dplyr::mutate(
+      itn_use = NA,
+      irs_coverage = NA
+    )
+}
+# ------------------------------------------------------------------------------
+
+# Aggregate --------------------------------------------------------------------
+gadm_df <- readRDS("gadm_df.rds")
+aggregated <- population_prevalence_interventions |>
+  dplyr::summarise(
+    pfpr = weighted.mean(pfpr, population_at_risk_pf, na.rm = TRUE),
+    pvpr = weighted.mean(pvpr, population_at_risk_pv, na.rm = TRUE),
+    bednet_use = weighted.mean(bednet_use, population_at_risk, na.rm = TRUE),
+    irs_use = weighted.mean(irs_use, population_at_risk, na.rm = TRUE),
+    treatment_coverage = weighted.mean(treatment, population_at_risk, na.rm = TRUE),
+    population = sum(population),
+    population_at_risk = sum(population_at_risk),
+    population_at_risk_pf = sum(population_at_risk_pf),
+    population_at_risk_pv = sum(population_at_risk_pv),
+    .by = c("ID", "urban_rural", "year")
+  ) |>
+  dplyr::left_join(gadm_df, by = c("ID" = "id"))
+# ------------------------------------------------------------------------------
+
+# TODO:
+# CHECK NA remove assumptions make sense.
+# Split out and save aggregated parts

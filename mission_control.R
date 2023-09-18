@@ -41,9 +41,7 @@ for(iso in isos){
 ## Treatment coverage
 
 
-# ---- Site file elements ---- #
-
-# Demography
+# ---- Demography ---- #
 for(iso in isos){
   orderly2::orderly_run(
     name = "demography",
@@ -55,5 +53,3 @@ for(iso in isos){
     echo = FALSE
   )
 }
-
-# TODO: Finish src/population
