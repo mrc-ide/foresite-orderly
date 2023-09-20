@@ -6,6 +6,7 @@ admin_level <- 1
 start_year <- 2000
 end_year <- 2050
 current_year <- 2023
+external_data_address <- "C:/Users/pwinskil/OneDrive - Imperial College London/"
 
 # ---- UN WPP ---- # 
 orderly2::orderly_run(
@@ -24,48 +25,21 @@ orderly2::orderly_run(
 ## Estimates urban/rural split
 ## Extracts and aggregates spatial data
 for(iso in isos){
-  
-}
-
-
-
-
-
-
-# ---- Data processing / Country split ---- #
-for(iso in isos){
   orderly2::orderly_run(
-    name = "process_data",
+    name = "spatial",
     parameters = list(
       iso3c = iso,
       admin_level = admin_level
     ),
-    echo = TRUE
+    echo = FALSE
   )
 }
 
-# ---- Aggregation of spatial data ---- #
-
-# This includes:
-## population
-## Populations at risk
-## PfPr
-## Pvpr
-## ITN use (Africa)
-## IRS coverage (Africa)
-## Treatment coverage
-for(iso in isos){
-  orderly2::orderly_run(
-    name = "aggregation",
-    parameters = list(
-      iso3c = iso,
-      admin_level = admin_level,
-      end_year = end_year,
-      current_year = current_year
-    ),
-    echo = TRUE
-  )
-}
+# TODO:
+## Create a sites object with the full compliment of sites including urban/rural
+## Deal with sites with 0 population for some years
+## When to do population projections for units and rescaling
+## When harvested, remove "process_data" and "aggregation" and update "interventions" and "demography"
 
 # ---- Interventions ---- #
 
@@ -90,6 +64,3 @@ for(iso in isos){
 
 # ---- Seasonality ---- #
 
-# TODO: clean up
-# Intervention columsn should match those read in my site
-# ID should be id throughout and fix join by

@@ -23,14 +23,26 @@ orderly2::orderly_artefact(
   files = "gadm.rds"
 )
 
+#orderly2::orderly_artefact(
+#  description = "Spatial sites", 
+#  files = "sites.rds"
+#)
+
 orderly2::orderly_artefact(
-  description = "Spatial sites", 
-  files = "sites.rds"
+  description = "Aggregated spatial data", 
+  files = "aggregated_spatial_data.rds"
 )
 
-# ------------------------------------------------------------------------------
+orderly2::orderly_artefact(
+  description = "Rainfall data", 
+  files = "rainfall_data.rds"
+)
 
-external_data_address <- "C:/Users/pwinskil/OneDrive - Imperial College London/"
+orderly2::orderly_artefact(
+  description = "Vector data", 
+  files = "vector_data.rds"
+)
+# ------------------------------------------------------------------------------
 
 # Spatial boundaries -----------------------------------------------------------
 library(sf)
@@ -448,6 +460,8 @@ aggregated_spatial_data <-  spatial_data |>
     "pfpr", "pvpr",
     "tx_cov", "net_use", "irs_cov"
   )
+
+saveRDS(aggregated_spatial_data, "aggregated_spatial_data.rds")
 # ------------------------------------------------------------------------------
 
 # Vectors ----------------------------------------------------------------------
@@ -507,6 +521,7 @@ if(gadm_df$continent[1] == "Africa"){
 } else {
   
 }
+saveRDS(vector_pixel_values, "vector_data.rds")
 # ------------------------------------------------------------------------------
 
 # Rainfall ---------------------------------------------------------------------
@@ -552,6 +567,7 @@ rainfall_values <- rainfall_raster_stack |>
     dplyr::any_of(c("name_1", "name_2")),
     "rainfall"
   )
+saveRDS(rainfall_values, "rainfall_data.rds")
 # ------------------------------------------------------------------------------
 
 

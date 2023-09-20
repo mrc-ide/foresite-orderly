@@ -26,8 +26,6 @@ orderly2::orderly_parameters(
 )
 # ------------------------------------------------------------------------------
 
-external_data_address <- "C:/Users/pwinskil/OneDrive - Imperial College London/"
-
 # Life tables ------------------------------------------------------------------
 historical_life_tables <- read.csv(
   file = 
