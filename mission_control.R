@@ -39,7 +39,20 @@ for(iso in isos){
 ## ITN use (Africa)
 ## IRS coverage (Africa)
 ## Treatment coverage
+for(iso in isos){
+  orderly2::orderly_run(
+    name = "aggregation",
+    parameters = list(
+      iso3c = iso,
+      admin_level = admin_level,
+      end_year = end_year,
+      current_year = current_year
+    ),
+    echo = TRUE
+  )
+}
 
+# ---- Interventions ---- #
 
 # ---- Demography ---- #
 for(iso in isos){
@@ -53,3 +66,15 @@ for(iso in isos){
     echo = FALSE
   )
 }
+
+# ---- Vectors ---- #
+
+
+# ---- Insecticide resistance ---- #
+
+
+# ---- Seasonality ---- #
+
+# TODO: clean up
+# Intervention columsn should match those read in my site
+# ID should be id throughout and fix join by

@@ -7,7 +7,8 @@ orderly2::orderly_description(
 orderly2::orderly_parameters(
   iso3c = NULL,
   admin_level = NULL,
-  end_year = NULL
+  end_year = NULL,
+  current_year = NULL
 )
 
 orderly2::orderly_dependency(
@@ -27,8 +28,18 @@ orderly2::orderly_dependency(
 )
 
 orderly2::orderly_artefact(
-  description = "Demography data: Site file demography", 
-  files = "population.rds"
+  description = "Population and population at risk by year and spatial unit", 
+  files = "aggregated_population.rds"
+)
+
+orderly2::orderly_artefact(
+  description = "Spatial intervention data by year and spatial unit", 
+  files = "aggregated_interventions.rds"
+)
+
+orderly2::orderly_artefact(
+  description = "MAP prevalence data by year and spatial unit", 
+  files = "aggregated_prevalence.rds"
 )
 # ------------------------------------------------------------------------------
 
@@ -47,7 +58,7 @@ limits <- pfpr |>
     year == 2000
   ) |>
   dplyr::mutate(
-    pf_limits = ifelse(is.na(pfpr) | pfpr == 0, 0, 1),
+    pf_limits = ifelse(is.na(pfpr) | pfpr <= 0, 0, 1),
     pv_limits = ifelse(is.na(pvpr) | pvpr <= 0, 0, 1),
     limits = ifelse(pf_limits == 1 | pv_limits == 1, 1, 0)
   ) |>
@@ -57,9 +68,12 @@ limits <- pfpr |>
 # ------------------------------------------------------------------------------
 
 # Population -------------------------------------------------------------------
-population_pixel <- readRDS("population_pixel_values.rds")
+population_pixel <- readRDS("population_pixel_values.rds") |>
+  tidyr::replace_na(list(population = 0))
 
 # Expand to max_year
+## This assumes the population spatial distribution across pixels remains the same
+## in the future (each pixel population is scaled to account for population growth).
 max_available <- population_pixel |>
   dplyr::filter(year == max(year))
 
@@ -73,7 +87,7 @@ future_population_pixel <- lapply((max(population_pixel$year) + 1):end_year, fun
 
 population_pixel <- dplyr::bind_rows(population_pixel, future_population_pixel)
 
-# Rescaling to match current UN WPP projections
+# Rescaling to match UN WPP projections
 un <- readRDS("population_demography.rds") |>
   dplyr::summarise(un_population = sum(population), .by = year)
 
@@ -95,6 +109,9 @@ population <- population_pixel |>
 rm(population_pixel)
 
 # Assigning pixels as rural or urban to match UN estimates of proportion urban
+## Pixels are assigned to "urban" starting with the most densely populated first
+## and continuing until the UN WUP urban population size is met. After this point
+## remaining pixels are assigned as "rural"
 urban_pop <- readRDS("urbanisation.rds") |>
   dplyr::left_join(un, by = "year") |>
   dplyr::mutate(urban_population = un_population * proportion_urban) |>
@@ -124,7 +141,7 @@ population <- population |>
     population_at_risk = limits * population,
     population_at_risk_pf = pf_limits * population,
     population_at_risk_pv = pf_limits * population
-    ) |>
+  ) |>
   dplyr::select(ID, pixel, urban_rural, year, dplyr::contains("population"))
 # ------------------------------------------------------------------------------
 
@@ -142,6 +159,7 @@ population_prevalence_interventions <- population_prevalence |>
   dplyr::left_join(treatment_pixel_values, by = c("ID", "pixel", "year"))
 rm(population_prevalence)
 
+# Spatial ITN and IRS data are available on for the African continent
 continent <- countrycode::countrycode(iso3c, "iso3c", "continent")
 if(continent == "Africa"){
   bednet_pixel_values <- readRDS("bednet_pixel_values.rds")
@@ -159,23 +177,40 @@ if(continent == "Africa"){
 # ------------------------------------------------------------------------------
 
 # Aggregate --------------------------------------------------------------------
-gadm_df <- readRDS("gadm_df.rds")
+weighted.mean2 <- function(x, w, na.rm = TRUE){
+  if(sum(w, na.rm = TRUE) == 0){
+    out <- 0
+  } else {
+    out <- weighted.mean(x, w, na.rm = na.rm)
+  }
+  return(out)
+}
+
 aggregated <- population_prevalence_interventions |>
   dplyr::summarise(
-    pfpr = weighted.mean(pfpr, population_at_risk_pf, na.rm = TRUE),
-    pvpr = weighted.mean(pvpr, population_at_risk_pv, na.rm = TRUE),
-    bednet_use = weighted.mean(bednet_use, population_at_risk, na.rm = TRUE),
-    irs_use = weighted.mean(irs_use, population_at_risk, na.rm = TRUE),
-    treatment_coverage = weighted.mean(treatment, population_at_risk, na.rm = TRUE),
+    pfpr = weighted.mean2(pfpr, population_at_risk_pf),
+    pvpr = weighted.mean2(pvpr, population_at_risk_pv),
+    bednet_use = weighted.mean2(bednet_use, population_at_risk),
+    irs_use = weighted.mean2(irs_use, population_at_risk),
+    treatment_coverage = weighted.mean2(treatment, population_at_risk),
     population = sum(population),
     population_at_risk = sum(population_at_risk),
     population_at_risk_pf = sum(population_at_risk_pf),
     population_at_risk_pv = sum(population_at_risk_pv),
     .by = c("ID", "urban_rural", "year")
-  ) |>
-  dplyr::left_join(gadm_df, by = c("ID" = "id"))
-# ------------------------------------------------------------------------------
+  )
 
-# TODO:
-# CHECK NA remove assumptions make sense.
-# Split out and save aggregated parts
+aggregated_population <- aggregated |>
+  dplyr::select("ID", "urban_rural", "year", dplyr::contains("population"))
+saveRDS(aggregated_population, "aggregated_population.rds")
+
+aggregated_interventions <- aggregated |>
+  dplyr::select("ID", "urban_rural", "year", "treatment_coverage", "bednet_use", "irs_use") |>
+  dplyr::filter(year <= current_year)
+saveRDS(aggregated_interventions, "aggregated_interventions.rds")
+
+aggregated_prevalence <- aggregated |>
+  dplyr::select("ID", "urban_rural", "year", "pfpr", "pvpr") |>
+  dplyr::filter(year <= current_year)
+saveRDS(aggregated_prevalence, "aggregated_prevalence.rds")
+# ------------------------------------------------------------------------------

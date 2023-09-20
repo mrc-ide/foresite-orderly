@@ -21,18 +21,8 @@ orderly2::orderly_artefact(
 )
 
 orderly2::orderly_artefact(
-  description = "Population rasters", 
-  files = "population_raster_stack.rds"
-)
-
-orderly2::orderly_artefact(
   description = "Population raster pixel values", 
   files = "population_pixel_values.rds"
-)
-
-orderly2::orderly_artefact(
-  description = "PfPr rasters", 
-  files = "pfpr_raster_stack.rds"
 )
 
 orderly2::orderly_artefact(
@@ -41,18 +31,8 @@ orderly2::orderly_artefact(
 )
 
 orderly2::orderly_artefact(
-  description = "PvPr rasters", 
-  files = "pvpr_raster_stack.rds"
-)
-
-orderly2::orderly_artefact(
   description = "PvPr raster pixel values", 
   files = "pvpr_pixel_values.rds"
-)
-
-orderly2::orderly_artefact(
-  description = "Effective treatment coverage rasters", 
-  files = "treatment_raster_stack.rds"
 )
 
 orderly2::orderly_artefact(
@@ -61,18 +41,8 @@ orderly2::orderly_artefact(
 )
 
 orderly2::orderly_artefact(
-  description = "Bednet use rasters", 
-  files = "bednet_raster_stack.rds"
-)
-
-orderly2::orderly_artefact(
   description = "Bednet use raster pixel values", 
   files = "bednet_pixel_values.rds"
-)
-
-orderly2::orderly_artefact(
-  description = "IRS coverage rasters", 
-  files = "irs_raster_stack.rds"
 )
 
 orderly2::orderly_artefact(
@@ -210,7 +180,6 @@ population_pixel_values <- terra::extract(
     )
   )
 
-saveRDS(population_raster_stack, "population_raster_stack.rds")
 saveRDS(population_pixel_values, "population_pixel_values.rds")
 # ------------------------------------------------------------------------------
 
@@ -250,7 +219,6 @@ pfpr_pixel_values <- terra::extract(
     )
   )
 
-saveRDS(pfpr_raster_stack, "pfpr_raster_stack.rds")
 saveRDS(pfpr_pixel_values, "pfpr_pixel_values.rds")
 # ------------------------------------------------------------------------------
 
@@ -290,7 +258,6 @@ pvpr_pixel_values <- terra::extract(
     )
   )
 
-saveRDS(pvpr_raster_stack, "pvpr_raster_stack.rds")
 saveRDS(pvpr_pixel_values, "pvpr_pixel_values.rds")
 # ------------------------------------------------------------------------------
 
@@ -330,7 +297,6 @@ treatment_pixel_values <- terra::extract(
     )
   )
 
-saveRDS(treatment_raster_stack, "treatment_raster_stack.rds")
 saveRDS(treatment_pixel_values, "treatment_pixel_values.rds")
 # ------------------------------------------------------------------------------
 
@@ -372,10 +338,8 @@ if(gadm_df$continent[1] == "Africa"){
       )
     )
   
-  saveRDS(bednet_raster_stack, "bednet_raster_stack.rds")
   saveRDS(bednet_pixel_values, "bednet_pixel_values.rds")
 } else {
-  saveRDS(NA, "bednet_raster_stack.rds")
   saveRDS(NA, "bednet_pixel_values.rds")
 }
 # ------------------------------------------------------------------------------
@@ -418,10 +382,8 @@ if(gadm_df$continent[1] == "Africa"){
       )
     )
   
-  saveRDS(irs_raster_stack, "irs_raster_stack.rds")
   saveRDS(irs_pixel_values, "irs_pixel_values.rds")
 } else {
-  saveRDS(NA, "irs_raster_stack.rds")
   saveRDS(NA, "irs_pixel_values.rds")
 }
 # ------------------------------------------------------------------------------
