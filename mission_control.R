@@ -17,6 +17,21 @@ orderly2::orderly_run(
   echo = FALSE
 )
 
+# ---- Spatial ---- #
+
+## >16Gb RAM required to run locally
+## Designates shape file with spatial units
+## Estimates urban/rural split
+## Extracts and aggregates spatial data
+for(iso in isos){
+  
+}
+
+
+
+
+
+
 # ---- Data processing / Country split ---- #
 for(iso in isos){
   orderly2::orderly_run(

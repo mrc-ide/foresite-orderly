@@ -256,7 +256,8 @@ pvpr_pixel_values <- terra::extract(
     names_transform = list(
       year = as.integer
     )
-  )
+  ) |>
+  dplyr::mutate(pvpr = ifelse(pvpr == -1, NA, pvpr))
 
 saveRDS(pvpr_pixel_values, "pvpr_pixel_values.rds")
 # ------------------------------------------------------------------------------
