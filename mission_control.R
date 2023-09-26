@@ -35,11 +35,21 @@ for(iso in isos){
   )
 }
 
+# ---- Population ---- #
+for(iso in isos){
+  orderly2::orderly_run(
+    name = "population",
+    parameters = list(
+      iso3c = iso,
+      admin_level = admin_level
+    ),
+    echo = FALSE
+  )
+}
+
 # TODO:
-## Create a sites object with the full compliment of sites including urban/rural
-## Deal with sites with 0 population for some years
-## When to do population projections for units and rescaling
-## When harvested, remove "process_data" and "aggregation" and update "interventions" and "demography"
+## Update "interventions" and "demography"
+## Ensure parameterisation of Population is correct and tidy/comment our diagnostics
 
 # ---- Interventions ---- #
 

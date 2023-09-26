@@ -14,7 +14,8 @@ orderly2::orderly_dependency(
   name = "un_wpp",
   query = "latest()",
   files = c(
-    "un_wup.rds"
+    "un_wup.rds",
+    "un_wpp.rds"
   )
 )
 
@@ -23,25 +24,25 @@ orderly2::orderly_artefact(
   files = "gadm.rds"
 )
 
-#orderly2::orderly_artefact(
-#  description = "Spatial sites", 
-#  files = "sites.rds"
-#)
+orderly2::orderly_artefact(
+  description = "Spatial sites", 
+  files = "sites.rds"
+)
 
 orderly2::orderly_artefact(
   description = "Aggregated spatial data", 
   files = "aggregated_spatial_data.rds"
 )
 
-orderly2::orderly_artefact(
-  description = "Rainfall data", 
-  files = "rainfall_data.rds"
-)
-
-orderly2::orderly_artefact(
-  description = "Vector data", 
-  files = "vector_data.rds"
-)
+# orderly2::orderly_artefact(
+#   description = "Rainfall data", 
+#   files = "rainfall_data.rds"
+# )
+# 
+# orderly2::orderly_artefact(
+#   description = "Vector data", 
+#   files = "vector_data.rds"
+# )
 # ------------------------------------------------------------------------------
 
 # Spatial boundaries -----------------------------------------------------------
@@ -128,6 +129,39 @@ spatial_data <- population_raster_stack |>
       population = 0
     )
   )
+
+# Rescale to ensure exact match with total UN population estimate
+un_pop <- readRDS("un_wpp.rds") |>
+  dplyr::filter(iso3c == {{iso3c}}) |>
+  dplyr::summarise(
+    un_population = sum(population),
+    .by = "year"
+  )
+  
+scaler <- spatial_data |>
+  dplyr::summarise(
+    population = sum(population),
+    .by = "year"
+  ) |>
+  dplyr::left_join(
+    un_pop,
+    by = "year"
+  ) |>
+  dplyr::mutate(
+    scaler = un_population / population
+  ) |>
+  dplyr::select(
+    "year",
+    "scaler"
+  )
+
+spatial_data <- spatial_data |>
+  dplyr::left_join(
+    scaler,
+    by = "year"
+  ) |>
+  dplyr::mutate(population = population * scaler) |>
+  dplyr::select(-"scaler")
 # ------------------------------------------------------------------------------
 
 # Assign pixels as urban or rural ----------------------------------------------
@@ -398,8 +432,6 @@ if(gadm_df$continent[1] == "Africa"){
 }
 # ------------------------------------------------------------------------------
 
-# TODO: Note! We have not rescaled or projected population yet
-
 # Spatial limits and population at risk ----------------------------------------
 limits <- spatial_data |>
   dplyr::filter(
@@ -456,7 +488,7 @@ aggregated_spatial_data <-  spatial_data |>
     dplyr::any_of(c("name_1", "name_2")),
     "urban_rural",
     "year",
-    "population", "par_pf", "par_pv",
+    "population", "par", "par_pf", "par_pv",
     "pfpr", "pvpr",
     "tx_cov", "net_use", "irs_cov"
   )
@@ -464,110 +496,124 @@ aggregated_spatial_data <-  spatial_data |>
 saveRDS(aggregated_spatial_data, "aggregated_spatial_data.rds")
 # ------------------------------------------------------------------------------
 
-# Vectors ----------------------------------------------------------------------
-if(gadm_df$continent[1] == "Africa"){
-  vector_rasters <- list.files(
+# Sites ------------------------------------------------------------------------
+sites <- aggregated_spatial_data |>
+  dplyr::select(
+    dplyr::any_of(
+      c("continent", "country", "iso3c", "name_1", "name_2", "urban_rural")
+    )
+  ) |>
+  unique()
+
+saveRDS(sites, "sites.rds")
+# ------------------------------------------------------------------------------
+
+
+if(FALSE){
+  # Vectors ----------------------------------------------------------------------
+  if(gadm_df$continent[1] == "Africa"){
+    vector_rasters <- list.files(
+      path = paste0(
+        external_data_address,
+        "malaria_sites_data/raster"
+      ),
+      pattern = "relative",
+      full.names = TRUE
+    )
+    
+    vector_raster_names <- vector_rasters |>
+      stringr::str_replace(paste0(
+        external_data_address,
+        "malaria_sites_data/raster/relative_"
+      ), "") |>
+      stringr::str_replace(".tif", "")
+    
+    vector_raster <- list()
+    for(i in 1:length(vector_rasters)){
+      vector_raster[[i]] <- 
+        terra::rast(x = vector_rasters[i]) |>
+        terra::crop(y = gadm_spatvector) |>
+        terra::resample(population_raster_stack)
+    }
+    vector_raster_stack <- terra::rast(vector_raster)
+    names(vector_raster_stack) <- vector_raster_names
+    
+    vector_pixel_values <- vector_raster_stack |>
+      terra::extract(
+        y = gadm_spatvector
+      ) |>
+      dplyr::mutate(
+        pixel = 1:dplyr::n()
+      ) |>
+      dplyr::rename(id = ID) |>
+      tidyr::pivot_longer(cols = -c(id, pixel), names_to = "species", values_to = "prop") |>
+      dplyr::filter(!is.na(prop)) |>
+      dplyr::summarise(
+        prop = mean(prop, na.rm = TRUE),
+        .by = c("id", "species")
+      ) |>
+      dplyr::mutate(
+        prop = prop / sum(prop),
+        .by = c("id")
+      ) |>
+      dplyr::left_join(gadm_df, by = "id") |>
+      dplyr::select(-"id") |>
+      dplyr::select(
+        "continent", "country", "iso3c",
+        dplyr::any_of(c("name_1", "name_2")),
+        "species", "prop"
+      )
+    
+  } else {
+    
+  }
+  saveRDS(vector_pixel_values, "vector_data.rds")
+  # ------------------------------------------------------------------------------
+  
+  # Rainfall ---------------------------------------------------------------------
+  rainfall_rasters <- list.files(
     path = paste0(
       external_data_address,
       "malaria_sites_data/raster"
     ),
-    pattern = "relative",
+    pattern = "rainfall",
     full.names = TRUE
   )
   
-  vector_raster_names <- vector_rasters |>
-    stringr::str_replace(paste0(
-      external_data_address,
-      "malaria_sites_data/raster/relative_"
-    ), "") |>
-    stringr::str_replace(".tif", "")
+  rainfall_raster_stack <- terra::rast(x = rainfall_rasters) |>
+    terra::crop(y = gadm_spatvector)
   
-  vector_raster <- list()
-  for(i in 1:length(vector_rasters)){
-    vector_raster[[i]] <- 
-      terra::rast(x = vector_rasters[i]) |>
-      terra::crop(y = gadm_spatvector) |>
-      terra::resample(population_raster_stack)
+  mean2 <- function(x, na.rm = TRUE){
+    return(mean(x[x>=0], na.rm = na.rm))
   }
-  vector_raster_stack <- terra::rast(vector_raster)
-  names(vector_raster_stack) <- vector_raster_names
   
-  vector_pixel_values <- vector_raster_stack |>
+  rainfall_values <- rainfall_raster_stack |>
     terra::extract(
-      y = gadm_spatvector
-    ) |>
-    dplyr::mutate(
-      pixel = 1:dplyr::n()
+      y = gadm_spatvector,
+      fun = mean2
     ) |>
     dplyr::rename(id = ID) |>
-    tidyr::pivot_longer(cols = -c(id, pixel), names_to = "species", values_to = "prop") |>
-    dplyr::filter(!is.na(prop)) |>
-    dplyr::summarise(
-      prop = mean(prop, na.rm = TRUE),
-      .by = c("id", "species")
+    tidyr::pivot_longer(
+      cols = -id,
+      names_to = "date",
+      values_to = "rainfall",
+      names_prefix = "rainfall_"
     ) |>
     dplyr::mutate(
-      prop = prop / sum(prop),
-      .by = c("id")
+      date = stringr::str_replace_all(
+        date, "_", "-"
+      ),
+      day = lubridate::yday(date)
     ) |>
+    dplyr::filter(day < 366) |>
     dplyr::left_join(gadm_df, by = "id") |>
     dplyr::select(-"id") |>
     dplyr::select(
       "continent", "country", "iso3c",
       dplyr::any_of(c("name_1", "name_2")),
-      "species", "prop"
+      "rainfall"
     )
-  
-} else {
-  
+  saveRDS(rainfall_values, "rainfall_data.rds")
+  # ------------------------------------------------------------------------------
 }
-saveRDS(vector_pixel_values, "vector_data.rds")
-# ------------------------------------------------------------------------------
-
-# Rainfall ---------------------------------------------------------------------
-rainfall_rasters <- list.files(
-  path = paste0(
-    external_data_address,
-    "malaria_sites_data/raster"
-  ),
-  pattern = "rainfall",
-  full.names = TRUE
-)
-
-rainfall_raster_stack <- terra::rast(x = rainfall_rasters) |>
-  terra::crop(y = gadm_spatvector)
-
-mean2 <- function(x, na.rm = TRUE){
-  return(mean(x[x>=0], na.rm = na.rm))
-}
-
-rainfall_values <- rainfall_raster_stack |>
-  terra::extract(
-    y = gadm_spatvector,
-    fun = mean2
-  ) |>
-  dplyr::rename(id = ID) |>
-  tidyr::pivot_longer(
-    cols = -id,
-    names_to = "date",
-    values_to = "rainfall",
-    names_prefix = "rainfall_"
-  ) |>
-  dplyr::mutate(
-    date = stringr::str_replace_all(
-      date, "_", "-"
-    ),
-    day = lubridate::yday(date)
-  ) |>
-  dplyr::filter(day < 366) |>
-  dplyr::left_join(gadm_df, by = "id") |>
-  dplyr::select(-"id") |>
-  dplyr::select(
-    "continent", "country", "iso3c",
-    dplyr::any_of(c("name_1", "name_2")),
-    "rainfall"
-  )
-saveRDS(rainfall_values, "rainfall_data.rds")
-# ------------------------------------------------------------------------------
-
 
