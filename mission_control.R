@@ -36,6 +36,7 @@ for(iso in isos){
 }
 
 # ---- Population ---- #
+
 for(iso in isos){
   orderly2::orderly_run(
     name = "population",
@@ -49,7 +50,7 @@ for(iso in isos){
 
 # TODO:
 ## Update "interventions" and "demography"
-## Ensure parameterisation of Population is correct and tidy/comment our diagnostics
+## Finish missing elements for spatial
 
 # ---- Interventions ---- #
 

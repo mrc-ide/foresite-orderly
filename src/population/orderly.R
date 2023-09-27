@@ -25,6 +25,16 @@ orderly2::orderly_dependency(
     "aggregated_spatial_data.rds"
   )
 )
+
+orderly2::orderly_artefact(
+  description = "Population diagnostics",
+  files = "population_diagnostics.rds"
+)
+
+orderly2::orderly_artefact(
+  description = "Population outputs",
+  files = "population.rds"
+)
 # ------------------------------------------------------------------------------
 
 # Population projection --------------------------------------------------------
@@ -141,85 +151,121 @@ population_age <- population |>
 # ------------------------------------------------------------------------------
 
 # Diagnostics ------------------------------------------------------------------
-library(ggplot2)
 
 # Plot projections
-ggplot(data = population, aes(x = year, y = population, colour = urban_rural)) +
-  geom_line() +
-  facet_wrap(~ name_1, scales = "free_y") +
-  theme_bw()
+projections_pd <- population |>
+  dplyr::summarise(
+    population = sum(population),
+    .by = c("year", "name_1", "urban_rural")
+  )
 
-# Check total against un 
+projections_plot <- ggplot2::ggplot(data = projections_pd,
+                                    ggplot2::aes(x = year, y = population / 1e6, colour = urban_rural)) +
+  ggplot2::geom_line() +
+  ggplot2::ylab("Population (millions)") +
+  ggplot2::scale_colour_manual(values = c("green", "grey20"), name = "") +
+  ggplot2::facet_wrap(~ name_1, scales = "free_y") +
+  ggplot2::theme_bw() +
+  ggplot2::theme(strip.background = ggplot2::element_rect(fill = NA))
+
+# Population total
 total_check <- population |>
   dplyr::summarise(
     population = sum(population),
     .by = "year") |>
-  dplyr::mutate(source = "population")
+  dplyr::mutate(source = "Output age-aggregated")
 
 total_age_check <- population_age |>
   dplyr::summarise(
     population = sum(population),
     .by = "year") |>
-  dplyr::mutate(source = "population_age")
+  dplyr::mutate(source = "Output age-disaggregated")
 
 total_un_check <- un_wpp |>
   dplyr::summarise(
     population = sum(population),
     .by = "year") |>
-  dplyr::mutate(source = "population_un")
+  dplyr::mutate(source = "UN estimate")
 
 total_check_pd <- total_check |>
   dplyr::bind_rows(total_age_check) |>
   dplyr::bind_rows(total_un_check)
 
-ggplot(data = total_check_pd, aes(x = year, y = population, fill = source)) +
-  geom_bar(stat = "identity", position = "dodge") +
-  theme_bw()
+total_plot <- ggplot2::ggplot(data = total_check_pd,
+                              ggplot2::aes(x = year, y = population / 1e6, fill = source)) +
+  ggplot2::geom_bar(stat = "identity", position = "dodge") +
+  ggplot2::ylab("Population (millions)") +
+  ggplot2::scale_fill_manual(values = c("dodgerblue", "deeppink", "orange"), name = "") +
+  ggplot2::theme_bw()
 
-# Check age distribution (against UN input)
+# Age distribution
 age_comp <- population_age |>
   dplyr::filter(year %% 10 == 0) |>
-  dplyr::summarise(population = sum(population), 
-                   .by = c("year", "age_lower"))
+  dplyr::summarise(
+    population = sum(population), 
+                   .by = c("year", "age_lower")
+    ) |>
+  dplyr::mutate(
+    source = "Output"
+  )
 
 un_age_comp <- un_wpp |>
   dplyr::filter(year %% 10 == 0) |>
-  dplyr::rename(un_population = population) |>
   dplyr::select(
-    "year", "age_lower", "un_population"
+    "year", "age_lower", "population"
+  ) |>
+  dplyr::mutate(
+    source = "UN estimate"
   )
 
-age_comp_pd <- age_comp |>
-  dplyr::left_join(un_age_comp, by = c("year", "age_lower")) |>
-  tidyr::pivot_longer(
-    cols = -c("year", "age_lower"),
-    names_to = "source",
-    values_to = "population"
-  )
+age_comp_pd <- dplyr::bind_rows(age_comp, un_age_comp)
 
-ggplot(data = age_comp_pd, aes(x = age_lower, y = population, fill = source)) +
-  geom_bar(stat = "identity", position = "dodge") +
-  facet_wrap(~ year) +
-  theme_bw()
+age_distribution_plot <- ggplot2::ggplot(data = age_comp_pd,
+                                         ggplot2::aes(x = age_lower, y = population / 1e6, fill = source)) +
+  ggplot2::geom_bar(stat = "identity", position = "dodge") +
+  ggplot2::scale_fill_manual(values = c("dodgerblue", "orange"), name = "") +
+  ggplot2::ylab("Population (millions)") +
+  ggplot2::xlab("Age") +
+  ggplot2::facet_wrap(~ year) +
+  ggplot2::theme_bw() +
+  ggplot2::theme(strip.background = ggplot2::element_rect(fill = NA))
 
-# Check urban rural (against un input)
-
+# Proportion urban
 urban_check <- population |>
   dplyr::summarise(population = sum(population), .by = c("year", "urban_rural")) |> 
   tidyr::pivot_wider(id_cols = year, names_from = urban_rural, values_from = population) |>
   dplyr::mutate(
     proportion_urban = urban / (urban + rural)
   ) |>
-  dplyr::mutate(source = "proportion_urban")
+  dplyr::mutate(source = "Output")
 
 un_urban_check <- un_wup |>
   dplyr::select(-iso3c) |>
-  dplyr::mutate(source = "un_proportion_urban")
+  dplyr::mutate(source = "UN estimate")
 
 urban_check_pd <- dplyr::bind_rows(urban_check, un_urban_check)
 
-ggplot(data = urban_check_pd, aes(x = year, y = proportion_urban, fill = source)) +
-  geom_bar(stat = "identity", position = "dodge") +
-  theme_bw()
+urbanisation_plot <- ggplot2::ggplot(data = urban_check_pd,
+                                     ggplot2::aes(x = year, y = proportion_urban, fill = source)) +
+  ggplot2::geom_bar(stat = "identity", position = "dodge") +
+  ggplot2::ylab("Proportion urban") +
+  ggplot2::scale_fill_manual(values = c("dodgerblue", "orange"), name = "") +
+  ggplot2::theme_bw()
 
+population_diagnostics <- list(
+  projections_plot = projections_plot,
+  total_plot = total_plot,
+  age_distribution_plot = age_distribution_plot,
+  urbanisation_plot = urbanisation_plot
+)
+saveRDS(population_diagnostics, "population_diagnostics.rds")
+# ------------------------------------------------------------------------------
 
+# Site file element ------------------------------------------------------------
+population <- list(
+  population = population,
+  population_by_age = population_age
+)
+
+saveRDS(population, "population.rds")
+# ------------------------------------------------------------------------------

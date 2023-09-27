@@ -6,15 +6,16 @@ orderly2::orderly_description(
 )
 
 orderly2::orderly_parameters(
-  iso3c = NULL,
-  start_year = NULL,
-  end_year = NULL
+  iso3c = NULL
 )
 
 orderly2::orderly_dependency(
-  name = "process_data",
-  query = "latest(parameter:iso3c == this:iso3c)",
-  files = c("population_demography.rds", "neonatal_mortality.rds")
+  name = "un_wpp",
+  query = "latest()",
+  files = c(
+    "un_wpp.rds",
+    "unicef_neonatal_mortality.rds"
+  )
 )
 
 orderly2::orderly_artefact(
@@ -23,20 +24,16 @@ orderly2::orderly_artefact(
 )
 # ------------------------------------------------------------------------------
 
-demography_data <- readRDS("population_demography.rds") |>
-  dplyr::filter(
-    year >= start_year,
-    year <= end_year
-  )  |>
+# Make demography adjustments --------------------------------------------------
+demography_data <- readRDS("un_wpp.rds") |>
+  dplyr::filter(iso3c == {{iso3c}}) |>
   dplyr::mutate(
-    adjusted_mortality_rates = peeps::estimate_mortality_rates(population_proportion, qx), .by = "year"
+    adjusted_mortality_rates = peeps::estimate_mortality_rates(population_proportion, qx),
+    .by = "year"
   )
 
-neonatal_mortality_data <- readRDS("neonatal_mortality.rds") |>
-  dplyr::filter(
-    year >= start_year,
-    year <= end_year
-  ) |>
+neonatal_mortality_data <- readRDS("unicef_neonatal_mortality.rds") |>
+  dplyr::filter(iso3c == {{iso3c}}) |>
   dplyr::mutate(neonatal_mortality = peeps::rescale_prob(neonatal_mortality, 28, 365))
 
 demography_sub_matrix <- matrix(
@@ -66,8 +63,14 @@ demography_matrix <- cbind(
   neonatal_mortality_sub_matrix,
   demography_sub_matrix
 )
+# ------------------------------------------------------------------------------
 
+# Diagnostics ------------------------------------------------------------------
+
+# ------------------------------------------------------------------------------
+
+# Site file element ------------------------------------------------------------
 # Convert to daily for direct use in malariasimulation
-demography_matrix <- peeps::rescale_prob(demography_matrix, 365, 1)
-
-saveRDS(demography_matrix, "demography.rds")
+demography <- peeps::rescale_prob(demography_matrix, 365, 1)
+saveRDS(demography, "demography.rds")
+# ------------------------------------------------------------------------------
