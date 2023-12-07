@@ -236,7 +236,7 @@ rainfall_years <- 2000:2022
 rainfall_months <- c("01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12")
 
 rainfall_raster <- list()
-for(m in seq_along(months)){
+for(m in seq_along(rainfall_months)){
   rainfall_files <- paste0(rainfall_data, rainfall_years, "_", rainfall_months[m], ".tif")
   rainfall_raster[[m]] <- terra:::rast(rainfall_files) |>
     terra::crop(shape) 
