@@ -19,11 +19,10 @@ orderly2::orderly_artefact(
   description = "UN WUP population urbanisation", 
   files = "un_wup.rds"
 )
+# ------------------------------------------------------------------------------
 
-orderly2::orderly_parameters(
-  start_year = NULL,
-  end_year = NULL
-)
+# Fixed inputs -----------------------------------------------------------------
+external_data_address <- "C:/Users/pwinskil/OneDrive - Imperial College London/malaria_sites_data/2023/"
 # ------------------------------------------------------------------------------
 
 # Life tables ------------------------------------------------------------------
@@ -31,13 +30,13 @@ historical_life_tables <- read.csv(
   file = 
     paste0(
       external_data_address,
-      "malaria_sites_data/2023/WPP2022_Life_Table_Complete_Medium_Both_1950-2021.csv"
+      "WPP2022_Life_Table_Complete_Medium_Both_1950-2021.csv"
     )
 )
 future_life_tables <- read.csv(
   file = paste0(
     external_data_address,
-    "malaria_sites_data/2023/WPP2022_Life_Table_Complete_Medium_Both_2022-2100.csv"
+    "WPP2022_Life_Table_Complete_Medium_Both_2022-2100.csv"
   )
 )
 
@@ -48,10 +47,6 @@ life_tables <- historical_life_tables |>
     year  =  Time,
     age_lower = AgeGrpStart,
     qx = qx
-  ) |>
-  dplyr::filter(
-    year >= start_year,
-    year <= end_year
   ) |>
   dplyr::mutate(
     age_upper = ifelse(
@@ -76,13 +71,13 @@ life_tables <- historical_life_tables |>
 historical_populations <- read.csv(
   file = paste0(
     external_data_address,
-    "malaria_sites_data/2023/WPP2022_Population1JanuaryBySingleAgeSex_Medium_1950-2021.csv"
+    "/WPP2022_Population1JanuaryBySingleAgeSex_Medium_1950-2021.csv"
   )
 )
 future_populations <- read.csv(
   file = paste0(
     external_data_address,
-    "malaria_sites_data/2023/WPP2022_Population1JanuaryBySingleAgeSex_Medium_2022-2100.csv"
+    "WPP2022_Population1JanuaryBySingleAgeSex_Medium_2022-2100.csv"
   )
 )
 
@@ -94,12 +89,8 @@ populations <- historical_populations |>
     age_lower = AgeGrpStart,
     population = PopTotal
   ) |>
-  dplyr::filter(
-    year >= start_year,
-    year <= end_year
-  ) |>
   dplyr::mutate(
-    population = as.integer(round(population  * 1000)),
+    population = as.integer(round(population * 1000)),
     age_upper = ifelse(
       age_lower < 100, 
       age_lower + 1,
@@ -137,7 +128,7 @@ saveRDS(un_wpp, "un_wpp.rds")
 unicef_neonatal_mortality <- read.csv(
   file = paste0(
     external_data_address,
-    "malaria_sites_data/2023/Neonatal_Mortality_Rates_2022.csv"
+    "Neonatal_Mortality_Rates_2022.csv"
   )
 ) |>
   dplyr::filter(
@@ -166,17 +157,19 @@ saveRDS(unicef_neonatal_mortality, "unicef_neonatal_mortality.rds")
 un_wup <- read.csv(
   file = paste0(
     external_data_address,
-    "malaria_sites_data/2023/WUP2018-F02-Proportion_Urban.csv"
+    "WUP2018-F02-Proportion_Urban.csv"
   )
 ) |>
-  dplyr::rename(name = `Region..subregion..country.or.area`) |>
+  dplyr::rename(
+    name = `Region..subregion..country.or.area`,
+    code = "Country.code") |>
   dplyr::filter(
-    name %in% countrycode::codelist$country.name.en
+    code %in% countrycode::codelist$un
   ) |>
   dplyr::mutate(
-    iso3c = countrycode::countrycode(name, "country.name", "iso3c", warn = FALSE)
+    iso3c = countrycode::countrycode(code, "un", "iso3c", warn = FALSE)
   ) |>
-  dplyr::select(-c("name", "Country.code")) |>
+  dplyr::select(-c("name", "code")) |>
   tidyr::pivot_longer(
     cols = -"iso3c",
     names_to = "year",
@@ -186,10 +179,6 @@ un_wup <- read.csv(
   dplyr::mutate(
     year = as.integer(year),
     proportion_urban = percent_urban / 100
-  ) |>
-  dplyr::filter(
-    year >= start_year,
-    year <= end_year
   ) |>
   dplyr::select(-"percent_urban") |>
   tidyr::complete(year = min(year):max(year), tidyr::nesting(iso3c)) |>
@@ -202,5 +191,6 @@ un_wup <- read.csv(
     ),
     .by = "iso3c"
   )
+
 saveRDS(un_wup, "un_wup.rds")
 # ------------------------------------------------------------------------------
