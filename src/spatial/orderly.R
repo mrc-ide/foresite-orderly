@@ -6,7 +6,7 @@ orderly2::orderly_description(
 
 orderly2::orderly_parameters(
   version_name = "testing",
-  shape_address = "C:/Users/pwinskil/OneDrive - Imperial College London/GADM/version_4.1.0/iso3c/BFA/BFA_2.RDS"
+  iso3c = "BFA"
 )
 
 orderly2::orderly_resource(
@@ -36,7 +36,27 @@ years <- 2000:as.integer(format(Sys.Date(), "%Y"))
 source("spatial_utils.R")
 # ------------------------------------------------------------------------------
 
-# Shape file ------------------------------------------------------------------
+# Shape file -------------------------------------------------------------------
+
+# Load shape file at lowest available admin level
+admin_levels <- 3:1
+for(level in admin_levels){
+  shape_address <- paste0(
+    "C:/Users/pwinskil/OneDrive - Imperial College London/GADM/version_4.1.0/iso3c/",
+    iso3c,
+    "/",
+    iso3c,
+    "_",
+    level,
+    ".RDS"
+  )
+  shape <- readRDS(shape_address)
+  if(nrow(shape) > 0){
+    break
+  }
+}
+
+
 lookup <- c(
   uid = "uid",
   iso3c = "GID_0",
@@ -47,7 +67,7 @@ lookup <- c(
   geom = "geom"
 )
 
-shape <- readRDS(shape_address) |>
+shape <- shape |>
   dplyr::mutate(
     uid = 1:dplyr::n()
   ) |>
@@ -58,8 +78,6 @@ shape <- readRDS(shape_address) |>
 
 shape_df <- shape |>
   sf::st_drop_geometry(shape)
-
-iso3c <- unique(shape_df$iso3c)
 # ------------------------------------------------------------------------------
 
 # Prevalence -------------------------------------------------------------------
