@@ -1,0 +1,37 @@
+# Orderly set-up ---------------------------------------------------------------
+orderly2::orderly_description(
+  display = "Mortaltiy rate adjustments",
+  long = "Adjusts UN mortality rates such that a model run with a fixed simulation
+  population size would return the observed age distribution (at equilibrium)."
+)
+
+orderly2::orderly_resource("adjust_rates.R")
+
+orderly2::orderly_artefact(
+  description = "Adjusted mortality rates",
+  files = "adjusted_demography.rds"
+)
+# ------------------------------------------------------------------------------
+
+# Prepare data for parallel processing -----------------------------------------
+demography <- readRDS("un_wpp.rds") |>
+  dplyr::filter(year >= 2000)
+demography_split <- dplyr::group_split(demography, iso3c, year)[4100:4110]
+
+source("adjust_rates.R")
+
+system.time({
+  cores <- 5 # parallel::detectCores()
+  cluster <- parallel::makeCluster(cores)
+  adjusted_demography_split <- parallel::parLapply(
+    cl = cluster,
+    X = demography_split,
+    fun = adjust_rates
+  )
+  parallel::stopCluster(cl = cluster)
+  
+  adjusted_demography <- dplyr::bind_rows(adjusted_demography_split)
+})
+
+saveRDS(adjusted_demography, "adjusted_demography.rds")
+# ------------------------------------------------------------------------------

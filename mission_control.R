@@ -3,7 +3,10 @@
 # UN population and demography
 orderly2::orderly_run(name = "un_wpp")
 
-# Demography adjustment (on cluster)
+# Demography adjustment - this would take days locally
+orderly2::orderly_run(
+  name = "demography"
+)
 
 # Spatial processing
 orderly2::orderly_run(
@@ -15,14 +18,14 @@ orderly2::orderly_run(
 )
 
 # Population projections
-## Load spatial
-## Aggregate
-## Convert spatial-pops to proportions
-## Complete all missing year-place (historical) and add 0s
-## complete all missing future years and extrapolate current proportion
-## Load UN projections
-## Multiply proportions by UN numbers
-## Check this re-captures both UN POP and prop urban with diagnostic
+orderly2::orderly_run(
+  name = "population",
+  parameters = list(
+    version_name = "testing",
+    iso3c = "BFA"
+  )
+)
+
 
 # Interventions & Resistance
 ## Load resistance
