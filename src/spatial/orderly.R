@@ -250,6 +250,32 @@ for(v in seq_along(vectors)){
     vector_raster[[vectors[v]]] <- NA
   }
 }
+
+vector_occurence_data <- paste0(external_data_address, "Sinka_occurence/")
+vectors_occurence <- list.files(vector_occurence_data) |>
+  stringr::str_replace("occurence_", "") |>
+  stringr::str_replace(".tif", "")
+
+vector_occurence_raster <- list()
+for(v in seq_along(vectors_occurence)){
+  vector_files <- paste0(vector_occurence_data, "occurence_", vectors_occurence[v], ".tif")
+  vector_occurence_raster[[vectors_occurence[v]]] <- terra::rast(vector_files) 
+  
+  if(extents_overlap(vector_occurence_raster[[v]], shape)){
+    vector_occurence_raster[[vectors_occurence[v]]] <- vector_occurence_raster[[vectors_occurence[v]]] |>
+      terra::crop(shape)  |>
+      terra::resample(pfpr_raster) |>
+      pad_raster(2011, years, forward_empty = TRUE)
+    names(vector_occurence_raster[[vectors_occurence[v]]]) <- paste0(vectors_occurence[v], "_", years)
+  } else {
+    vector_occurence_raster[[vectors_occurence[v]]] <- NA
+  }
+}
+vector_occurence_raster <- vector_occurence_raster[!is.na(vector_occurence_raster)]
+vector_occurence_df <-
+  lapply(vector_occurence_raster, raster_values) |>
+  as.data.frame()
+colnames(vector_occurence_df) <- paste0("occurence_",names(vector_occurence_raster))
 # ------------------------------------------------------------------------------
 
 # Rainfall ---------------------------------------------------------------------
@@ -412,11 +438,14 @@ df <- data.frame(
   walking_travel_time_healthcare = raster_values(walking_travel_healthcare_raster),
   city_travel_time = raster_values(city_travel_time_raster)
 ) |>
+  dplyr::bind_cols(
+    vector_occurence_df
+  ) |>
   # Remove pixels that don't fall within a polygon
   dplyr::filter(!is.na(uid)) |> 
   # Categorise urban_rural
   dplyr::mutate(urban_rural = ifelse(urban_rural == 1, "urban", "rural")) |>
-  # Normalise vectors
+  # Normalise vectors of relative abundance
   dplyr::mutate(
     vector_sum = gambiae + arabiensis + funestus,
     gambiae = gambiae / vector_sum,
