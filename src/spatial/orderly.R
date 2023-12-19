@@ -6,7 +6,7 @@ orderly2::orderly_description(
 
 orderly2::orderly_parameters(
   version_name = "testing",
-  iso3c = "BFA"
+  iso3c = "DOM"
 )
 
 orderly2::orderly_resource(
@@ -163,13 +163,15 @@ itn_years <- 2000:2020
 itn_files <- paste0(itn_data, "202106_Africa_Insecticide_Treated_Net_Use_", itn_years, ".tiff")
 itn_raster <- terra::rast(itn_files) |>
   pad_raster(itn_years, years)
+approximate_itn <- FALSE
 
 if(extents_overlap(itn_raster, shape)){
   itn_raster <- itn_raster |>
     terra::crop(shape)
   names(itn_raster) <- paste0("itn_use_", years)
-} else{
+} else {
   itn_raster <- NA
+  approximate_itn <- TRUE
 }
 # ------------------------------------------------------------------------------
 
@@ -179,6 +181,7 @@ irs_years <- 2000:2020
 irs_files <- paste0(irs_data, "/202106_Africa_Indoor_Residual_Spraying_Coverage_", irs_years, ".tif")
 irs_raster <- terra::rast(irs_files) |>
   pad_raster(irs_years, years)
+approximate_irs <- FALSE
 
 if(extents_overlap(irs_raster, shape)){
   irs_raster <- irs_raster |>
@@ -186,6 +189,7 @@ if(extents_overlap(irs_raster, shape)){
   names(irs_raster) <- paste0("irs_cov_", years)
 } else{
   irs_raster <- NA
+  approximate_irs <- TRUE
 }
 # ------------------------------------------------------------------------------
 
@@ -217,7 +221,7 @@ for(m in seq_along(smc_months)){
   smc_raster_month <- terra::rast(smc_files)
   if(extents_overlap(smc_raster_month, shape)){
     smc_raster[[m]] <- smc_raster_month |>
-    terra::crop(shape) |>
+      terra::crop(shape) |>
       pad_raster(smc_years, years)
     names(smc_raster[[m]]) <- paste0("smc_cov_", years, "_", m)
   } else {
@@ -360,6 +364,7 @@ shape_raster <- terra::rasterize(shape, pfpr_raster, field = "uid")
 uid <- terra::values(shape_raster)
 
 df <- data.frame(
+  pixel = 1:length(uid),
   uid = uid,
   urban_rural = raster_values(urban_rural_raster),
   year = rep(years, each = nrow(uid)),
@@ -368,6 +373,7 @@ df <- data.frame(
   par_pf = raster_values(pop_at_risk_pf_raster, na_replace = 0),
   par_pv = raster_values(pop_at_risk_pv_raster, na_replace = 0),
   pfpr = raster_values(pfpr_raster),
+  pvpr = raster_values(pvpr_raster),
   itn_use = raster_values(itn_raster),
   irs_cov = raster_values(irs_raster),
   tx_cov = raster_values(tx_raster),
@@ -416,7 +422,7 @@ df <- data.frame(
     gambiae = gambiae / vector_sum,
     arabiensis = arabiensis / vector_sum,
     funestus = funestus / vector_sum
-    ) |>
+  ) |>
   dplyr::select(-vector_sum) |>
   # Link to shape data
   dplyr::left_join(shape_df, by = "uid") |>
@@ -425,6 +431,109 @@ df <- data.frame(
 
 format(object.size(df), "Mb")
 
+# ------------------------------------------------------------------------------
+
+# Fill nets and IRS outside SSA ------------------------------------------------
+
+# TODO: How to handle year extrapolation?
+if(approximate_itn | approximate_irs){
+  par <- df |>
+    dplyr::summarise(
+      par = sum(par),
+      .by = "year"
+    )
+  
+  rank <- df |>
+    dplyr::filter(year == 2000) |>
+    dplyr::mutate(pr = 1 - (1 - pfpr) * (1 - pvpr)) |>
+    dplyr::arrange(-pr) |>
+    dplyr::mutate(rank = 1:dplyr::n()) |>
+    dplyr::select(pixel, rank)
+}
+
+if(approximate_itn){
+  
+  # Assume median half life and usage rate
+  hl <- netz::get_halflife_data() |>
+    dplyr::pull(half_life) |>
+    median()
+  ur <- netz::get_usage_rate_data() |>
+    dplyr::pull(usage_rate) |>
+    median()
+  
+  # Estimate the total people using nets each year | WHO net delivery/distribution
+  nets_distributed <- read.csv(paste0(external_data_address, "itn_delivered.csv")) |>
+    dplyr::filter(iso3c == {{iso3c}}) |>
+    dplyr::left_join(par, by = "year") |>
+    dplyr::mutate(
+      crop = netz::distribution_to_crop_dynamic(itn_interpolated, netz::net_loss_map, half_life = hl) / par,
+      # TODO: usin a hybrid here, forcing linear at acess < 0.5, might be worth adding to netz package?
+      access = crop_to_access2(crop),
+      usage = netz::access_to_usage(access, ur),
+      people_using_nets = usage * par
+    ) |>
+    dplyr::select(year, people_using_nets)
+  
+  # Target nets at maximum of 50% use (to be in linear section of net model),
+  # Targeting is based on 2000 prevalence
+  max_use <- 0.5
+  df <- df |>
+    dplyr::left_join(
+      rank,
+      by = "pixel",
+      relationship = "many-to-many"
+    ) |>
+    dplyr::left_join(
+      nets_distributed,
+      by = "year"
+    ) |>
+    dplyr::group_by(year) |>
+    dplyr::arrange(rank) |>
+    dplyr::mutate(
+      pop_cov = cumsum(par * max_use),
+      itn_use = ifelse(pop_cov <= people_using_nets, max_use, 0)
+    ) |>
+    dplyr::ungroup() |>
+    tidyr::replace_na(
+      list(itn_use = 0)
+    ) |>
+    dplyr::select(-c("rank", "pop_cov", "people_using_nets"))
+}
+
+if(approximate_irs){
+  irs_people <- read.csv(paste0(external_data_address, "irs_people_protected.csv")) |>
+    dplyr::filter(iso3c == {{iso3c}}) |>
+    dplyr::select(year, irs_interpolated)
+  
+  # Target irs at maximum of 80% coverage,
+  # Targeting is based on 2000 prevalence
+  max_cov <- 0.8
+  df <- df |>
+    dplyr::left_join(
+      rank,
+      by = "pixel",
+      relationship = "many-to-many"
+    ) |>
+    dplyr::left_join(
+      irs_people,
+      by = "year"
+    ) |>
+    dplyr::group_by(year) |>
+    dplyr::arrange(rank) |>
+    dplyr::mutate(
+      pop_cov = cumsum(par * max_cov),
+      irs_cov = ifelse(pop_cov <= irs_interpolated, max_cov, 0)
+    ) |>
+    dplyr::ungroup() |>
+    tidyr::replace_na(
+      list(irs_cov = 0)
+    ) |>
+    dplyr::select(-c("rank", "pop_cov", "irs_interpolated"))
+  
+}
+# ------------------------------------------------------------------------------
+
+# Save outputs -----------------------------------------------------------------
 saveRDS(df, "spatial.rds")
 saveRDS(shape, "shape.rds")
 # ------------------------------------------------------------------------------

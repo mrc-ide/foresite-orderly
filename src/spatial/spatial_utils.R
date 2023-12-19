@@ -85,3 +85,36 @@ raster_values <- function(x, na_replace = NULL){
   }
   return(values)
 }
+
+access_to_crop2 <- function(access, type = "loess", hybrid = TRUE){
+  if(any(access < 0 | access > 1, na.rm = TRUE)){
+    stop("access must be between 0 and 1")
+  }
+  if(!type %in% c("loess", "loess_extrapolate", "linear", "hybrid")){
+    stop("type must be one of: loess, loess_extrapolate, linear or hybrid")
+  }
+  
+  smooth <- netz::npc_fits[[type]]
+  pred <- unname(stats::predict(smooth, newdata = data.frame(access_mean = access)))
+  pred[access == 0] <- 0
+  
+  if(hybrid){
+    smooth2 <- netz::npc_fits[["linear"]]
+    pred2 <- unname(stats::predict(smooth2, newdata = data.frame(access_mean = access)))
+    pred2[access == 0] <- 0
+    pred[access <= 0.5] <- pred2[access <= 0.5]
+  }
+  return(pred)
+}
+
+crop_to_access2 <- function(crop, type = "loess", hybrid = TRUE){
+  if(!type %in% c("loess", "loess_extrapolate", "linear")){
+    stop("type must be one of: loess, loess_extrapolate or linear")
+  }
+  smooth <- netz::npc_fits[[type]]
+  access <- seq(0, 1, 0.001)
+  pred <- access_to_crop2(access, type, hybrid)
+  access_out <- stats::approx(x = pred, y = access, xout = crop)$y
+  access_out[crop == 0] <- 0
+  return(access_out)
+}
