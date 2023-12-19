@@ -435,7 +435,6 @@ format(object.size(df), "Mb")
 
 # Fill nets and IRS outside SSA ------------------------------------------------
 
-# TODO: How to handle year extrapolation?
 if(approximate_itn | approximate_irs){
   par <- df |>
     dplyr::summarise(
@@ -467,12 +466,19 @@ if(approximate_itn){
     dplyr::left_join(par, by = "year") |>
     dplyr::mutate(
       crop = netz::distribution_to_crop_dynamic(itn_interpolated, netz::net_loss_map, half_life = hl) / par,
-      # TODO: usin a hybrid here, forcing linear at acess < 0.5, might be worth adding to netz package?
+      # TODO: using a hybrid here, forcing linear at access < 0.5, might be worth adding to netz package?
       access = crop_to_access2(crop),
       usage = netz::access_to_usage(access, ur),
       people_using_nets = usage * par
     ) |>
-    dplyr::select(year, people_using_nets)
+    dplyr::select(year, people_using_nets) |>
+    tidyr::complete(year = years)
+  
+  if(sum(is.na(nets_distributed$people_using_nets)) > 0){
+    # Extrapolate assuming 3 year cycle
+    na_index <- which(is.na(nets_distributed$people_using_nets))
+    nets_distributed$people_using_nets[na_index] <- nets_distributed$people_using_nets[pmax(0, na_index - 3)]
+  }
   
   # Target nets at maximum of 50% use (to be in linear section of net model),
   # Targeting is based on 2000 prevalence
@@ -503,7 +509,14 @@ if(approximate_itn){
 if(approximate_irs){
   irs_people <- read.csv(paste0(external_data_address, "irs_people_protected.csv")) |>
     dplyr::filter(iso3c == {{iso3c}}) |>
-    dplyr::select(year, irs_interpolated)
+    dplyr::select(year, irs_interpolated) |>
+    tidyr::complete(year = years)
+  
+  if(sum(is.na(irs_people$irs_interpolated)) > 0){
+    # Extrapolate assuming last year with data continues
+    na_index <- which(is.na(irs_people$irs_interpolated))
+    irs_people$irs_interpolated[na_index] <- irs_people$irs_interpolated[max(1, min(na_index) - 1)]
+  }
   
   # Target irs at maximum of 80% coverage,
   # Targeting is based on 2000 prevalence
