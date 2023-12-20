@@ -251,31 +251,31 @@ for(v in seq_along(vectors)){
   }
 }
 
-vector_occurence_data <- paste0(external_data_address, "Sinka_occurence/")
-vectors_occurence <- list.files(vector_occurence_data) |>
-  stringr::str_replace("occurence_", "") |>
+vector_occurrence_data <- paste0(external_data_address, "Sinka_occurrence/")
+vectors_occurrence <- list.files(vector_occurrence_data) |>
+  stringr::str_replace("occurrence_", "") |>
   stringr::str_replace(".tif", "")
 
-vector_occurence_raster <- list()
-for(v in seq_along(vectors_occurence)){
-  vector_files <- paste0(vector_occurence_data, "occurence_", vectors_occurence[v], ".tif")
-  vector_occurence_raster[[vectors_occurence[v]]] <- terra::rast(vector_files) 
+vector_occurrence_raster <- list()
+for(v in seq_along(vectors_occurrence)){
+  vector_files <- paste0(vector_occurrence_data, "occurrence_", vectors_occurrence[v], ".tif")
+  vector_occurrence_raster[[vectors_occurrence[v]]] <- terra::rast(vector_files) 
   
-  if(extents_overlap(vector_occurence_raster[[v]], shape)){
-    vector_occurence_raster[[vectors_occurence[v]]] <- vector_occurence_raster[[vectors_occurence[v]]] |>
+  if(extents_overlap(vector_occurrence_raster[[v]], shape)){
+    vector_occurrence_raster[[vectors_occurrence[v]]] <- vector_occurrence_raster[[vectors_occurrence[v]]] |>
       terra::crop(shape)  |>
       terra::resample(pfpr_raster) |>
       pad_raster(2011, years, forward_empty = TRUE)
-    names(vector_occurence_raster[[vectors_occurence[v]]]) <- paste0(vectors_occurence[v], "_", years)
+    names(vector_occurrence_raster[[vectors_occurrence[v]]]) <- paste0(vectors_occurrence[v], "_", years)
   } else {
-    vector_occurence_raster[[vectors_occurence[v]]] <- NA
+    vector_occurrence_raster[[vectors_occurrence[v]]] <- NA
   }
 }
-vector_occurence_raster <- vector_occurence_raster[!is.na(vector_occurence_raster)]
-vector_occurence_df <-
-  lapply(vector_occurence_raster, raster_values) |>
+vector_occurrence_raster <- vector_occurrence_raster[!is.na(vector_occurrence_raster)]
+vector_occurrence_df <-
+  lapply(vector_occurrence_raster, raster_values) |>
   as.data.frame()
-colnames(vector_occurence_df) <- paste0("occurence_",names(vector_occurence_raster))
+colnames(vector_occurrence_df) <- paste0("occurrence_",names(vector_occurrence_raster))
 # ------------------------------------------------------------------------------
 
 # Rainfall ---------------------------------------------------------------------
@@ -439,20 +439,12 @@ df <- data.frame(
   city_travel_time = raster_values(city_travel_time_raster)
 ) |>
   dplyr::bind_cols(
-    vector_occurence_df
+    vector_occurrence_df
   ) |>
   # Remove pixels that don't fall within a polygon
   dplyr::filter(!is.na(uid)) |> 
   # Categorise urban_rural
   dplyr::mutate(urban_rural = ifelse(urban_rural == 1, "urban", "rural")) |>
-  # Normalise vectors of relative abundance
-  dplyr::mutate(
-    vector_sum = gambiae + arabiensis + funestus,
-    gambiae = gambiae / vector_sum,
-    arabiensis = arabiensis / vector_sum,
-    funestus = funestus / vector_sum
-  ) |>
-  dplyr::select(-vector_sum) |>
   # Link to shape data
   dplyr::left_join(shape_df, by = "uid") |>
   # Order columns
