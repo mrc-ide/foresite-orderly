@@ -13,8 +13,9 @@ orderly2::orderly_run(
   name = "spatial",
   parameters = list(
     version_name = "testing",
-    iso3c = "BFA"
-  )
+    iso3c = "IND"
+  ),
+  echo = FALSE
 )
 
 # Population projections
@@ -31,7 +32,6 @@ orderly2::orderly_run(
 ## Load resistance
 ## Load spatial
 ## Aggregate
-## Fill VC outside of SSA
 ## Link VC parameters
 ## ITN input dist
-## SMC replacement?
+## SMC replacement

@@ -5,8 +5,8 @@ orderly2::orderly_description(
 )
 
 orderly2::orderly_parameters(
-  version_name = "testing",
-  iso3c = "DOM"
+  version_name = NULL,
+  iso3c = NULL
 )
 
 orderly2::orderly_resource(

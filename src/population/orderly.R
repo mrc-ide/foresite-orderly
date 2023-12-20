@@ -15,6 +15,10 @@ orderly2::orderly_parameters(
   iso3c = "BFA"
 )
 
+orderly2::orderly_resource(
+  files = "population_utils.R"
+)
+
 orderly2::orderly_dependency(
   name = "un_wpp",
   query = "latest()",
@@ -44,26 +48,7 @@ spatial <- readRDS("spatial.rds")
 # ------------------------------------------------------------------------------
 
 # Future urbanisation ----------------------------------------------------------
-extrapolate_with_bounds_polynomial <- function(year, proportion_urban, threshold_year) {
-  
-  data <- data.frame(
-    year = year[year <= threshold_year],
-    proportion_urban = proportion_urban[year <= threshold_year]
-  )
-  # Fit a polynomial model
-  formula <- as.formula(paste("proportion_urban", "~ poly(", "year", ",", 2, ")"))
-  model <- lm(formula, data = data)
-  
-  # Create a sequence for prediction
-  predictions <- predict(model, newdata = data.frame(year = year[year > threshold_year]))
-  predictions <- pmin(predictions, 1)
-  predictions <- pmax(predictions, 0)
-  
-  out <- c(as.vector(data$proportion_urban), predictions)
-  
-  return(out)
-}
-
+source("population_utils.R")
 msy <-  max(spatial$year)
 
 future_urbanisation <-
@@ -158,123 +143,122 @@ population <- population_age |>
     .by = dplyr::all_of(c(aggregation_levels, "year"))
   )
 
-
-# Diagnostics
-population_country <- population |>
-  dplyr::summarise(
-    pop = sum(pop),
-    par = sum(par),
-    par_pf = sum(par_pf),
-    par_pv = sum(par_pv),
-    .by = dplyr::all_of(c("iso3c", "year"))
-  )
-
-un_pop <- un_wpp |>
-  dplyr::summarise(
-    population = sum(population),
-    .by = c("iso3c", "year")
-  )
-
-country_plot <- ggplot2::ggplot() +
-  ggplot2::geom_line(data = un_pop, ggplot2::aes(x = year, y = population / 1e6)) +
-  ggplot2::geom_line(data = population_country, ggplot2::aes(x = year, y = pop / 1e6), lty = 2, col = "deeppink") +
-  ggplot2::ylab("Population (millions)") +
-  ggplot2::xlab("Year") +
-  ggplot2::theme_bw() +
-  ggplot2::ggtitle(iso3c)
-
-admin_pop_pd <- population |>
-  tidyr::pivot_longer(cols = c("pop", "par", "par_pf", "par_pv"), names_to = "g", values_to = "Population") |>
-  dplyr::mutate(g = factor(g, levels = c("pop", "par", "par_pf", "par_pv"))) |>
-  dplyr::summarise(
-    Population = sum(Population),
-    .by = c(c("name_1", "urban_rural", "year", g))
-  )
-
-admin_plot <- ggplot2::ggplot(
-  data = admin_pop_pd,
-  ggplot2::aes(
-    x = year,
-    y = Population / 1e6,
-    colour = urban_rural,
-    linetype = g
-  )
-) +
-  ggplot2::geom_line() +
-  ggplot2::ylab("Population (millions)") +
-  ggplot2::xlab("Year") +
-  ggplot2::theme_bw() +
-  ggplot2::facet_wrap(~ name_1, scale = "free_y") +
-  ggplot2::ggtitle(iso3c)
-
-prop_urban_pd <- population |> 
-  dplyr::summarise(
-    pop = sum(pop),
-    .by =c("iso3c", "urban_rural", "year")
-  ) |>
-  dplyr::mutate(
-    proportion_urban = pop / sum(pop),
-         .by = "year") |>
-  dplyr::filter(urban_rural == "urban")
-
-prop_urban_plot <- ggplot2::ggplot() +
-  ggplot2::geom_bar(
-    data = prop_urban_pd,
-    ggplot2::aes(
-      x = year,
-      y = proportion_urban
-    ),
-    stat = "identity"
-  ) +
-  ggplot2::geom_point(
-    data = un_wup,
-    ggplot2::aes(
-      x = year,
-      y = proportion_urban
-    ),
-    colour = "deeppink"
-  ) +
-  ggplot2::xlab("Year") +
-  ggplot2::ylab("Proportion urban") +
-  ggplot2::theme_bw() +
-  ggplot2::ggtitle(iso3c)
+if(FALSE){
+  # Diagnostics
+  population_country <- population |>
+    dplyr::summarise(
+      pop = sum(pop),
+      par = sum(par),
+      par_pf = sum(par_pf),
+      par_pv = sum(par_pv),
+      .by = dplyr::all_of(c("iso3c", "year"))
+    )
   
-
-
-age_dist_pd <- population_age |>
-  dplyr::summarise(
-    pop = sum(pop),
-    .by = dplyr::all_of(c("iso3c", "year", "age_lower"))
-  ) |>
-  dplyr::filter(year %% 5 == 0)
-
-un_age_dist_pd <-
-  un_wpp |>
-  dplyr::filter(year %% 5 == 0)
-
-age_dist_plot <- ggplot2::ggplot() +
-  ggplot2::geom_bar(
-    data = age_dist_pd,
+  un_pop <- un_wpp |>
+    dplyr::summarise(
+      population = sum(population),
+      .by = c("iso3c", "year")
+    )
+  
+  country_plot <- ggplot2::ggplot() +
+    ggplot2::geom_line(data = un_pop, ggplot2::aes(x = year, y = population / 1e6)) +
+    ggplot2::geom_line(data = population_country, ggplot2::aes(x = year, y = pop / 1e6), lty = 2, col = "deeppink") +
+    ggplot2::ylab("Population (millions)") +
+    ggplot2::xlab("Year") +
+    ggplot2::theme_bw() +
+    ggplot2::ggtitle(iso3c)
+  
+  admin_pop_pd <- population |>
+    tidyr::pivot_longer(cols = c("pop", "par", "par_pf", "par_pv"), names_to = "g", values_to = "Population") |>
+    dplyr::mutate(g = factor(g, levels = c("pop", "par", "par_pf", "par_pv"))) |>
+    dplyr::summarise(
+      Population = sum(Population),
+      .by = c(c("name_1", "urban_rural", "year", g))
+    )
+  
+  admin_plot <- ggplot2::ggplot(
+    data = admin_pop_pd,
     ggplot2::aes(
-      x = age_lower,
-      y = pop / 1e6
-    ),
-    stat = "identity"
+      x = year,
+      y = Population / 1e6,
+      colour = urban_rural,
+      linetype = g
+    )
   ) +
-  ggplot2::geom_line(
-    data = un_age_dist_pd,
-    ggplot2::aes(
-      x = age_lower,
-      y = population / 1e6
-    ),
-    col = "deeppink"
-  ) +
-  ggplot2::ylab("Population (millions)") +
-  ggplot2::xlab("Age band") +
-  ggplot2::facet_wrap(~ year, ncol = 7) +
-  ggplot2::coord_flip() +
-  ggplot2::theme_bw() +
-  ggplot2::ggtitle(iso3c)
+    ggplot2::geom_line() +
+    ggplot2::ylab("Population (millions)") +
+    ggplot2::xlab("Year") +
+    ggplot2::theme_bw() +
+    ggplot2::facet_wrap(~ name_1, scale = "free_y") +
+    ggplot2::ggtitle(iso3c)
+  
+  prop_urban_pd <- population |> 
+    dplyr::summarise(
+      pop = sum(pop),
+      .by =c("iso3c", "urban_rural", "year")
+    ) |>
+    dplyr::mutate(
+      proportion_urban = pop / sum(pop),
+      .by = "year") |>
+    dplyr::filter(urban_rural == "urban")
+  
+  prop_urban_plot <- ggplot2::ggplot() +
+    ggplot2::geom_bar(
+      data = prop_urban_pd,
+      ggplot2::aes(
+        x = year,
+        y = proportion_urban
+      ),
+      stat = "identity"
+    ) +
+    ggplot2::geom_point(
+      data = un_wup,
+      ggplot2::aes(
+        x = year,
+        y = proportion_urban
+      ),
+      colour = "deeppink"
+    ) +
+    ggplot2::xlab("Year") +
+    ggplot2::ylab("Proportion urban") +
+    ggplot2::theme_bw() +
+    ggplot2::ggtitle(iso3c)
+  
+  age_dist_pd <- population_age |>
+    dplyr::summarise(
+      pop = sum(pop),
+      .by = dplyr::all_of(c("iso3c", "year", "age_lower"))
+    ) |>
+    dplyr::filter(year %% 5 == 0)
+  
+  un_age_dist_pd <-
+    un_wpp |>
+    dplyr::filter(year %% 5 == 0)
+  
+  age_dist_plot <- ggplot2::ggplot() +
+    ggplot2::geom_bar(
+      data = age_dist_pd,
+      ggplot2::aes(
+        x = age_lower,
+        y = pop / 1e6
+      ),
+      stat = "identity"
+    ) +
+    ggplot2::geom_line(
+      data = un_age_dist_pd,
+      ggplot2::aes(
+        x = age_lower,
+        y = population / 1e6
+      ),
+      col = "deeppink"
+    ) +
+    ggplot2::ylab("Population (millions)") +
+    ggplot2::xlab("Age band") +
+    ggplot2::facet_wrap(~ year, ncol = 7) +
+    ggplot2::coord_flip() +
+    ggplot2::theme_bw() +
+    ggplot2::ggtitle(iso3c)
+}
 # ------------------------------------------------------------------------------
 
 
