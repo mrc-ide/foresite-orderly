@@ -18,7 +18,7 @@ orderly2::orderly_resource(
 orderly2::orderly_dependency(
   name = "spatial",
   query = "latest(parameter:version_name == this:version_name && parameter:iso3c ==  this:iso3c)",
-  files = c("spatial.rds")
+  files = c("spatial.rds", "shape.rds")
 )
 
 orderly2::orderly_dependency(
@@ -69,14 +69,13 @@ population_age <- readRDS("population_age.rds") |>
 # ------------------------------------------------------------------------------
 
 # Interventions ----------------------------------------------------------------
-# TODO: RTSS cov (historical) - in spatial
-# TODO: R21 cov (0) - in spatial
 interventions <- spatial |>
   dplyr::summarise(
     tx_cov = weighted.mean(tx_cov, par),
     itn_use = weighted.mean(itn_use, par),
     irs_cov = weighted.mean(irs_cov, par),
-    r21_cov = 0,
+    rtss_cov = weighted.mean(rtss_cov, par),
+    r21_cov = weighted.mean(r21_cov, par),
     dplyr::across(dplyr::contains("smc"), \(x) weighted.mean(x, par)),
     .by = dplyr::all_of(c(grouping, "year"))
   )
@@ -98,7 +97,7 @@ interventions <- interventions |>
 
 ## ITN half-life to mean rentention conversion
 ## Match our exponential mean retention as closely as possible to the MAP 
-## function with given half life:
+## function with given half life (min sum of squared differences over first 3 years):
 hl_data <- netz::get_halflife_data()
 if(iso3c %in% hl_data$iso3){
   hl <- hl_data |>
@@ -132,6 +131,12 @@ interventions <- interventions |>
   ) |>
   dplyr::mutate(mean_retention = mean_retention)
 
+## Link with pyrethroid resistance
+# TODO: work out how to make this spatially agnostic
+# pyrethroid_resistance <- read.csv(external_data_address, )
+
+## Add resistance parameters
+
 # ------------------------------------------------------------------------------
 
 # Prevalence -------------------------------------------------------------------
@@ -143,6 +148,49 @@ prevalence <- spatial |>
     pv = sum(pvpr),
     .by = dplyr::all_of(c(grouping, "year"))
   )
+# ------------------------------------------------------------------------------
+
+# Sites ------------------------------------------------------------------------
+sites <- unique(spatial[, grouping])
+# ------------------------------------------------------------------------------
+
+# Shape ------------------------------------------------------------------------
+shape <- list()
+## User provided admin levels and all higher levels included
+levels <- admin_level:0
+for(level in levels){
+  
+  shape_address <- paste0(
+    "C:/Users/pwinskil/OneDrive - Imperial College London/GADM/version_4.1.0/iso3c/",
+    iso3c,
+    "/",
+    iso3c,
+    "_",
+    level,
+    ".RDS"
+  )
+  
+  s <- readRDS(shape_address)
+  
+  lookup <- c(
+    uid = "uid",
+    iso3c = "GID_0",
+    country = "COUNTRY",
+    name_1 = "NAME_1",
+    name_2 = "NAME_2",
+    name_3 = "NAME_3",
+    geom = "geom"
+  )
+  
+  s <- s |>
+    dplyr::rename(
+      dplyr::any_of(lookup)
+    ) |>
+    dplyr::select(dplyr::any_of(names(lookup)))
+  
+  shape[[paste0("level_", level)]] <- s
+}
+
 # ------------------------------------------------------------------------------
 
 # Seasonality ------------------------------------------------------------------
@@ -255,7 +303,26 @@ vector_plot <- ggplot2::ggplot(data = vector_pd, ggplot2::aes(x = "", y = prop, 
   ggplot2::theme_bw()
 # ------------------------------------------------------------------------------
 
+# Blood disorders --------------------------------------------------------------
+blood_disorders <- spatial |>
+  dplyr::summarise(
+    sicklecell = weighted.mean(sicklecell, par, na.rm = TRUE),
+    gdp6 = weighted.mean(gdp6, par, na.rm = TRUE),
+    hpc = weighted.mean(hpc, par, na.rm = TRUE),
+    duffy_negativity = weighted.mean(duffy_negativity, par, na.rm = TRUE),
+    .by = dplyr::all_of(grouping)
+  )
+# ------------------------------------------------------------------------------
 
+# Accessibility -----------------------------------------------------------------
+accessibility <- spatial |>
+  dplyr::summarise(
+    motor_travel_time_healthcare = weighted.mean(motor_travel_time_healthcare, par, na.rm = TRUE),
+    walking_travel_time_healthcare = weighted.mean(walking_travel_time_healthcare, par, na.rm = TRUE),
+    city_travel_time = weighted.mean(city_travel_time, par, na.rm = TRUE),
+    .by = dplyr::all_of(grouping)
+  )
+# ------------------------------------------------------------------------------
 
 # Create the site file ---------------------------------------------------------
 site_file <- list()
@@ -264,15 +331,15 @@ site_file$country = unique(spatial$country)
 site_file$version = version_name
 site_file$admin_level = grouping
 
-site_file$sites = 1
+site_file$sites = sites
 
-site_file$spatial = 1
+site_file$shape = shape
 
 site_file$cases_deaths = 1
 
 site_file$prevalence = prevalence
 
-site_file$intervetions = 1
+site_file$interventions = 1
 
 site_file$population = list(
   population_total = population,
@@ -292,9 +359,9 @@ site_file$seasonality = list(
   fourier_prediction = seasonal_curve
 )
 
-site_file$blood_disorders = 1
+site_file$blood_disorders = blood_disorders
 
-site_file$accessibility = 1
+site_file$accessibility = accessibility
 
 format(object.size(site_file), "Mb")
 # ------------------------------------------------------------------------------

@@ -56,7 +56,6 @@ for(level in admin_levels){
   }
 }
 
-
 lookup <- c(
   uid = "uid",
   iso3c = "GID_0",
@@ -392,7 +391,7 @@ uid <- terra::values(shape_raster)
 df <- data.frame(
   pixel = 1:length(uid),
   uid = uid,
-  urban_rural = raster_values(urban_rural_raster),
+  urban_rural = raster_values(urban_rural_raster, na_replace = 0),
   year = rep(years, each = nrow(uid)),
   pop = raster_values(population_raster, na_replace = 0),
   par = raster_values(pop_at_risk_raster, na_replace = 0),
@@ -452,6 +451,31 @@ df <- data.frame(
 
 format(object.size(df), "Mb")
 
+# ------------------------------------------------------------------------------
+
+# Fill interventions without spatial-raster inputs -----------------------------
+
+## Vaccine
+rtss_cov_data <- read.csv(paste0(external_data_address, "rtss_coverage.csv")) |>
+  dplyr::group_by(iso3c, name_1) |>
+  tidyr::complete(year = min(year):as.integer(format(Sys.Date(), "%Y"))) |>
+  tidyr::fill(rtss_cov) |>
+  dplyr::ungroup()
+if(iso3c %in% rtss_cov_data$iso3c){
+  df <- df |>
+    dplyr::left_join(
+      rtss_cov_data,
+      by = c("iso3c", "name_1")
+    ) |>
+    tidyr::replace_na(
+      replace = list(
+        rtss_cov = 0
+        )
+    )
+} else {
+  df$rtss_cov = 0
+}
+df$r21_cov <- 0
 # ------------------------------------------------------------------------------
 
 # Fill nets and IRS outside SSA ------------------------------------------------
