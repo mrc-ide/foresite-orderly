@@ -19,3 +19,12 @@ fit_fourier_df <- function(rainfall, t){
   )
 }
 # ------------------------------------------------------------------------------
+
+# Interventions ----------------------------------------------------------------
+net_loss_match_objective <- function(mean_retention, half_life, years = 3){
+  t <- 1:(365 * years)
+  ex <- netz::net_loss_exp(t, mean_retention)
+  map <- netz::net_loss_map(t, half_life)
+  sum((ex - map)^2)
+}
+# ------------------------------------------------------------------------------

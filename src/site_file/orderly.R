@@ -69,8 +69,80 @@ population_age <- readRDS("population_age.rds") |>
 # ------------------------------------------------------------------------------
 
 # Interventions ----------------------------------------------------------------
+# TODO: RTSS cov (historical) - in spatial
+# TODO: R21 cov (0) - in spatial
+interventions <- spatial |>
+  dplyr::summarise(
+    tx_cov = weighted.mean(tx_cov, par),
+    itn_use = weighted.mean(itn_use, par),
+    irs_cov = weighted.mean(irs_cov, par),
+    r21_cov = 0,
+    dplyr::across(dplyr::contains("smc"), \(x) weighted.mean(x, par)),
+    .by = dplyr::all_of(c(grouping, "year"))
+  )
 
+## Overwrite SMC, as we cannot currently use the new MAP estimates widely
+smc_overwrite <- interventions
+smc_overwrite$smc <- ifelse(rowSums(interventions[,paste0("smc_", 1:12)]) > 0, 1, 0)
+smc_overwrite <- smc_overwrite |>
+  dplyr::summarise(
+    smc_cov = ifelse(mean(smc) > 0.5, 0.9, 0),
+    .by = dplyr::all_of(c(grouping[1:3], "year"))
+  )
+interventions <- interventions |>
+  dplyr::select(-dplyr::contains("smc")) |>
+  dplyr::left_join(
+    smc_overwrite,
+    by = c(grouping[1:3], "year")
+  )
 
+## ITN half-life to mean rentention conversion
+## Match our exponential mean retention as closely as possible to the MAP 
+## function with given half life:
+hl_data <- netz::get_halflife_data()
+if(iso3c %in% hl_data$iso3){
+  hl <- hl_data |>
+    dplyr::filter(iso3 == {{iso3c}}) |>
+    dplyr::pull(half_life)
+} else {
+  hl <- median(hl_data$half_life)
+}
+
+mean_retention <- optimise(
+  net_loss_match_objective, lower = 1, upper = 365 * 10, half_life = hl
+)$minimum
+
+## Add in ITN input distribution, and predicted use (for checks)
+interventions <- interventions |>
+  dplyr::arrange(dplyr::across(dplyr::all_of(c(grouping, "year")))) |>
+  dplyr::mutate(
+    itn_input_dist = netz::fit_usage_sequential(
+      target_usage = itn_use,
+      target_usage_timesteps = (year - 2000) * 365 + 183,
+      distribution_timesteps = (year - 2000) * 365 + 1,
+      mean_retention = mean_retention
+    ),
+    predicted_use = netz::population_usage_t(
+      timesteps = (year - 2000) * 365 + 183,
+      distribution = itn_input_dist,
+      distribution_timesteps = (year - 2000) * 365 + 1,
+      mean_retention = mean_retention
+    ),
+    .by = dplyr::all_of(grouping)
+  ) |>
+  dplyr::mutate(mean_retention = mean_retention)
+
+# ------------------------------------------------------------------------------
+
+# Prevalence -------------------------------------------------------------------
+prevalence <- spatial |>
+  dplyr::summarise(
+    pfpr = weighted.mean(pfpr, par_pf),
+    pvpr = weighted.mean(pvpr, par_pv),
+    par_pv = sum(par_pv),
+    pv = sum(pvpr),
+    .by = dplyr::all_of(c(grouping, "year"))
+  )
 # ------------------------------------------------------------------------------
 
 # Seasonality ------------------------------------------------------------------
@@ -107,7 +179,13 @@ seasonal_parameters <- rainfall|>
 
 seasonal_curve <- seasonal_parameters |>
   dplyr::summarise(
-    predict = list(umbrella::fourier_predict(coef = c(g0, g1, g2, g3, h1, h2, h3), t = 1:365, floor = 0)),
+    predict = list(
+      umbrella::fourier_predict(
+        coef = c(g0, g1, g2, g3, h1, h2, h3),
+        t = 1:365,
+        floor = 0
+      )
+    ),
     .by = dplyr::all_of(grouping)
   ) |>
   tidyr::unnest("predict")
@@ -142,7 +220,7 @@ vectors <- spatial |>
   dplyr::select(
     dplyr::all_of(
       c(grouping, "par", vector_columns)
-      )
+    )
   ) |>
   dplyr::mutate(
     across(
@@ -187,8 +265,13 @@ site_file$version = version_name
 site_file$admin_level = grouping
 
 site_file$sites = 1
+
+site_file$spatial = 1
+
 site_file$cases_deaths = 1
-site_file$prevalence = 1
+
+site_file$prevalence = prevalence
+
 site_file$intervetions = 1
 
 site_file$population = list(
@@ -198,13 +281,20 @@ site_file$population = list(
 
 site_file$demography = 1
 
-site_file$vectors = vectors
-
-site_file$pyrethroid_resistance = 1
+site_file$vectors = list(
+  vector_species = vectors,
+  pyrethroid_resistance = 1
+)
 
 site_file$seasonality = list(
   seasonality_parameters = seasonal_parameters,
   monthly_rainfall = rainfall,
   fourier_prediction = seasonal_curve
 )
+
+site_file$blood_disorders = 1
+
+site_file$accessibility = 1
+
+format(object.size(site_file), "Mb")
 # ------------------------------------------------------------------------------
