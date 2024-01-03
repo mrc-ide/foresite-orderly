@@ -27,8 +27,18 @@ orderly2::orderly_dependency(
 
 orderly2::orderly_dependency(
   name = "spatial",
-  query = "latest(parameter:iso3c ==  this:iso3c)",
+  query = "latest(parameter:version_name == this:version_name && parameter:iso3c ==  this:iso3c)",
   files = c("spatial.rds")
+)
+
+orderly2::orderly_artefact(
+  description = "Population",
+  files = "population.rds"
+)
+
+orderly2::orderly_artefact(
+  description = "Age-disaggregated population",
+  files = "population_age.rds"
 )
 # ------------------------------------------------------------------------------
 
@@ -74,8 +84,8 @@ future_urbanisation <-
 # ------------------------------------------------------------------------------
 
 # Aggregation ------------------------------------------------------------------
-aggregation_levels <- c("iso3c", "name_1", "name_2", "name_3", "urban_rural") 
-aggregation_levels <- spatial_aggregation_levels[spatial_aggregation_levels %in% names(spatial)]
+aggregation_levels <- c("country", "iso3c", "name_1", "name_2", "name_3", "urban_rural") 
+aggregation_levels <- aggregation_levels[aggregation_levels %in% names(spatial)]
 years <- min(spatial$year):max(un_wpp$year)
 
 population_age <- spatial |>
@@ -142,6 +152,9 @@ population <- population_age |>
     par_pv = sum(par_pv),
     .by = dplyr::all_of(c(aggregation_levels, "year"))
   )
+
+saveRDS(population, "population.rds")
+saveRDS(population_age, "population_age.rds")
 
 if(FALSE){
   # Diagnostics
