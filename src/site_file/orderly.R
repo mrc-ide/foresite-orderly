@@ -36,6 +36,7 @@ orderly2::orderly_artefact(
 # Load inputs ------------------------------------------------------------------
 source("site_file_utils.R")
 spatial <- readRDS("spatial.rds")
+external_data_address <- "C:/Users/pwinskil/OneDrive - Imperial College London/malaria_sites_data/2023/"
 # ------------------------------------------------------------------------------
 
 # Grouping variable ------------------------------------------------------------
@@ -46,108 +47,6 @@ if(urban_rural){
 if(!all(grouping %in% names(spatial))){
   stop("Admin-level(s) missing - you may need to aggregate to a higher level")
 }
-# ------------------------------------------------------------------------------
-
-# Population -------------------------------------------------------------------
-population <- readRDS("population.rds") |>
-  dplyr::summarise(
-    pop = sum(pop),
-    par = sum(par),
-    par_pf = sum(par_pf),
-    par_pv = sum(par_pv),
-    .by = dplyr::all_of(c(grouping, "year"))
-  )
-
-population_age <- readRDS("population_age.rds") |>
-  dplyr::summarise(
-    pop = sum(pop),
-    par = sum(par),
-    par_pf = sum(par_pf),
-    par_pv = sum(par_pv),
-    .by = dplyr::all_of(c(grouping, "year", "age_lower", "age_upper"))
-  )
-# ------------------------------------------------------------------------------
-
-# Interventions ----------------------------------------------------------------
-interventions <- spatial |>
-  dplyr::summarise(
-    tx_cov = weighted.mean(tx_cov, par),
-    itn_use = weighted.mean(itn_use, par),
-    irs_cov = weighted.mean(irs_cov, par),
-    rtss_cov = weighted.mean(rtss_cov, par),
-    r21_cov = weighted.mean(r21_cov, par),
-    dplyr::across(dplyr::contains("smc"), \(x) weighted.mean(x, par)),
-    .by = dplyr::all_of(c(grouping, "year"))
-  )
-
-## Overwrite SMC, as we cannot currently use the new MAP estimates widely
-smc_overwrite <- interventions
-smc_overwrite$smc <- ifelse(rowSums(interventions[,paste0("smc_", 1:12)]) > 0, 1, 0)
-smc_overwrite <- smc_overwrite |>
-  dplyr::summarise(
-    smc_cov = ifelse(mean(smc) > 0.5, 0.9, 0),
-    .by = dplyr::all_of(c(grouping[1:3], "year"))
-  )
-interventions <- interventions |>
-  dplyr::select(-dplyr::contains("smc")) |>
-  dplyr::left_join(
-    smc_overwrite,
-    by = c(grouping[1:3], "year")
-  )
-
-## ITN half-life to mean rentention conversion
-## Match our exponential mean retention as closely as possible to the MAP 
-## function with given half life (min sum of squared differences over first 3 years):
-hl_data <- netz::get_halflife_data()
-if(iso3c %in% hl_data$iso3){
-  hl <- hl_data |>
-    dplyr::filter(iso3 == {{iso3c}}) |>
-    dplyr::pull(half_life)
-} else {
-  hl <- median(hl_data$half_life)
-}
-
-mean_retention <- optimise(
-  net_loss_match_objective, lower = 1, upper = 365 * 10, half_life = hl
-)$minimum
-
-## Add in ITN input distribution, and predicted use (for checks)
-interventions <- interventions |>
-  dplyr::arrange(dplyr::across(dplyr::all_of(c(grouping, "year")))) |>
-  dplyr::mutate(
-    itn_input_dist = netz::fit_usage_sequential(
-      target_usage = itn_use,
-      target_usage_timesteps = (year - 2000) * 365 + 183,
-      distribution_timesteps = (year - 2000) * 365 + 1,
-      mean_retention = mean_retention
-    ),
-    predicted_use = netz::population_usage_t(
-      timesteps = (year - 2000) * 365 + 183,
-      distribution = itn_input_dist,
-      distribution_timesteps = (year - 2000) * 365 + 1,
-      mean_retention = mean_retention
-    ),
-    .by = dplyr::all_of(grouping)
-  ) |>
-  dplyr::mutate(mean_retention = mean_retention)
-
-## Link with pyrethroid resistance
-# TODO: work out how to make this spatially agnostic
-# pyrethroid_resistance <- read.csv(external_data_address, )
-
-## Add resistance parameters
-
-# ------------------------------------------------------------------------------
-
-# Prevalence -------------------------------------------------------------------
-prevalence <- spatial |>
-  dplyr::summarise(
-    pfpr = weighted.mean(pfpr, par_pf),
-    pvpr = weighted.mean(pvpr, par_pv),
-    par_pv = sum(par_pv),
-    pv = sum(pvpr),
-    .by = dplyr::all_of(c(grouping, "year"))
-  )
 # ------------------------------------------------------------------------------
 
 # Sites ------------------------------------------------------------------------
@@ -191,6 +90,170 @@ for(level in levels){
   shape[[paste0("level_", level)]] <- s
 }
 
+# ------------------------------------------------------------------------------
+
+# Population -------------------------------------------------------------------
+population <- readRDS("population.rds") |>
+  dplyr::summarise(
+    pop = sum(pop),
+    par = sum(par),
+    par_pf = sum(par_pf),
+    par_pv = sum(par_pv),
+    .by = dplyr::all_of(c(grouping, "year"))
+  )
+
+population_age <- readRDS("population_age.rds") |>
+  dplyr::summarise(
+    pop = sum(pop),
+    par = sum(par),
+    par_pf = sum(par_pf),
+    par_pv = sum(par_pv),
+    .by = dplyr::all_of(c(grouping, "year", "age_lower", "age_upper"))
+  )
+# ------------------------------------------------------------------------------
+
+# Pyrethroid resistance --------------------------------------------------------
+old_resistance <- read.csv(paste0(external_data_address, "pyrethroid_resistance_coordinate.csv"))
+
+if(iso3c %in% old_resistance$iso3c){
+  old_resistance <- old_resistance |>
+    dplyr::filter(iso3c == {{iso3c}}) 
+  old_centroids <- old_resistance |>
+    dplyr::select(unit, X, Y) |>
+    unique() |>
+    dplyr::filter(!(is.na(X) | is.na(Y)))
+  
+  new_centroids <- shape[[paste0("level_", admin_level)]] |>
+    sf::st_centroid()
+  
+  unit <- c()
+  for(i in 1:nrow(new_centroids)){
+    coord <- sf::st_geometry(new_centroids[i,]) |>
+      sf::st_coordinates()
+    dist <- sqrt((coord[,1] - old_centroids$X) ^ 2 + (coord[,2] - old_centroids$Y) ^ 2)
+    unit[i] <- old_centroids$unit[which.min(dist)]
+  }
+  
+  pyrethroid_resistance <- shape[[paste0("level_", admin_level)]] |>
+    sf::st_drop_geometry() |>
+    dplyr::mutate(unit = unit) |>
+    dplyr::left_join(old_resistance, by = c("iso3c", "unit"), relationship = "many-to-many") |>
+    dplyr::select(-unit, -X, -Y)
+} else {
+  pyrethroid_resistance <- shape[[paste0("level_", admin_level)]] |>
+    sf::st_drop_geometry() |>
+    dplyr::mutate(pyrethroid_resistance = 0)
+}
+# ------------------------------------------------------------------------------
+
+# Interventions ----------------------------------------------------------------
+interventions <- spatial |>
+  dplyr::summarise(
+    tx_cov = weighted.mean(tx_cov, par),
+    itn_use = weighted.mean(itn_use, par),
+    irs_cov = weighted.mean(irs_cov, par),
+    rtss_cov = weighted.mean(rtss_cov, par),
+    r21_cov = weighted.mean(r21_cov, par),
+    dplyr::across(dplyr::contains("smc"), \(x) weighted.mean(x, par)),
+    .by = dplyr::all_of(c(grouping, "year"))
+  )
+
+## Overwrite SMC, as we cannot currently use the new MAP estimates widely
+smc_overwrite <- interventions
+smc_overwrite$smc <- ifelse(rowSums(interventions[,paste0("smc_", 1:12)]) > 0, 1, 0)
+smc_overwrite <- smc_overwrite |>
+  dplyr::summarise(
+    smc_cov = ifelse(mean(smc) > 0.5, 0.9, 0),
+    .by = dplyr::all_of(c(grouping[1:3], "year"))
+  )
+interventions <- interventions |>
+  dplyr::select(-dplyr::contains("smc")) |>
+  dplyr::left_join(
+    smc_overwrite,
+    by = c(grouping[1:3], "year")
+  )
+
+# Add in IRS assumptions
+irs_parameters <- read.csv(
+  paste0(external_data_address, "irs_insecticide_parameters.csv")
+)
+actellic_switch_year <- 2017
+interventions <- interventions |>
+  dplyr::mutate(
+    # Switch to Actellic-like insecticide
+    irs_insecticide = ifelse(year < actellic_switch_year, "ddt", "actellic"),
+    # Assume 1 round per year
+    irs_spray_rounds = 1
+  ) |>
+  dplyr::left_join(irs_parameters, by = "irs_insecticide")
+
+## ITN half-life to mean rentention conversion
+## Match our exponential mean retention as closely as possible to the MAP 
+## function with given half life (min sum of squared differences over first 3 years):
+hl_data <- netz::get_halflife_data()
+if(iso3c %in% hl_data$iso3){
+  hl <- hl_data |>
+    dplyr::filter(iso3 == {{iso3c}}) |>
+    dplyr::pull(half_life)
+} else {
+  hl <- median(hl_data$half_life)
+}
+
+mean_retention <- optimise(
+  net_loss_match_objective, lower = 1, upper = 365 * 10, half_life = hl
+)$minimum
+
+## Add in ITN input distribution, and predicted use (for checks)
+interventions <- interventions |>
+  dplyr::arrange(dplyr::across(dplyr::all_of(c(grouping, "year")))) |>
+  dplyr::mutate(
+    itn_input_dist = netz::fit_usage_sequential(
+      target_usage = itn_use,
+      target_usage_timesteps = (year - 2000) * 365 + 183,
+      distribution_timesteps = (year - 2000) * 365 + 1,
+      mean_retention = mean_retention
+    ),
+    predicted_use = netz::population_usage_t(
+      timesteps = (year - 2000) * 365 + 183,
+      distribution = itn_input_dist,
+      distribution_timesteps = (year - 2000) * 365 + 1,
+      mean_retention = mean_retention
+    ),
+    .by = dplyr::all_of(grouping)
+  ) |>
+  dplyr::mutate(mean_retention = mean_retention)
+
+## Link with pyrethroid resistance
+interventions <- interventions |>
+  dplyr::left_join(pyrethroid_resistance, by = c(grouping[grouping != "urban_rural"], "year"))
+
+## Add resistance parameters
+
+# ------------------------------------------------------------------------------
+
+# Prevalence -------------------------------------------------------------------
+prevalence <- spatial |>
+  dplyr::summarise(
+    pfpr = weighted.mean(pfpr, par_pf),
+    pvpr = weighted.mean(pvpr, par_pv),
+    par_pv = sum(par_pv),
+    pv = sum(pvpr),
+    .by = dplyr::all_of(c(grouping, "year"))
+  )
+# ------------------------------------------------------------------------------
+
+# Cases and Deaths from WMR ----------------------------------------------------
+cases_deaths <- read.csv(paste0(external_data_address, "wmr_2023_cases_deaths.csv")) |>
+  tidyr::fill(country, iso3c) |>
+  dplyr::filter(iso3c == {{iso3c}}) |>
+  dplyr::mutate(
+    wmr_incidence_l = wmr_cases_l / wmr_par,
+    wmr_incidence = wmr_cases / wmr_par,
+    wmr_incidence_u = wmr_cases_u / wmr_par,
+    wmr_mortality_l = wmr_deaths_l / wmr_par,
+    wmr_mortality = wmr_deaths / wmr_par,
+    wmr_mortality_u = wmr_deaths_u / wmr_par,
+  )
 # ------------------------------------------------------------------------------
 
 # Seasonality ------------------------------------------------------------------
@@ -335,7 +398,7 @@ site_file$sites = sites
 
 site_file$shape = shape
 
-site_file$cases_deaths = 1
+site_file$cases_deaths = cases_deaths
 
 site_file$prevalence = prevalence
 
