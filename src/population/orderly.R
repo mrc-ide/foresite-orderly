@@ -11,8 +11,8 @@ orderly2::orderly_description(
 )
 
 orderly2::orderly_parameters(
-  version_name = "testing",
-  iso3c = "BFA"
+  version_name = NULL,
+  iso3c = NULL
 )
 
 orderly2::orderly_resource(
@@ -273,6 +273,3 @@ if(FALSE){
     ggplot2::ggtitle(iso3c)
 }
 # ------------------------------------------------------------------------------
-
-
-

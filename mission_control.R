@@ -10,30 +10,57 @@ orderly2::orderly_run(
   name = "demography"
 )
 
+isos <- c("BFA", "KEN", "IND")
+
 # Spatial processing
-orderly2::orderly_run(
-  name = "spatial",
-  parameters = list(
-    version_name = "testing",
-    iso3c = "BFA"
-  ),
-  echo = FALSE
-)
+for(iso in isos){
+  orderly2::orderly_run(
+    name = "spatial",
+    parameters = list(
+      version_name = "testing",
+      iso3c = iso
+    ),
+    echo = FALSE
+  )
+}  
 
 # Population projections
-orderly2::orderly_run(
-  name = "population",
-  parameters = list(
-    version_name = "testing",
-    iso3c = "BFA"
+for(iso in isos){
+  orderly2::orderly_run(
+    name = "population",
+    parameters = list(
+      version_name = "testing",
+      iso3c = iso
+    ),
+    echo = FALSE
   )
-)
+}
 
+# Site file creation - admin unit 1
+for(iso in isos){
+  orderly2::orderly_run(
+    name = "site_file",
+    parameters = list(
+      version_name = "testing",
+      iso3c = iso,
+      admin_level = 1,
+      urban_rural = TRUE
+    ),
+    echo = FALSE
+  )
+}
 
-# Interventions & Resistance
-## Load resistance
-## Load spatial
-## Aggregate
-## Link VC parameters
-## ITN input dist
-## SMC replacement
+# Site file creation - admin unit 2
+for(iso in isos){
+  orderly2::orderly_run(
+    name = "site_file",
+    parameters = list(
+      version_name = "testing",
+      iso3c = iso,
+      admin_level = 2,
+      urban_rural = TRUE
+    ),
+    echo = FALSE
+  )
+}
+

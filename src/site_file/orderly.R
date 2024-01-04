@@ -6,7 +6,7 @@ orderly2::orderly_description(
 
 orderly2::orderly_parameters(
   version_name = "testing",
-  iso3c = "BFA",
+  iso3c = NULL,
   admin_level = 1,
   urban_rural = TRUE
 )
@@ -142,7 +142,8 @@ if(iso3c %in% old_resistance$iso3c){
 } else {
   pyrethroid_resistance <- shape[[paste0("level_", admin_level)]] |>
     sf::st_drop_geometry() |>
-    dplyr::mutate(pyrethroid_resistance = 0)
+    dplyr::mutate(pyrethroid_resistance = 0) |>
+    dplyr::cross_join(data.frame(year = 2000:2050))
 }
 # ------------------------------------------------------------------------------
 
@@ -250,8 +251,6 @@ prevalence <- spatial |>
   dplyr::summarise(
     pfpr = weighted.mean(pfpr, par_pf),
     pvpr = weighted.mean(pvpr, par_pv),
-    par_pv = sum(par_pv),
-    pv = sum(pvpr),
     .by = dplyr::all_of(c(grouping, "year"))
   )
 # ------------------------------------------------------------------------------
@@ -324,7 +323,6 @@ seasonality_plot <- ggplot2::ggplot() +
   ggplot2::ylab("Rainfall") +
   ggplot2::theme_bw() +
   ggplot2::theme(legend.position = "none")
-seasonality_plot
 # ------------------------------------------------------------------------------
 
 # Vectors ----------------------------------------------------------------------
@@ -441,4 +439,8 @@ site_file$blood_disorders = blood_disorders
 site_file$accessibility = accessibility
 
 format(object.size(site_file), "Mb")
+
+saveRDS(site_file, "site.rds")
 # ------------------------------------------------------------------------------
+
+

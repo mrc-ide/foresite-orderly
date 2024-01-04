@@ -465,7 +465,7 @@ if(iso3c %in% rtss_cov_data$iso3c){
   df <- df |>
     dplyr::left_join(
       rtss_cov_data,
-      by = c("iso3c", "name_1")
+      by = c("iso3c", "name_1", "year")
     ) |>
     tidyr::replace_na(
       replace = list(
