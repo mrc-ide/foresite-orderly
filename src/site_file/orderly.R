@@ -227,8 +227,22 @@ interventions <- interventions |>
 interventions <- interventions |>
   dplyr::left_join(pyrethroid_resistance, by = c(grouping[grouping != "urban_rural"], "year"))
 
-## Add resistance parameters
+## Link with net type and net efficacy
+new_net_introductions <- read.csv(paste0(external_data_address, "Alliance_for_malaria_prevention/new_net_introductions.csv"))
+interventions <- interventions |>
+  dplyr::mutate(net_type = ifelse(year == 2000, "pyrethroid_only", NA)) |>
+  dplyr::left_join(new_net_introductions, by = c("iso3c", "name_1", "year")) |>
+  dplyr::mutate(net_type = ifelse(is.na(type), net_type, type)) |>
+  dplyr::group_by(dplyr::across(dplyr::all_of(grouping))) |>
+  tidyr::fill(net_type) |>
+  dplyr::ungroup()
 
+
+## Add net efficacy | resistance and net type
+net_efficacy_parameters <- read.csv(paste0(external_data_address, "/net_efficacy_2023.csv"))
+interventions <- interventions |>
+  mutate(pyrethroid_resistance = round(pyrethroid_resistance, 2)) |>
+  left_join(net_efficacy_parameters, by = c("pyrethroid_resistance", "net_type"))
 # ------------------------------------------------------------------------------
 
 # Prevalence -------------------------------------------------------------------
@@ -402,7 +416,7 @@ site_file$cases_deaths = cases_deaths
 
 site_file$prevalence = prevalence
 
-site_file$interventions = 1
+site_file$interventions = interventions
 
 site_file$population = list(
   population_total = population,
@@ -413,7 +427,7 @@ site_file$demography = 1
 
 site_file$vectors = list(
   vector_species = vectors,
-  pyrethroid_resistance = 1
+  pyrethroid_resistance = pyrethroid_resistance
 )
 
 site_file$seasonality = list(
