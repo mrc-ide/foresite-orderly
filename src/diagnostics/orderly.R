@@ -253,7 +253,7 @@ geom_graphic_areas_plot <- geom_graphic_areas_plot +
 
 # Vector species ---------------------------------------------------------------
 vector_pd <- site$vectors$vector_species
-vector_name_cols <- site$admin_level[!site$admin_level %in% c("country")]
+vector_name_cols <- site$admin_level[!site$admin_level %in% c("country", "iso3c")]
 vector_pd$name <- apply(vector_pd[,vector_name_cols], 1, paste, collapse = " | ")
 
 vector_species_plot <- ggplot2::ggplot(data = vector_pd, ggplot2::aes(x = name, y = prop, fill = vector)) +
@@ -370,4 +370,128 @@ access_plot <- ggplot2::ggplot(data = access_pd, ggplot2::aes(x = type, y = time
   ggplot2::ggtitle(paste0(iso3c, ": Accessibility"))
 # ------------------------------------------------------------------------------
 
+# Blood disorders --------------------------------------------------------------
+blood <- site$blood_disorders
+blood_name_cols <- site$admin_level[!site$admin_level %in% c("country", "iso3c")]
+blood$name <- apply(blood[,blood_name_cols], 1, paste, collapse = " | ")
+blood_pd <- blood |>
+  tidyr::pivot_longer(cols =-c(site$admin_level, "name"), names_to = "type", values_to = "frequency") |>
+  dplyr::mutate(
+    type = dplyr::case_when(
+      type == "sicklecell" ~ "Sickle\nHaemoglobin\nHbS Allele",
+      type == "gdp6" ~ "G6PDd\nAllele",
+      type == "hpc" ~ "Haemoglobin\nC (HbC)\nAllele",
+      type == "duffy_negativity" ~ "Duffy\nNegativity\nPhenotype"
+    )
+  )
 
+blood_plot <- ggplot2::ggplot(data = blood_pd, ggplot2::aes(x = type, y = frequency, col = type)) +
+  ggplot2::geom_boxplot(col = "black") +
+  ggplot2::geom_jitter() +
+  ggplot2::xlab("") +
+  ggplot2::ylab("Frequency") +
+  ggplot2::theme_bw() +
+  ggplot2::theme(
+    legend.position = "none"
+  ) +
+  ggplot2::ggtitle(paste0(iso3c, ": Blood disorders"))
+# ------------------------------------------------------------------------------
+
+# Prevalence -------------------------------------------------------------------
+prevalence_area_pd <- site$prevalence |>
+  dplyr::left_join(
+    site$population$population_total,
+    by = c(site$admin_level, "year")
+  ) |>
+  dplyr::summarise(
+    pfpr = weighted.mean(pfpr, par_pf),
+    pvpr = weighted.mean(pvpr, par_pv),
+    .by = c(site$admin_level[!site$admin_level == "urban_rural"], "year")
+  ) |>
+  dplyr::left_join(
+    site$shape[[1]]
+  )
+
+pfpr_map_plot <- ggplot2::ggplot(data = prevalence_area_pd, ggplot2::aes(geometry = geom, fill = pfpr)) +
+  ggplot2::geom_sf() +
+  ggplot2::scale_fill_viridis_c(limits = c(0, 1), option = "B") +
+  ggplot2::facet_wrap(~ year, ncol = 5) +
+  ggplot2::theme_bw() +
+  ggplot2::theme(
+    strip.background = ggplot2::element_rect(fill = "white"),
+    axis.text = ggplot2::element_blank(),
+    axis.ticks = ggplot2::element_blank()
+  ) +
+  ggplot2::ggtitle(paste0(iso3c, ": PfPr map"))
+
+pvpr_map_plot <- ggplot2::ggplot(data = prevalence_area_pd, ggplot2::aes(geometry = geom, fill = pvpr)) +
+  ggplot2::geom_sf() +
+  ggplot2::scale_fill_viridis_c(limits = c(0, 1), option = "B") +
+  ggplot2::facet_wrap(~ year, ncol = 5) +
+  ggplot2::theme_bw() +
+  ggplot2::theme(
+    strip.background = ggplot2::element_rect(fill = "white"),
+    axis.text = ggplot2::element_blank(),
+    axis.ticks = ggplot2::element_blank()
+  ) +
+  ggplot2::ggtitle(paste0(iso3c, ": PvPr map"))
+
+country_prevalence_pd <- site$prevalence |>
+  dplyr::left_join(
+    site$population$population_total,
+    by = c(site$admin_level, "year")
+  ) |>
+  dplyr::summarise(
+    pfpr = weighted.mean(pfpr, par_pf),
+    pvpr = weighted.mean(pvpr, par_pv),
+    .by = "year"
+  ) |>
+  tidyr::pivot_longer(-year, names_to = "Species", values_to = "Prevalence")
+
+country_prevalence_plot <- ggplot2::ggplot(data = country_prevalence_pd, ggplot2::aes(x = year, y = Prevalence, col = Species)) +
+  ggplot2::geom_line() +
+  ggplot2::xlab("Year") +
+  ggplot2::ylab("Prevalence") +
+  ggplot2::theme_bw() +
+  ggplot2::ggtitle(paste0(iso3c, ": Prevalence"))
+# ------------------------------------------------------------------------------
+
+# Cases and deaths -------------------------------------------------------------
+burden_pd <- site$cases_deaths
+
+cases_plot <- ggplot2::ggplot(
+  data = burden_pd,
+  ggplot2::aes(x = year, y = wmr_cases / 1e6, ymin = wmr_cases_l / 1e6, ymax = wmr_cases_u / 1e6)) +
+  ggplot2::geom_point() +
+  ggplot2::geom_errorbar(width = 0.5) +
+  ggplot2::xlab("Year") +
+  ggplot2::ylab("WMR cases (millions)") +
+  ggplot2::theme_bw()
+
+incidence_plot <- ggplot2::ggplot(
+  data = burden_pd,
+  ggplot2::aes(x = year, y = wmr_incidence, ymin = wmr_incidence_l, ymax =wmr_incidence_u)) +
+  ggplot2::geom_point() +
+  ggplot2::geom_errorbar(width = 0.5) +
+  ggplot2::xlab("Year") +
+  ggplot2::ylab("WMR clinical incidence (ppar, py)") +
+  ggplot2::theme_bw()
+
+deaths_plot <- ggplot2::ggplot(
+  data = burden_pd,
+  ggplot2::aes(x = year, y = wmr_deaths / 1000, ymin = wmr_deaths_l / 1000, ymax = wmr_deaths_u / 1000)) +
+  ggplot2::geom_point() +
+  ggplot2::geom_errorbar(width = 0.5) +
+  ggplot2::xlab("Year") +
+  ggplot2::ylab("WMR deaths (thousands)") +
+  ggplot2::theme_bw()
+
+mortality_plot <- ggplot2::ggplot(
+  data = burden_pd,
+  ggplot2::aes(x = year, y = wmr_mortality, ymin = wmr_mortality_l, ymax = wmr_mortality_u)) +
+  ggplot2::geom_point() +
+  ggplot2::geom_errorbar(width = 0.5) +
+  ggplot2::xlab("Year") +
+  ggplot2::ylab("WMR mortality rate (ppar, py)") +
+  ggplot2::theme_bw()
+# ------------------------------------------------------------------------------
