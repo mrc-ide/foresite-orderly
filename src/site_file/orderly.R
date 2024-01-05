@@ -313,16 +313,6 @@ seasonal_curve <- seasonal_parameters |>
     .by = dplyr::all_of(grouping)
   ) |>
   tidyr::unnest("predict")
-
-seasonality_plot <- ggplot2::ggplot() +
-  ggplot2::geom_jitter(data = rainfall, ggplot2::aes(x = t, y = rainfall, colour = name_1, group = urban_rural), alpha = 0.2) +
-  ggplot2::geom_line(data = seasonal_curve, ggplot2::aes(x = t, y = profile, colour = name_1, group = urban_rural)) +
-  ggplot2::facet_wrap(~ name_1) +
-  ggplot2::scale_x_continuous(breaks = middle_days$t, labels = middle_days$month_name) +
-  ggplot2::xlab("Day of year") +
-  ggplot2::ylab("Rainfall") +
-  ggplot2::theme_bw() +
-  ggplot2::theme(legend.position = "none")
 # ------------------------------------------------------------------------------
 
 # Vectors ----------------------------------------------------------------------
@@ -366,16 +356,6 @@ vectors <- spatial |>
   dplyr::mutate(prop = prop / sum(prop)) |>
   dplyr::ungroup() |>
   dplyr::mutate(vector = stringr::str_replace(vector, "occurrence_", ""))
-
-vector_pd <- vectors
-grouping2 <- grouping[-(1:2)]
-vector_pd$group <- apply(vector_pd[, grouping2], 1, function(x){paste0(x, collapse = "\n")})
-vector_plot <- ggplot2::ggplot(data = vector_pd, ggplot2::aes(x = "", y = prop, fill = vector)) +
-  ggplot2::geom_bar(stat = "identity") +
-  ggplot2::xlab("") +
-  ggplot2::facet_wrap(~ group, scales = "free_y") +
-  ggplot2::ylab("Vector proportion") +
-  ggplot2::theme_bw()
 # ------------------------------------------------------------------------------
 
 # Blood disorders --------------------------------------------------------------
