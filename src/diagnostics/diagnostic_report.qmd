@@ -1,0 +1,79 @@
+---
+format: 
+  html:
+    toc: true
+    toc-location: left
+    embed-resources: true
+editor: visual
+params:
+  iso3c: "NULL"
+  country: "NULL"
+  version: "NULL"
+---
+
+## Site file summary for `r params$country`, version: `r params$version`
+
+``` {r}
+#| echo: false
+plots <- readRDS("diagnostic_plots.RDS")
+```
+
+## World malaria report burden estimates
+
+::: {.panel-tabset}
+## Clinical incidence
+
+``` {r}
+#| echo: false
+plots$incidence
+```
+
+## Cases
+
+``` {r}
+#| echo: false
+plots$cases
+```
+
+## Mortality Rate
+
+``` {r}
+#| echo: false
+plots$mortality
+```
+
+## Deaths
+
+``` {r}
+#| echo: false
+plots$deaths
+```
+
+:::
+
+## Malaria Atlas Project prevalence summaries
+
+::: {.panel-tabset}
+## Prevalence
+
+``` {r}
+#| echo: false
+plots$country_prevalence
+```
+
+## PfPr Map
+
+``` {r}
+#| echo: false
+plots$pfpr_map
+```
+
+## PvPr Map
+
+``` {r}
+#| echo: false
+plots$pvpr_map
+```
+
+
+:::

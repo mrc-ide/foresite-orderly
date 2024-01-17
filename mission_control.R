@@ -64,3 +64,17 @@ for(iso in isos){
   )
 }
 
+# Diagnostics
+for(iso in isos){
+  orderly2::orderly_run(
+    name = "diagnostics",
+    parameters = list(
+      version_name = "testing",
+      iso3c = iso,
+      admin_level = 2,
+      urban_rural = TRUE
+    ),
+    echo = FALSE
+  )
+}
+

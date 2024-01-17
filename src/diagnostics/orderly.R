@@ -11,6 +11,10 @@ orderly2::orderly_parameters(
   urban_rural = TRUE
 )
 
+orderly2::orderly_resource(
+  files = c("diagnostic_report.qmd")
+)
+
 orderly2::orderly_dependency(
   name = "site_file",
   query = "latest(parameter:version_name == this:version_name && parameter:iso3c ==  this:iso3c && parameter:admin_level == this:admin_level && parameter:urban_rural == this:urban_rural)",
@@ -21,6 +25,16 @@ orderly2::orderly_dependency(
   name = "un_wpp",
   query = "latest()",
   files = c("un_wup.rds", "un_wpp.rds")
+)
+
+orderly2::orderly_artefact(
+  description = "Raw list of diagnostic plots",
+  files = "diagnostic_plots.rds"
+)
+
+orderly2::orderly_artefact(
+  description = "HTML diagnostic report",
+  files = "diagnostic_report.html"
 )
 # ------------------------------------------------------------------------------
 
@@ -494,4 +508,30 @@ mortality_plot <- ggplot2::ggplot(
   ggplot2::xlab("Year") +
   ggplot2::ylab("WMR mortality rate (ppar, py)") +
   ggplot2::theme_bw()
+# ------------------------------------------------------------------------------
+
+# Save plots for reporting -----------------------------------------------------
+diagnostic_plots <- list(
+  # WMR burden
+  cases = cases_plot,
+  incidence = incidence_plot,
+  deaths = deaths_plot,
+  mortality = mortality_plot,
+  # MAP prevalence
+  pfpr_map = pfpr_map_plot,
+  pvpr_map = pvpr_map_plot,
+  country_prevalence = country_prevalence_plot
+)
+saveRDS(diagnostic_plots, "diagnostic_plots.rds")
+# ------------------------------------------------------------------------------
+
+# Render diagnostics report ----------------------------------------------------
+quarto::quarto_render(
+  input = "diagnostic_report.qmd",
+  execute_params = list(
+    iso3c =  iso3c,
+    country = site$country,
+    version = site$version
+  )
+)
 # ------------------------------------------------------------------------------
