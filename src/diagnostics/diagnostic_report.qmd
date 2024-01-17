@@ -75,5 +75,46 @@ plots$pfpr_map
 plots$pvpr_map
 ```
 
+:::
+
+## Population estimates
+
+::: {.panel-tabset}
+## Population
+
+``` {r}
+#| echo: false
+plots$country_population
+```
+
+## Population at risk
+``` {r}
+#| echo: false
+plots$country_par
+```
+
+## Urban/Rural population
+``` {r}
+#| echo: false
+plots$country_urban_rural
+```
+
+## Proportion Urban
+``` {r}
+#| echo: false
+plots$country_prop_urban
+```
+
+## Urban/Rural subnational population
+``` {r}
+#| echo: false
+plots$area_urban_rural
+```
 
 :::
+
+## Age-distribution
+``` {r}
+#| echo: false
+plots$age_dist
+```

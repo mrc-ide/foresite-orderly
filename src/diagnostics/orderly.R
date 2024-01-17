@@ -520,7 +520,15 @@ diagnostic_plots <- list(
   # MAP prevalence
   pfpr_map = pfpr_map_plot,
   pvpr_map = pvpr_map_plot,
-  country_prevalence = country_prevalence_plot
+  country_prevalence = country_prevalence_plot,
+  # Population
+  country_population = country_population_plot,
+  country_par = country_population_at_risk_plot,
+  country_urban_rural = country_population_urban_rural_plot,
+  country_prop_urban = country_prop_urban_plot,
+  area_urban_rural = area_urban_rural_population_plot,
+  # Demography
+  age_dist = age_dist_plot
 )
 saveRDS(diagnostic_plots, "diagnostic_plots.rds")
 # ------------------------------------------------------------------------------
