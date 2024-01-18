@@ -6,7 +6,7 @@ orderly2::orderly_description(
 
 orderly2::orderly_parameters(
   version_name = "testing",
-  iso3c = NULL,
+  iso3c = "BFA",
   admin_level = 1,
   urban_rural = TRUE
 )
@@ -234,7 +234,7 @@ age_dist_plot <- ggplot2::ggplot(data = age_dist_pd,
   ggplot2::scale_alpha_manual(values = c(1, 0), name = "Source") +
   ggplot2::xlab("Age") +
   ggplot2::ylab("Proportion of the population") +
-  ggplot2::facet_wrap(~ year, ncol = 5) +
+  ggplot2::facet_wrap(~ year, ncol = 1) +
   ggplot2::theme_bw() +
   ggplot2::theme(
     strip.background = ggplot2::element_rect(fill = "white")
@@ -509,6 +509,15 @@ mortality_plot <- ggplot2::ggplot(
   ggplot2::ylab("WMR mortality rate (ppar, py)") +
   ggplot2::theme_bw()
 # ------------------------------------------------------------------------------
+
+splitFacet <- function(x){
+  facet_vars <- names(x$facet$params$facets)         # 1
+  x$facet    <- ggplot2::ggplot()$facet              # 2
+  datasets   <- split(x$data, x$data[facet_vars])    # 3
+  new_plots  <- lapply(datasets,function(new_data) { # 4
+    x$data <- new_data
+    x})
+}  
 
 # Save plots for reporting -----------------------------------------------------
 diagnostic_plots <- list(

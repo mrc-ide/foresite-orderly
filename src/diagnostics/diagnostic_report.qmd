@@ -4,7 +4,7 @@ format:
     toc: true
     toc-location: left
     embed-resources: true
-editor: visual
+editor: source
 params:
   iso3c: "NULL"
   country: "NULL"
@@ -13,108 +13,115 @@ params:
 
 ## Site file summary for `r params$country`, version: `r params$version`
 
-``` {r}
+```{r}
 #| echo: false
 plots <- readRDS("diagnostic_plots.RDS")
 ```
 
 ## World malaria report burden estimates
 
-::: {.panel-tabset}
+::: panel-tabset
 ## Clinical incidence
 
-``` {r}
+```{r}
 #| echo: false
 plots$incidence
 ```
 
 ## Cases
 
-``` {r}
+```{r}
 #| echo: false
 plots$cases
 ```
 
 ## Mortality Rate
 
-``` {r}
+```{r}
 #| echo: false
 plots$mortality
 ```
 
 ## Deaths
 
-``` {r}
+```{r}
 #| echo: false
 plots$deaths
 ```
-
 :::
 
 ## Malaria Atlas Project prevalence summaries
 
-::: {.panel-tabset}
+::: panel-tabset
 ## Prevalence
 
-``` {r}
+```{r}
 #| echo: false
 plots$country_prevalence
 ```
 
 ## PfPr Map
 
-``` {r}
+```{r}
 #| echo: false
 plots$pfpr_map
 ```
 
 ## PvPr Map
 
-``` {r}
+```{r}
 #| echo: false
 plots$pvpr_map
 ```
-
 :::
 
 ## Population estimates
 
-::: {.panel-tabset}
+::: panel-tabset
 ## Population
 
-``` {r}
+```{r}
 #| echo: false
 plots$country_population
 ```
 
 ## Population at risk
-``` {r}
+
+```{r}
 #| echo: false
 plots$country_par
 ```
 
 ## Urban/Rural population
-``` {r}
+
+```{r}
 #| echo: false
 plots$country_urban_rural
 ```
 
 ## Proportion Urban
-``` {r}
+
+```{r}
 #| echo: false
 plots$country_prop_urban
 ```
 
 ## Urban/Rural subnational population
-``` {r}
+
+```{r}
 #| echo: false
 plots$area_urban_rural
 ```
-
 :::
 
 ## Age-distribution
-``` {r}
+
+```{r,echo=FALSE}
+fheight = length(plots$age_dist$facet$params$facets) * 50
+```
+
+```{r, fig.height=fheight}
 #| echo: false
 plots$age_dist
 ```
+
