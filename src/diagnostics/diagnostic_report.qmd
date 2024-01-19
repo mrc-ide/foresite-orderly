@@ -11,12 +11,25 @@ params:
   version: "NULL"
 ---
 
-## Site file summary for `r params$country`, version: `r params$version`
+```{css, echo = FALSE}
+.output {
+max-height: 500px;
+overflow-y: auto;
+}
+```
 
 ```{r}
 #| echo: false
+#| warning: false
 plots <- readRDS("diagnostic_plots.RDS")
+library(patchwork)
+title <- paste0(params$country, " (", params$iso3c, "). ", "Version: ", params$version)
 ```
+
+---
+title: "`r title`"
+title-block-banner: true
+---
 
 ## World malaria report burden estimates
 
@@ -106,22 +119,38 @@ plots$country_urban_rural
 plots$country_prop_urban
 ```
 
-## Urban/Rural subnational population
+:::
 
-```{r}
+### Urban/Rural subnational population
+```{r,echo=FALSE}
+fheight_urban = length(plots$area_urban_rural$facet$params$facets) * 50
+```
+
+```{r, fig.height=fheight_urban}
+#| class: output
 #| echo: false
 plots$area_urban_rural
 ```
-:::
 
 ## Age-distribution
 
 ```{r,echo=FALSE}
-fheight = length(plots$age_dist$facet$params$facets) * 50
+fheight_age = length(plots$age_dist$facet$params$facets) * 50
 ```
 
-```{r, fig.height=fheight}
+```{r, fig.height=fheight_age}
+#| class: output
 #| echo: false
 plots$age_dist
 ```
 
+## Seasonality
+```{r,echo=FALSE}
+fheight_seasonality = length(plots$rainfall$facet$params$facets) * 50
+```
+
+```{r, fig.height=fheight_seasonality}
+#| class: output
+#| echo: false
+plots$rainfall | plots$seasonality
+```

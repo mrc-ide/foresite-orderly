@@ -298,13 +298,15 @@ rainfall_plot <- ggplot2::ggplot(data = rainfall_pd, ggplot2::aes(x = time, y = 
   ggplot2::geom_line() +
   ggplot2::xlab("Year") +
   ggplot2::ylab("Monthly rainfall (mm)") +
-  ggplot2::facet_wrap(~ name, ncol = 5) +
+  ggplot2::facet_wrap(~ name, ncol = 1, scales = "free_x") +
   ggplot2::theme_bw() +
   ggplot2::theme(
     legend.position = "none",
+    axis.text.x = ggplot2::element_text(angle = 90, vjust = 0.5, hjust = 1),
     strip.background = ggplot2::element_rect(fill = "white")
   ) +
-  ggplot2::ggtitle(paste0(iso3c, ": Rainfall timeseries"))
+  ggplot2::ggtitle(paste0(iso3c, ": Rainfall timeseries")) +
+  ggplot2::theme(panel.spacing.y = ggplot2::unit(2, "lines"))
 
 seasonal_curve_pd <- site$seasonality$fourier_prediction
 seasonal_curve_pd$name <- apply(seasonal_curve_pd[,rainfall_name_cols], 1, paste, collapse = " | ")
@@ -314,7 +316,7 @@ labs <- unique(rainfall_pd[,c("t", "month_name")])
 seasonality_plot <- ggplot2::ggplot() +
   ggplot2::geom_jitter(data = rainfall_pd, ggplot2::aes(x = t, y = rainfall, colour = name), alpha = 0.2) +
   ggplot2::geom_line(data = seasonal_curve_pd, ggplot2::aes(x = t, y = profile, colour = name)) +
-  ggplot2::facet_wrap(~ name, ncol = 5) +
+  ggplot2::facet_wrap(~ name, ncol = 1, scales = "free_x") +
   ggplot2::scale_x_continuous(breaks = labs$t, labels = labs$month_name) +
   ggplot2::xlab("Month") +
   ggplot2::ylab("Rainfall (mm)") +
@@ -323,7 +325,9 @@ seasonality_plot <- ggplot2::ggplot() +
     legend.position = "none",
     axis.text.x = ggplot2::element_text(angle = 90, vjust = 0.5, hjust = 1),
     strip.background = ggplot2::element_rect(fill = "white")
-  )
+  ) +
+  ggplot2::ggtitle(paste0(iso3c, ": Seasonality")) +
+  ggplot2::theme(panel.spacing.y = ggplot2::unit(2, "lines"))
 # ------------------------------------------------------------------------------
 
 # Interventions ----------------------------------------------------------------
@@ -537,7 +541,10 @@ diagnostic_plots <- list(
   country_prop_urban = country_prop_urban_plot,
   area_urban_rural = area_urban_rural_population_plot,
   # Demography
-  age_dist = age_dist_plot
+  age_dist = age_dist_plot,
+  # Seasonality
+  rainfall = rainfall_plot,
+  seasonality = seasonality_plot
 )
 saveRDS(diagnostic_plots, "diagnostic_plots.rds")
 # ------------------------------------------------------------------------------
