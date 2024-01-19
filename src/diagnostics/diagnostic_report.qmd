@@ -184,3 +184,63 @@ plots$vectors
 #| echo: false
 plots$resistance
 ```
+
+## Blood disorders
+
+::: panel-tabset
+## GDP6
+
+```{r}
+#| echo: false
+plots$gdp6
+```
+
+## Sicklecell
+
+```{r}
+#| echo: false
+plots$sickle
+```
+
+## Duffy negativity
+
+```{r}
+#| echo: false
+plots$duffy
+```
+
+## HPC
+
+```{r}
+#| echo: false
+plots$hpc
+```
+
+:::
+
+## Accessibility
+
+::: panel-tabset
+## Motor transport
+
+```{r}
+#| echo: false
+plots$motor
+```
+
+## Walking
+
+```{r}
+#| echo: false
+plots$walk
+```
+
+## To city
+
+```{r}
+#| echo: false
+plots$city
+```
+
+
+:::

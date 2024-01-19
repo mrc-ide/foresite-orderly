@@ -360,18 +360,49 @@ access_pd <- access |>
       type == "walking_travel_time_healthcare" ~ "Walking\nto\nhealthcare",
       type == "city_travel_time" ~ "To\ncity"
     )
-  )
+  ) |>
+  dplyr::left_join(site$shape[[1]])
 
-access_plot <- ggplot2::ggplot(data = access_pd, ggplot2::aes(x = type, y = time, col = type)) +
-  ggplot2::geom_boxplot(col = "black") +
-  ggplot2::geom_jitter() +
-  ggplot2::xlab("") +
-  ggplot2::ylab("Travel time (minutes)") +
+access_lims = c(0, max(access_pd$time))
+
+motor_plot <- ggplot2::ggplot(
+  data = dplyr::filter(access_pd, type == "Motor\nto\nhealthcare"),
+  ggplot2::aes(geometry = geom, fill = time)
+) +
+  ggplot2::geom_sf()  +
+  ggplot2::scale_fill_viridis_c(direction =  -1, option = "B", name = "Time to\nhealthcare\n(minutes)\nmotorised\ntransport", limits = access_lims) +
   ggplot2::theme_bw() +
   ggplot2::theme(
-    legend.position = "none"
-  ) +
-  ggplot2::ggtitle(paste0(iso3c, ": Accessibility"))
+    strip.background = ggplot2::element_rect(fill = "white"),
+    axis.text = ggplot2::element_blank(),
+    axis.ticks = ggplot2::element_blank()
+  ) 
+
+walk_plot <- ggplot2::ggplot(
+  data = dplyr::filter(access_pd, type == "Walking\nto\nhealthcare"),
+  ggplot2::aes(geometry = geom, fill = time)
+) +
+  ggplot2::geom_sf()  +
+  ggplot2::scale_fill_viridis_c(direction =  -1, option = "B", name = "Time to\nhealthcare\n(minutes)\nwalking", limits = access_lims) +
+  ggplot2::theme_bw() +
+  ggplot2::theme(
+    strip.background = ggplot2::element_rect(fill = "white"),
+    axis.text = ggplot2::element_blank(),
+    axis.ticks = ggplot2::element_blank()
+  ) 
+
+city_plot <- ggplot2::ggplot(
+  data = dplyr::filter(access_pd, type == "To\ncity"),
+  ggplot2::aes(geometry = geom, fill = time)
+) +
+  ggplot2::geom_sf()  +
+  ggplot2::scale_fill_viridis_c(direction =  -1, option = "B", name = "Time to\nnearest\ncity\n(minutes)", limits = access_lims) +
+  ggplot2::theme_bw() +
+  ggplot2::theme(
+    strip.background = ggplot2::element_rect(fill = "white"),
+    axis.text = ggplot2::element_blank(),
+    axis.ticks = ggplot2::element_blank()
+  )
 # ------------------------------------------------------------------------------
 
 # Blood disorders --------------------------------------------------------------
@@ -387,18 +418,61 @@ blood_pd <- blood |>
       type == "hpc" ~ "Haemoglobin\nC (HbC)\nAllele",
       type == "duffy_negativity" ~ "Duffy\nNegativity\nPhenotype"
     )
-  )
+  ) |>
+  dplyr::left_join(site$shape[[1]])
 
-blood_plot <- ggplot2::ggplot(data = blood_pd, ggplot2::aes(x = type, y = frequency, col = type)) +
-  ggplot2::geom_boxplot(col = "black") +
-  ggplot2::geom_jitter() +
-  ggplot2::xlab("") +
-  ggplot2::ylab("Frequency") +
+sicklecell_plot <- ggplot2::ggplot(
+  data = dplyr::filter(blood_pd, type == "Sickle\nHaemoglobin\nHbS Allele"),
+  ggplot2::aes(geometry = geom, fill = frequency)
+) +
+  ggplot2::geom_sf()  +
+  ggplot2::scale_fill_viridis_c(direction =  -1, option = "B", name = "Sickle\nHaemoglobin\nHbS Allele\nFrequency") +
   ggplot2::theme_bw() +
   ggplot2::theme(
-    legend.position = "none"
-  ) +
-  ggplot2::ggtitle(paste0(iso3c, ": Blood disorders"))
+    strip.background = ggplot2::element_rect(fill = "white"),
+    axis.text = ggplot2::element_blank(),
+    axis.ticks = ggplot2::element_blank()
+  ) 
+
+gdp6_plot <- ggplot2::ggplot(
+  data = dplyr::filter(blood_pd, type == "G6PDd\nAllele"),
+  ggplot2::aes(geometry = geom, fill = frequency)
+) +
+  ggplot2::geom_sf()  +
+  ggplot2::scale_fill_viridis_c(direction =  -1, option = "B", name = "G6PDd\nAllele\nFrequency") +
+  ggplot2::theme_bw() +
+  ggplot2::theme(
+    strip.background = ggplot2::element_rect(fill = "white"),
+    axis.text = ggplot2::element_blank(),
+    axis.ticks = ggplot2::element_blank()
+  ) 
+
+hpc_plot <- ggplot2::ggplot(
+  data = dplyr::filter(blood_pd, type == "Haemoglobin\nC (HbC)\nAllele"),
+  ggplot2::aes(geometry = geom, fill = frequency)
+) +
+  ggplot2::geom_sf()  +
+  ggplot2::scale_fill_viridis_c(direction =  -1, option = "B", name = "Haemoglobin\nC (HbC)\nAllele\nFrequency") +
+  ggplot2::theme_bw() +
+  ggplot2::theme(
+    strip.background = ggplot2::element_rect(fill = "white"),
+    axis.text = ggplot2::element_blank(),
+    axis.ticks = ggplot2::element_blank()
+  ) 
+
+duffy_plot <- ggplot2::ggplot(
+  data = dplyr::filter(blood_pd, type == "Duffy\nNegativity\nPhenotype"),
+  ggplot2::aes(geometry = geom, fill = frequency)
+) +
+  ggplot2::geom_sf()  +
+  ggplot2::scale_fill_viridis_c(direction =  -1, option = "B", name = "Duffy\nNegativity\nPhenotype\nFrequency") +
+  ggplot2::theme_bw() +
+  ggplot2::theme(
+    strip.background = ggplot2::element_rect(fill = "white"),
+    axis.text = ggplot2::element_blank(),
+    axis.ticks = ggplot2::element_blank()
+  ) 
+
 # ------------------------------------------------------------------------------
 
 # Prevalence -------------------------------------------------------------------
@@ -418,7 +492,7 @@ prevalence_area_pd <- site$prevalence |>
 
 pfpr_map_plot <- ggplot2::ggplot(data = prevalence_area_pd, ggplot2::aes(geometry = geom, fill = pfpr)) +
   ggplot2::geom_sf() +
-  ggplot2::scale_fill_viridis_c(limits = c(0, 1), option = "B") +
+  ggplot2::scale_fill_viridis_c(limits = c(0, 1), option = "B", direction = -1) +
   ggplot2::facet_wrap(~ year, ncol = 1) +
   ggplot2::theme_bw() +
   ggplot2::theme(
@@ -430,7 +504,7 @@ pfpr_map_plot <- ggplot2::ggplot(data = prevalence_area_pd, ggplot2::aes(geometr
 
 pvpr_map_plot <- ggplot2::ggplot(data = prevalence_area_pd, ggplot2::aes(geometry = geom, fill = pvpr)) +
   ggplot2::geom_sf() +
-  ggplot2::scale_fill_viridis_c(limits = c(0, 1), option = "B") +
+  ggplot2::scale_fill_viridis_c(limits = c(0, 1), option = "B", direction = -1) +
   ggplot2::facet_wrap(~ year, ncol = 1) +
   ggplot2::theme_bw() +
   ggplot2::theme(
@@ -535,7 +609,16 @@ diagnostic_plots <- list(
   seasonality = seasonality_plot,
   # Vectors
   vectors = vector_species_plot,
-  resistance = resistance_plot
+  resistance = resistance_plot,
+  # Blood disorders
+  gdp6 = gdp6_plot,
+  sickle = sicklecell_plot,
+  duffy = duffy_plot,
+  hpc = hpc_plot,
+  # Access
+  motor = motor_plot,
+  walk = walk_plot,
+  city = city_plot
 )
 saveRDS(diagnostic_plots, "diagnostic_plots.rds")
 # ------------------------------------------------------------------------------
