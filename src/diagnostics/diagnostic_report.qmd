@@ -31,6 +31,18 @@ title: "`r title`"
 title-block-banner: true
 ---
 
+## Subnational units
+
+```{r,echo=FALSE}
+fheight_units = length(plots$geom_graphic_areas$layers[[1]]$data$name) * 1.5
+```
+
+```{r, fig.height=fheight_units}
+#| class: output
+#| echo: false
+plots$geom_graphic_areas
+```
+
 ## World malaria report burden estimates
 
 ::: panel-tabset
@@ -65,30 +77,29 @@ plots$deaths
 
 ## Malaria Atlas Project prevalence summaries
 
-::: panel-tabset
-## Prevalence
+### Prevalance timeseries
 
 ```{r}
 #| echo: false
+#| warning: false
 plots$country_prevalence
 ```
 
-## PfPr Map
+### Prevlance maps
 
-```{r}
-#| echo: false
-plots$pfpr_map
+```{r,echo=FALSE}
+fheight_prev = length(unique(plots$pfpr_map$data$year)) * 2
 ```
 
-## PvPr Map
-
-```{r}
+```{r, fig.height=fheight_prev}
+#| class: output
 #| echo: false
-plots$pvpr_map
+(plots$pfpr_map | plots$pvpr_map)
 ```
-:::
 
-## Population estimates
+## Population and Demography
+
+### Population timeseries
 
 ::: panel-tabset
 ## Population
@@ -123,7 +134,7 @@ plots$country_prop_urban
 
 ### Urban/Rural subnational population
 ```{r,echo=FALSE}
-fheight_urban = length(plots$area_urban_rural$facet$params$facets) * 50
+fheight_urban = length(unique(plots$area_urban_rural$data$name)) * 1
 ```
 
 ```{r, fig.height=fheight_urban}
@@ -132,10 +143,10 @@ fheight_urban = length(plots$area_urban_rural$facet$params$facets) * 50
 plots$area_urban_rural
 ```
 
-## Age-distribution
+### Age-distribution
 
 ```{r,echo=FALSE}
-fheight_age = length(plots$age_dist$facet$params$facets) * 50
+fheight_age = length(unique(plots$age_dist$data$year)) * 1
 ```
 
 ```{r, fig.height=fheight_age}
@@ -146,11 +157,30 @@ plots$age_dist
 
 ## Seasonality
 ```{r,echo=FALSE}
-fheight_seasonality = length(plots$rainfall$facet$params$facets) * 50
+fheight_seasonality = length(unique(plots$rainfall$data$name)) * 2
 ```
 
 ```{r, fig.height=fheight_seasonality}
 #| class: output
 #| echo: false
 plots$rainfall | plots$seasonality
+```
+
+## Mosquito vectors
+
+### Species
+```{r,echo=FALSE}
+fheight_vectors = length(unique(plots$vectors$data$name)) * 0.25
+```
+
+```{r, fig.height=fheight_vectors}
+#| class: output
+#| echo: false
+plots$vectors
+```
+
+### Pyrethroid resistance
+```{r}
+#| echo: false
+plots$resistance
 ```

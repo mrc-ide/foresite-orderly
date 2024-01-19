@@ -177,25 +177,10 @@ area_urban_rural_pd <- p |>
 area_urban_rural_pd$name <- apply(area_urban_rural_pd[,area_name_cols], 1, paste, collapse = " | ")
 
 area_urban_rural_population_plot <- ggplot2::ggplot(
-  data = area_urban_rural_pd, ggplot2::aes(x = year, y = pop / 1e6, fill = urban_rural)
-) +
-  ggplot2::geom_bar(stat = "identity", width = 1) +
-  ggplot2::facet_wrap(~ name, ncol = 5, scales = "free_y") +
-  ggplot2::ylab("Population (millions)") +
-  ggplot2::xlab("Year") +
-  ggplot2::scale_fill_manual(values = c("forestgreen", "steelblue"), name = "") +
-  ggplot2::theme_bw() +
-  ggplot2::theme(
-    legend.title = ggplot2::element_blank(), 
-    strip.background = ggplot2::element_rect(fill = "white")
-  ) +
-  ggplot2::ggtitle(paste0(iso3c, ": Area Populations urban and rural"))
-
-area_urban_rural_population_plot <- ggplot2::ggplot(
   data = area_urban_rural_pd, ggplot2::aes(x = year, y = pop / 1e6, col = urban_rural)
 ) +
   ggplot2::geom_line() +
-  ggplot2::facet_wrap(~ name, ncol = 5, scales = "free_y") +
+  ggplot2::facet_wrap(~ name, ncol = 2, scales = "free") +
   ggplot2::ylab("Population (millions)") +
   ggplot2::xlab("Year") +
   ggplot2::scale_fill_manual(values = c("forestgreen", "steelblue"), name = "") +
@@ -207,14 +192,12 @@ area_urban_rural_population_plot <- ggplot2::ggplot(
   ggplot2::ggtitle(paste0(iso3c, ": Area Populations urban and rural"))
 
 age_dist_site <- pa |>
-  dplyr::filter(year %% 10 == 0) |>
   dplyr::summarise(pop = sum(pop), .by = c("iso3c", "year", "age_lower", "age_upper")) |>
   dplyr::mutate(population_proportion = pop / sum(pop), .by = c("iso3c", "year")) |>
   dplyr::select(year, age_lower, population_proportion) |>
   dplyr::mutate(source = "site file")
 
 age_dist_un <- un_wpp |>
-  dplyr::filter(year %% 10 == 0)  |>
   dplyr::select(year, age_lower, population_proportion) |>
   dplyr::mutate(source = "UN")
 
@@ -234,29 +217,31 @@ age_dist_plot <- ggplot2::ggplot(data = age_dist_pd,
   ggplot2::scale_alpha_manual(values = c(1, 0), name = "Source") +
   ggplot2::xlab("Age") +
   ggplot2::ylab("Proportion of the population") +
-  ggplot2::facet_wrap(~ year, ncol = 1) +
+  ggplot2::facet_wrap(~ year, ncol = 2, scales = "free_x") +
   ggplot2::theme_bw() +
   ggplot2::theme(
-    strip.background = ggplot2::element_rect(fill = "white")
+    strip.background = ggplot2::element_rect(fill = "white"),
+    panel.spacing.y = ggplot2::unit(2, "lines")
   ) +
   ggplot2::ggtitle(paste0(iso3c, ": Age distribution"))
 # ------------------------------------------------------------------------------
 
 # Geographic areas -------------------------------------------------------------
-geom_graphic_areas_plot <- ggplot2::ggplot()
-
 levels <- length(site$shape)
-for(i in levels:1){
-  if(i > 1){
-    geom_graphic_areas_plot <- geom_graphic_areas_plot +
-      ggplot2::geom_sf(data = site$shape[[i]], ggplot2::aes(geometry = geom))
-  } else {
-    geom_graphic_areas_plot <- geom_graphic_areas_plot +
-      ggplot2::geom_sf(data = site$shape[[i]], ggplot2::aes(geometry = geom), fill = "deeppink")
-  }
+facets <- site$shape[[1]] |>
+  dplyr::rename(name = paste0("name_", levels - 1))
+
+geom_graphic_areas_plot <-  geom_graphic_areas_plot <- ggplot2::ggplot() +
+  ggplot2::geom_sf(data = facets, ggplot2::aes(geometry = geom), fill = "deeppink", col = "grey50")
+
+border_cols <- rev(paste0("grey", round(seq(1, 50, length.out = levels))))
+for(i in 2:levels){
+  geom_graphic_areas_plot <- geom_graphic_areas_plot +
+    ggplot2::geom_sf(data = site$shape[[i]], ggplot2::aes(geometry = geom), col = border_cols[i], alpha = 0)
 }
+
 geom_graphic_areas_plot <- geom_graphic_areas_plot +
-  ggplot2::facet_wrap(as.formula(paste0("~ name_", levels - 1)), ncol = 5) +
+  ggplot2::facet_wrap(~ name, ncol = 2) +
   ggplot2::theme_bw() +
   ggplot2::theme(
     strip.background = ggplot2::element_rect(fill = "white"),
@@ -277,7 +262,8 @@ vector_species_plot <- ggplot2::ggplot(data = vector_pd, ggplot2::aes(x = name, 
   ggplot2::scale_fill_discrete(name = "Species") +
   ggplot2::theme_bw() +
   ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90, vjust = 0.5, hjust = 1)) +
-  ggplot2::ggtitle(paste0(iso3c, ": Vector species proportions"))
+  ggplot2::ggtitle(paste0(iso3c, ": Vector species proportions")) +
+  ggplot2::coord_flip()
 
 resistance_pd <- site$vectors$pyrethroid_resistance
 resistance_plot <- ggplot2::ggplot(data = resistance_pd, ggplot2::aes(x = year, y = pyrethroid_resistance)) +
@@ -303,10 +289,10 @@ rainfall_plot <- ggplot2::ggplot(data = rainfall_pd, ggplot2::aes(x = time, y = 
   ggplot2::theme(
     legend.position = "none",
     axis.text.x = ggplot2::element_text(angle = 90, vjust = 0.5, hjust = 1),
-    strip.background = ggplot2::element_rect(fill = "white")
+    strip.background = ggplot2::element_rect(fill = "white"),
+    panel.spacing.y = ggplot2::unit(2, "lines")
   ) +
-  ggplot2::ggtitle(paste0(iso3c, ": Rainfall timeseries")) +
-  ggplot2::theme(panel.spacing.y = ggplot2::unit(2, "lines"))
+  ggplot2::ggtitle(paste0(iso3c, ": Rainfall timeseries"))
 
 seasonal_curve_pd <- site$seasonality$fourier_prediction
 seasonal_curve_pd$name <- apply(seasonal_curve_pd[,rainfall_name_cols], 1, paste, collapse = " | ")
@@ -324,10 +310,10 @@ seasonality_plot <- ggplot2::ggplot() +
   ggplot2::theme(
     legend.position = "none",
     axis.text.x = ggplot2::element_text(angle = 90, vjust = 0.5, hjust = 1),
-    strip.background = ggplot2::element_rect(fill = "white")
+    strip.background = ggplot2::element_rect(fill = "white"),
+    panel.spacing.y = ggplot2::unit(2, "lines")
   ) +
-  ggplot2::ggtitle(paste0(iso3c, ": Seasonality")) +
-  ggplot2::theme(panel.spacing.y = ggplot2::unit(2, "lines"))
+  ggplot2::ggtitle(paste0(iso3c, ": Seasonality"))
 # ------------------------------------------------------------------------------
 
 # Interventions ----------------------------------------------------------------
@@ -433,7 +419,7 @@ prevalence_area_pd <- site$prevalence |>
 pfpr_map_plot <- ggplot2::ggplot(data = prevalence_area_pd, ggplot2::aes(geometry = geom, fill = pfpr)) +
   ggplot2::geom_sf() +
   ggplot2::scale_fill_viridis_c(limits = c(0, 1), option = "B") +
-  ggplot2::facet_wrap(~ year, ncol = 5) +
+  ggplot2::facet_wrap(~ year, ncol = 1) +
   ggplot2::theme_bw() +
   ggplot2::theme(
     strip.background = ggplot2::element_rect(fill = "white"),
@@ -445,7 +431,7 @@ pfpr_map_plot <- ggplot2::ggplot(data = prevalence_area_pd, ggplot2::aes(geometr
 pvpr_map_plot <- ggplot2::ggplot(data = prevalence_area_pd, ggplot2::aes(geometry = geom, fill = pvpr)) +
   ggplot2::geom_sf() +
   ggplot2::scale_fill_viridis_c(limits = c(0, 1), option = "B") +
-  ggplot2::facet_wrap(~ year, ncol = 5) +
+  ggplot2::facet_wrap(~ year, ncol = 1) +
   ggplot2::theme_bw() +
   ggplot2::theme(
     strip.background = ggplot2::element_rect(fill = "white"),
@@ -488,7 +474,7 @@ cases_plot <- ggplot2::ggplot(
 
 incidence_plot <- ggplot2::ggplot(
   data = burden_pd,
-  ggplot2::aes(x = year, y = wmr_incidence, ymin = wmr_incidence_l, ymax =wmr_incidence_u)) +
+  ggplot2::aes(x = year, y = wmr_incidence, ymin = wmr_incidence_l, ymax = wmr_incidence_u)) +
   ggplot2::geom_point() +
   ggplot2::geom_errorbar(width = 0.5) +
   ggplot2::xlab("Year") +
@@ -525,6 +511,8 @@ splitFacet <- function(x){
 
 # Save plots for reporting -----------------------------------------------------
 diagnostic_plots <- list(
+  # Geography
+  geom_graphic_areas = geom_graphic_areas_plot,
   # WMR burden
   cases = cases_plot,
   incidence = incidence_plot,
@@ -544,7 +532,10 @@ diagnostic_plots <- list(
   age_dist = age_dist_plot,
   # Seasonality
   rainfall = rainfall_plot,
-  seasonality = seasonality_plot
+  seasonality = seasonality_plot,
+  # Vectors
+  vectors = vector_species_plot,
+  resistance = resistance_plot
 )
 saveRDS(diagnostic_plots, "diagnostic_plots.rds")
 # ------------------------------------------------------------------------------
