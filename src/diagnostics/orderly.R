@@ -349,25 +349,33 @@ interventions_area_plot <- scene::plot_interventions(
 # ------------------------------------------------------------------------------
 
 # Accessibility ----------------------------------------------------------------
-access <- site$accessibility
-access_name_cols <- site$admin_level[!site$admin_level %in% c("country", "iso3c")]
-access$name <- apply(access[,access_name_cols], 1, paste, collapse = " | ")
-access_pd <- access |>
-  tidyr::pivot_longer(cols = dplyr::contains("time"), names_to = "type", values_to = "time") |>
-  dplyr::mutate(
-    type = dplyr::case_when(
-      type == "motor_travel_time_healthcare" ~ "Motor\nto\nhealthcare",
-      type == "walking_travel_time_healthcare" ~ "Walking\nto\nhealthcare",
-      type == "city_travel_time" ~ "To\ncity"
-    )
+access_pd <- site$accessibility |>
+  dplyr::left_join(
+    site$population$population_total,
+    by = c(site$admin_level)
   ) |>
-  dplyr::left_join(site$shape[[1]])
+  dplyr::summarise(
+    motor_travel_time_healthcare = weighted.mean(motor_travel_time_healthcare, pop),
+    walking_travel_time_healthcare = weighted.mean(walking_travel_time_healthcare, pop),
+    city_travel_time = weighted.mean(city_travel_time, pop),
+    .by = c(site$admin_level[!site$admin_level == "urban_rural"])
+  ) |>
+  dplyr::left_join(
+    site$shape[[1]]
+  )
 
-access_lims = c(0, max(access_pd$time))
+access_lims = c(
+  0, 
+  max(
+    access_pd$motor_travel_time_healthcare,
+    access_pd$walking_travel_time_healthcare,
+    access_pd$city_travel_time
+  )
+)
 
 motor_plot <- ggplot2::ggplot(
-  data = dplyr::filter(access_pd, type == "Motor\nto\nhealthcare"),
-  ggplot2::aes(geometry = geom, fill = time)
+  data = access_pd,
+  ggplot2::aes(geometry = geom, fill = motor_travel_time_healthcare)
 ) +
   ggplot2::geom_sf()  +
   ggplot2::scale_fill_viridis_c(direction =  -1, option = "B", name = "Time to\nhealthcare\n(minutes)\nmotorised\ntransport", limits = access_lims) +
@@ -379,8 +387,8 @@ motor_plot <- ggplot2::ggplot(
   ) 
 
 walk_plot <- ggplot2::ggplot(
-  data = dplyr::filter(access_pd, type == "Walking\nto\nhealthcare"),
-  ggplot2::aes(geometry = geom, fill = time)
+  data = access_pd,
+  ggplot2::aes(geometry = geom, fill = walking_travel_time_healthcare)
 ) +
   ggplot2::geom_sf()  +
   ggplot2::scale_fill_viridis_c(direction =  -1, option = "B", name = "Time to\nhealthcare\n(minutes)\nwalking", limits = access_lims) +
@@ -392,8 +400,8 @@ walk_plot <- ggplot2::ggplot(
   ) 
 
 city_plot <- ggplot2::ggplot(
-  data = dplyr::filter(access_pd, type == "To\ncity"),
-  ggplot2::aes(geometry = geom, fill = time)
+  data = access_pd,
+  ggplot2::aes(geometry = geom, fill = city_travel_time)
 ) +
   ggplot2::geom_sf()  +
   ggplot2::scale_fill_viridis_c(direction =  -1, option = "B", name = "Time to\nnearest\ncity\n(minutes)", limits = access_lims) +
@@ -406,27 +414,31 @@ city_plot <- ggplot2::ggplot(
 # ------------------------------------------------------------------------------
 
 # Blood disorders --------------------------------------------------------------
-blood <- site$blood_disorders
-blood_name_cols <- site$admin_level[!site$admin_level %in% c("country", "iso3c")]
-blood$name <- apply(blood[,blood_name_cols], 1, paste, collapse = " | ")
-blood_pd <- blood |>
-  tidyr::pivot_longer(cols =-c(site$admin_level, "name"), names_to = "type", values_to = "frequency") |>
-  dplyr::mutate(
-    type = dplyr::case_when(
-      type == "sicklecell" ~ "Sickle\nHaemoglobin\nHbS Allele",
-      type == "gdp6" ~ "G6PDd\nAllele",
-      type == "hpc" ~ "Haemoglobin\nC (HbC)\nAllele",
-      type == "duffy_negativity" ~ "Duffy\nNegativity\nPhenotype"
-    )
+blood_pd <- site$blood_disorders  |>
+  dplyr::left_join(
+  site$population$population_total,
+  by = c(site$admin_level)
+) |>
+  dplyr::summarise(
+    sicklecell = weighted.mean(sicklecell, par),
+    gdp6 = weighted.mean(gdp6, par),
+    hpc = weighted.mean(hpc, par),
+    duffy_negativity = weighted.mean(duffy_negativity, par),
+    .by = c(site$admin_level[!site$admin_level == "urban_rural"])
   ) |>
-  dplyr::left_join(site$shape[[1]])
+  dplyr::left_join(
+    site$shape[[1]]
+  )
 
 sicklecell_plot <- ggplot2::ggplot(
-  data = dplyr::filter(blood_pd, type == "Sickle\nHaemoglobin\nHbS Allele"),
-  ggplot2::aes(geometry = geom, fill = frequency)
+  data = blood_pd,
+  ggplot2::aes(geometry = geom, fill = sicklecell)
 ) +
   ggplot2::geom_sf()  +
-  ggplot2::scale_fill_viridis_c(direction =  -1, option = "B", name = "Sickle\nHaemoglobin\nHbS Allele\nFrequency") +
+  ggplot2::scale_fill_viridis_c(direction =  -1,
+                                option = "B",
+                                name = "Sickle\nHaemoglobin\nHbS Allele\nFrequency",
+                                limits = c(0, 1)) +
   ggplot2::theme_bw() +
   ggplot2::theme(
     strip.background = ggplot2::element_rect(fill = "white"),
@@ -435,11 +447,14 @@ sicklecell_plot <- ggplot2::ggplot(
   ) 
 
 gdp6_plot <- ggplot2::ggplot(
-  data = dplyr::filter(blood_pd, type == "G6PDd\nAllele"),
-  ggplot2::aes(geometry = geom, fill = frequency)
+  data = blood_pd,
+  ggplot2::aes(geometry = geom, fill = gdp6)
 ) +
   ggplot2::geom_sf()  +
-  ggplot2::scale_fill_viridis_c(direction =  -1, option = "B", name = "G6PDd\nAllele\nFrequency") +
+  ggplot2::scale_fill_viridis_c(direction =  -1,
+                                option = "B",
+                                name = "G6PDd\nAllele\nFrequency",
+                                limits = c(0, 1)) +
   ggplot2::theme_bw() +
   ggplot2::theme(
     strip.background = ggplot2::element_rect(fill = "white"),
@@ -448,11 +463,14 @@ gdp6_plot <- ggplot2::ggplot(
   ) 
 
 hpc_plot <- ggplot2::ggplot(
-  data = dplyr::filter(blood_pd, type == "Haemoglobin\nC (HbC)\nAllele"),
-  ggplot2::aes(geometry = geom, fill = frequency)
+  data = blood_pd,
+  ggplot2::aes(geometry = geom, fill = hpc)
 ) +
   ggplot2::geom_sf()  +
-  ggplot2::scale_fill_viridis_c(direction =  -1, option = "B", name = "Haemoglobin\nC (HbC)\nAllele\nFrequency") +
+  ggplot2::scale_fill_viridis_c(direction =  -1,
+                                option = "B",
+                                name = "Haemoglobin\nC (HbC)\nAllele\nFrequency",
+                                limits = c(0, 1)) +
   ggplot2::theme_bw() +
   ggplot2::theme(
     strip.background = ggplot2::element_rect(fill = "white"),
@@ -461,11 +479,14 @@ hpc_plot <- ggplot2::ggplot(
   ) 
 
 duffy_plot <- ggplot2::ggplot(
-  data = dplyr::filter(blood_pd, type == "Duffy\nNegativity\nPhenotype"),
-  ggplot2::aes(geometry = geom, fill = frequency)
+  data = blood_pd,
+  ggplot2::aes(geometry = geom, fill = duffy_negativity)
 ) +
   ggplot2::geom_sf()  +
-  ggplot2::scale_fill_viridis_c(direction =  -1, option = "B", name = "Duffy\nNegativity\nPhenotype\nFrequency") +
+  ggplot2::scale_fill_viridis_c(direction =  -1,
+                                option = "B",
+                                name = "Duffy\nNegativity\nPhenotype\nFrequency",
+                                limits = c(0, 1)) +
   ggplot2::theme_bw() +
   ggplot2::theme(
     strip.background = ggplot2::element_rect(fill = "white"),
