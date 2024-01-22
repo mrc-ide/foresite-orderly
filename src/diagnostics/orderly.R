@@ -6,8 +6,8 @@ orderly2::orderly_description(
 
 orderly2::orderly_parameters(
   version_name = "testing",
-  iso3c = "BFA",
-  admin_level = 2,
+  iso3c = "KEN",
+  admin_level = 1,
   urban_rural = TRUE
 )
 
@@ -344,9 +344,6 @@ interventions_area_plot <- scene::plot_interventions(
 
 # TODO: Update scene plotting function so that ITN model usage is a different colour
 ## to ITN usage - we match so well in some cases you can't tell them apart.
-
-# TODO: add in LSM
-# TODO: add in PMC
 # ------------------------------------------------------------------------------
 
 # Accessibility ----------------------------------------------------------------

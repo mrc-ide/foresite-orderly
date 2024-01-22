@@ -59,7 +59,8 @@ spatial <- readRDS("spatial.rds")
 
 # Future urbanisation ----------------------------------------------------------
 source("population_utils.R")
-msy <-  max(spatial$year)
+# TODO: should this be earlier to = last pop raster input date?
+msy <-  2020
 
 future_urbanisation <-
   un_wup |>

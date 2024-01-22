@@ -26,7 +26,7 @@ plots <- readRDS("diagnostic_plots.RDS")
 library(patchwork)
 title <- paste0(
   params$country, " (", params$iso3c, ").",
-  " Admin level: ", params$admin_level,
+  " Admin level: ", params$admin_level, ".",
   " Version: ", params$version
   )
 ```

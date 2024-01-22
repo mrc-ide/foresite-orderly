@@ -11,6 +11,7 @@ orderly2::orderly_run(
 )
 
 isos <- c("BFA", "KEN", "IND")
+admins <- 1:2
 
 # Spatial processing
 for(iso in isos){
@@ -36,45 +37,35 @@ for(iso in isos){
   )
 }
 
-# Site file creation - admin unit 1
+# Site file creation
 for(iso in isos){
-  orderly2::orderly_run(
-    name = "site_file",
-    parameters = list(
-      version_name = "testing",
-      iso3c = iso,
-      admin_level = 1,
-      urban_rural = TRUE
-    ),
-    echo = FALSE
-  )
-}
-
-# Site file creation - admin unit 2
-for(iso in isos){
-  orderly2::orderly_run(
-    name = "site_file",
-    parameters = list(
-      version_name = "testing",
-      iso3c = iso,
-      admin_level = 2,
-      urban_rural = TRUE
-    ),
-    echo = FALSE
-  )
+  for(admin in admins){
+    orderly2::orderly_run(
+      name = "site_file",
+      parameters = list(
+        version_name = "testing",
+        iso3c = iso,
+        admin_level = admin,
+        urban_rural = TRUE
+      ),
+      echo = FALSE
+    )
+  }
 }
 
 # Diagnostics
 for(iso in isos){
-  orderly2::orderly_run(
-    name = "diagnostics",
-    parameters = list(
-      version_name = "testing",
-      iso3c = iso,
-      admin_level = 2,
-      urban_rural = TRUE
-    ),
-    echo = FALSE
-  )
+  for(admin in admins){
+    orderly2::orderly_run(
+      name = "diagnostics",
+      parameters = list(
+        version_name = "testing",
+        iso3c = iso,
+        admin_level = admin,
+        urban_rural = TRUE
+      ),
+      echo = FALSE
+    )
+  }
 }
 

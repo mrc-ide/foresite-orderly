@@ -155,6 +155,8 @@ interventions <- spatial |>
     irs_cov = weighted.mean(irs_cov, par),
     rtss_cov = weighted.mean(rtss_cov, par),
     r21_cov = weighted.mean(r21_cov, par),
+    lsm_cov = weighted.mean(lsm_cov, par),
+    pmc_cov = weighted.mean(pmc_cov, par),
     dplyr::across(dplyr::contains("smc"), \(x) weighted.mean(x, par)),
     .by = dplyr::all_of(c(grouping, "year"))
   )
@@ -242,8 +244,8 @@ interventions <- interventions |>
 ## Add net efficacy | resistance and net type
 net_efficacy_parameters <- read.csv(paste0(external_data_address, "/net_efficacy_2023.csv"))
 interventions <- interventions |>
-  mutate(pyrethroid_resistance = round(pyrethroid_resistance, 2)) |>
-  left_join(net_efficacy_parameters, by = c("pyrethroid_resistance", "net_type"))
+  dplyr::mutate(pyrethroid_resistance = round(pyrethroid_resistance, 2)) |>
+  dplyr::left_join(net_efficacy_parameters, by = c("pyrethroid_resistance", "net_type"))
 # ------------------------------------------------------------------------------
 
 # Prevalence -------------------------------------------------------------------
@@ -337,12 +339,12 @@ vectors <- spatial |>
   ) |>
   dplyr::mutate(
     across(
-      vector_columns, \(x) ifelse(is.na(x), 0, x)
+      dplyr::all_of(vector_columns), \(x) ifelse(is.na(x), 0, x)
     )
   ) |>
   dplyr::summarise(
     dplyr::across(
-      vector_columns, \(x) weighted.mean(x, par, na.rm =)
+      dplyr::all_of(vector_columns), \(x) weighted.mean(x, par, na.rm =)
     ),
     .by = dplyr::all_of(grouping)
   ) |>

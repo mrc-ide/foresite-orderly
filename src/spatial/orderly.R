@@ -476,6 +476,11 @@ if(iso3c %in% rtss_cov_data$iso3c){
   df$rtss_cov = 0
 }
 df$r21_cov <- 0
+
+# Historical larval source management
+df$lsm_cov <- 0
+# Historical PMC (formerly IPTi)
+df$pmc_cov <- 0
 # ------------------------------------------------------------------------------
 
 # Fill nets and IRS outside SSA ------------------------------------------------
