@@ -8,6 +8,7 @@ editor: source
 params:
   iso3c: "NULL"
   country: "NULL"
+  admin_level: "NULL"
   version: "NULL"
 ---
 
@@ -23,7 +24,11 @@ overflow-y: auto;
 #| warning: false
 plots <- readRDS("diagnostic_plots.RDS")
 library(patchwork)
-title <- paste0(params$country, " (", params$iso3c, "). ", "Version: ", params$version)
+title <- paste0(
+  params$country, " (", params$iso3c, ").",
+  " Admin level: ", params$admin_level,
+  " Version: ", params$version
+  )
 ```
 
 ---
@@ -153,6 +158,23 @@ fheight_age = length(unique(plots$age_dist$data$year)) * 1
 #| class: output
 #| echo: false
 plots$age_dist
+```
+
+## Interventions 
+```{r}
+#| echo: false
+#| warning: false
+plots$interventions
+```
+
+```{r,echo=FALSE}
+fheight_interventions = length(unique(plots$area_interventions$data$name)) * 1
+```
+
+```{r, fig.height=fheight_interventions}
+#| class: output
+#| echo: false
+plots$area_interventions
 ```
 
 ## Seasonality

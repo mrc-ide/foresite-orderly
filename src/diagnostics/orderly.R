@@ -7,7 +7,7 @@ orderly2::orderly_description(
 orderly2::orderly_parameters(
   version_name = "testing",
   iso3c = "BFA",
-  admin_level = 1,
+  admin_level = 2,
   urban_rural = TRUE
 )
 
@@ -337,7 +337,8 @@ interventions_area_plot <- scene::plot_interventions(
   population = pop,
   group_var = "name",
   include = c("itn_use", "itn_input_dist", "predicted_use", "tx_cov", "irs_cov", "rtss_cov", "smc_cov"),
-  labels = c("ITN usage", "ITN model input", "ITN model usage", "Treatment", "IRS", "RTSS", "SMC")
+  labels = c("ITN usage", "ITN model input", "ITN model usage", "Treatment", "IRS", "RTSS", "SMC"),
+  facet_rows = floor(length(unique(interventions$name)) / 2)
 ) +
   ggplot2::ggtitle(paste0(iso3c, ": Intervention coverage by area"))
 
@@ -355,9 +356,9 @@ access_pd <- site$accessibility |>
     by = c(site$admin_level)
   ) |>
   dplyr::summarise(
-    motor_travel_time_healthcare = weighted.mean(motor_travel_time_healthcare, pop),
-    walking_travel_time_healthcare = weighted.mean(walking_travel_time_healthcare, pop),
-    city_travel_time = weighted.mean(city_travel_time, pop),
+    motor_travel_time_healthcare = weighted.mean(motor_travel_time_healthcare, pop, na.rm = TRUE),
+    walking_travel_time_healthcare = weighted.mean(walking_travel_time_healthcare, pop, na.rm = TRUE),
+    city_travel_time = weighted.mean(city_travel_time, pop, na.rm = TRUE),
     .by = c(site$admin_level[!site$admin_level == "urban_rural"])
   ) |>
   dplyr::left_join(
@@ -420,10 +421,10 @@ blood_pd <- site$blood_disorders  |>
   by = c(site$admin_level)
 ) |>
   dplyr::summarise(
-    sicklecell = weighted.mean(sicklecell, par),
-    gdp6 = weighted.mean(gdp6, par),
-    hpc = weighted.mean(hpc, par),
-    duffy_negativity = weighted.mean(duffy_negativity, par),
+    sicklecell = weighted.mean(sicklecell, par, na.rm = TRUE),
+    gdp6 = weighted.mean(gdp6, par, na.rm = TRUE),
+    hpc = weighted.mean(hpc, par, na.rm = TRUE),
+    duffy_negativity = weighted.mean(duffy_negativity, par, na.rm = TRUE),
     .by = c(site$admin_level[!site$admin_level == "urban_rural"])
   ) |>
   dplyr::left_join(
@@ -625,6 +626,9 @@ diagnostic_plots <- list(
   area_urban_rural = area_urban_rural_population_plot,
   # Demography
   age_dist = age_dist_plot,
+  # Interventions
+  interventions = interventions_country_plot,
+  area_interventions = interventions_area_plot,
   # Seasonality
   rainfall = rainfall_plot,
   seasonality = seasonality_plot,
@@ -650,6 +654,7 @@ quarto::quarto_render(
   execute_params = list(
     iso3c =  iso3c,
     country = site$country,
+    admin_level = admin_level,
     version = site$version
   )
 )
