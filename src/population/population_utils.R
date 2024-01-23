@@ -1,19 +1,25 @@
-extrapolate_with_bounds_polynomial <- function(year, proportion_urban, threshold_year) {
+logistic_function <- function(year, B, C) {
+  year <- year - 2030
+  0.8 / (1 + exp(-B * (year - C)))
+}
+
+extrapolate_logistic <- function(year, proportion_urban, threshold_year) {
   
   data <- data.frame(
-    year = year[year <= threshold_year],
-    proportion_urban = proportion_urban[year <= threshold_year]
+    year = year[year <= threshold_year & year >= 2030],
+    proportion_urban = proportion_urban[year <= threshold_year & year >= 2030]
   )
   # Fit a polynomial model
-  formula <- as.formula(paste("proportion_urban", "~ poly(", "year", ",", 2, ")"))
-  model <- lm(formula, data = data)
+  fit <- nls(
+    proportion_urban ~ logistic_function(year, B, C), 
+    data = data,
+    start = list(B = 0.1, C = mean(data$proportion_urban))
+  )
   
   # Create a sequence for prediction
-  predictions <- predict(model, newdata = data.frame(year = year[year > threshold_year]))
-  predictions <- pmin(predictions, 1)
-  predictions <- pmax(predictions, 0)
+  predictions <- predict(fit, newdata = data.frame(year = year[year > threshold_year]))
   
-  out <- c(as.vector(data$proportion_urban), predictions)
+  out <- c(proportion_urban[year <= threshold_year], predictions)
   
   return(out)
 }

@@ -69,7 +69,7 @@ future_urbanisation <-
     year = 2000:2100
   ) |>
   dplyr::mutate(
-    proportion_urban = extrapolate_with_bounds_polynomial(year, proportion_urban, 2050)
+    proportion_urban = extrapolate_logistic(year, proportion_urban, 2050)
   ) |>
   dplyr::mutate(
     proportion_rural = 1 - proportion_urban,
@@ -105,7 +105,12 @@ population_age <- spatial |>
     pop = ifelse(year <= max(spatial$year) & is.na(pop), 0, pop),
     par = ifelse(year <= max(spatial$year) & is.na(par), 0, par),
     par_pf = ifelse(year <= max(spatial$year) & is.na(par_pf), 0, par_pf),
-    par_pv = ifelse(year <= max(spatial$year) & is.na(par_pv), 0, par_pv)
+    par_pv = ifelse(year <= max(spatial$year) & is.na(par_pv), 0, par_pv),
+    # Clear extrapolated populations
+    pop = ifelse(year > msy, NA, pop),
+    par = ifelse(year > msy, NA, par),
+    par_pf = ifelse(year > msy, NA, par_pf),
+    par_pv = ifelse(year > msy, NA, par_pv)
   ) |>
   dplyr::group_by(dplyr::across(dplyr::all_of(aggregation_levels))) |>
   tidyr::fill(c("pop", "par", "par_pf", "par_pv"), .direction = "down") |>
