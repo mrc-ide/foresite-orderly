@@ -6,8 +6,8 @@ orderly2::orderly_description(
 
 orderly2::orderly_parameters(
   version_name = "testing",
-  iso3c = "KEN",
-  admin_level = 1,
+  iso3c = "BFA",
+  admin_level = 2,
   urban_rural = TRUE
 )
 
@@ -341,9 +341,6 @@ interventions_area_plot <- scene::plot_interventions(
   facet_rows = floor(length(unique(interventions$name)) / 2)
 ) +
   ggplot2::ggtitle(paste0(iso3c, ": Intervention coverage by area"))
-
-# TODO: Update scene plotting function so that ITN model usage is a different colour
-## to ITN usage - we match so well in some cases you can't tell them apart.
 # ------------------------------------------------------------------------------
 
 # Accessibility ----------------------------------------------------------------

@@ -6,8 +6,8 @@ orderly2::orderly_description(
 
 orderly2::orderly_parameters(
   version_name = "testing",
-  iso3c = NULL,
-  admin_level = 1,
+  iso3c = "BFA",
+  admin_level = 2,
   urban_rural = TRUE
 )
 
@@ -160,6 +160,37 @@ interventions <- spatial |>
     dplyr::across(dplyr::contains("smc"), \(x) weighted.mean(x, par)),
     .by = dplyr::all_of(c(grouping, "year"))
   )
+
+if(urban_rural){
+  # Some areas (usually urban) may come into (or drop out of) existence after 2000
+  # for these areas we assume coverage of interventions for model inputs maps to
+  # the matching admin unit (urban -> rural or rural -> urban)
+  not_full <- interventions |>
+    dplyr::mutate(
+      n = dplyr::n(),
+      .by = dplyr::all_of(grouping)
+    ) |>
+    dplyr::filter(
+      n != max(n)
+    ) |>
+    dplyr::select(dplyr::all_of(c(grouping, "year")))
+  
+  if(nrow(not_full) > 0){
+    replaced <- not_full |>
+      dplyr::mutate(
+        urban_rural = ifelse(urban_rural == "urban", "rural", "urban")
+      ) |>
+      tidyr::complete(year = min(interventions$year):max(interventions$year), tidyr::nesting(!!!rlang::syms(grouping))) |>
+      dplyr::left_join(interventions, by = c(grouping, "year")) |>
+      dplyr::mutate(
+        urban_rural = ifelse(urban_rural == "urban", "rural", "urban")
+      ) |>
+      dplyr::anti_join(not_full, by = c(grouping, "year"))
+    
+    interventions <- interventions |>
+      dplyr::bind_rows(replaced)
+  }
+}
 
 ## Overwrite SMC, as we cannot currently use the new MAP estimates widely
 smc_overwrite <- interventions
