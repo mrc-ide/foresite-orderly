@@ -4,6 +4,10 @@ format:
     toc: true
     toc-location: left
     embed-resources: true
+    grid:
+      sidebar-width: 200px
+      body-width: 1200px
+      margin-width: 100px
 editor: source
 params:
   iso3c: "NULL"
@@ -16,6 +20,7 @@ params:
 .output {
 max-height: 500px;
 overflow-y: auto;
+max-width: 1000px
 }
 ```
 
@@ -28,7 +33,8 @@ title <- paste0(
   params$country, " (", params$iso3c, ").",
   " Admin level: ", params$admin_level, ".",
   " Version: ", params$version
-  )
+)
+facet_plot_width <- 10
 ```
 
 ---
@@ -39,10 +45,13 @@ title-block-banner: true
 ## Subnational units
 
 ```{r,echo=FALSE}
-fheight_units = length(plots$geom_graphic_areas$layers[[1]]$data$name) * 1.5
+n_facets <- length(plots$geom_graphic_areas$layers[[1]]$data$name)
+ncols <- plots$geom_graphic_areas$facet$params$ncol
+nrows <- ceiling(n_facets / ncols)
+fheight_units <- (facet_plot_width / ncols) * nrows
 ```
 
-```{r, fig.height=fheight_units}
+```{r plot-geo-areas, fig.height=fheight_units, fig.width=facet_plot_width}
 #| class: output
 #| echo: false
 plots$geom_graphic_areas
@@ -53,28 +62,28 @@ plots$geom_graphic_areas
 ::: panel-tabset
 ## Clinical incidence
 
-```{r}
+```{r plot-incidence}
 #| echo: false
 plots$incidence
 ```
 
 ## Cases
 
-```{r}
+```{r plot-cases}
 #| echo: false
 plots$cases
 ```
 
 ## Mortality Rate
 
-```{r}
+```{r plot-mortality}
 #| echo: false
 plots$mortality
 ```
 
 ## Deaths
 
-```{r}
+```{r plot-deaths}
 #| echo: false
 plots$deaths
 ```
@@ -84,7 +93,7 @@ plots$deaths
 
 ### Prevalance timeseries
 
-```{r}
+```{r plot-prevalence-timeseries}
 #| echo: false
 #| warning: false
 plots$country_prevalence
@@ -93,10 +102,10 @@ plots$country_prevalence
 ### Prevlance maps
 
 ```{r,echo=FALSE}
-fheight_prev = length(unique(plots$pfpr_map$data$year)) * 2
+fheight_prev = min(length(unique(plots$pfpr_map$data$year)) * 2, 650)
 ```
 
-```{r, fig.height=fheight_prev}
+```{r plot-prevalence-maps, fig.height=fheight_prev}
 #| class: output
 #| echo: false
 (plots$pfpr_map | plots$pvpr_map)
@@ -109,28 +118,28 @@ fheight_prev = length(unique(plots$pfpr_map$data$year)) * 2
 ::: panel-tabset
 ## Population
 
-```{r}
+```{r plot-population}
 #| echo: false
 plots$country_population
 ```
 
 ## Population at risk
 
-```{r}
+```{r plot-population-at-risk}
 #| echo: false
 plots$country_par
 ```
 
 ## Urban/Rural population
 
-```{r}
+```{r plot-urban-rural-population}
 #| echo: false
 plots$country_urban_rural
 ```
 
 ## Proportion Urban
 
-```{r}
+```{r plot-proportion-urban}
 #| echo: false
 plots$country_prop_urban
 ```
@@ -139,10 +148,13 @@ plots$country_prop_urban
 
 ### Urban/Rural subnational population
 ```{r,echo=FALSE}
-fheight_urban = length(unique(plots$area_urban_rural$data$name)) * 1
+n_facets <- length(unique(plots$area_urban_rural$data$name))
+ncols <- plots$area_urban_rural$facet$params$ncol
+nrows <- ceiling(n_facets / ncols)
+fheight_urban <- (facet_plot_width / ncols) * nrows
 ```
 
-```{r, fig.height=fheight_urban}
+```{r plot-urban-rural-subnational, fig.height=fheight_urban, fig.width=facet_plot_width}
 #| class: output
 #| echo: false
 plots$area_urban_rural
@@ -151,27 +163,33 @@ plots$area_urban_rural
 ### Age-distribution
 
 ```{r,echo=FALSE}
-fheight_age = length(unique(plots$age_dist$data$year)) * 1
+n_facets <- length(unique(plots$age_dist$data$year))
+ncols <- plots$age_dist$facet$params$ncol
+nrows <- ceiling(n_facets / ncols)
+fheight_age <- (facet_plot_width / ncols) * nrows
 ```
 
-```{r, fig.height=fheight_age}
+```{r plot-age-dist, fig.height=fheight_age, fig.width=facet_plot_width}
 #| class: output
 #| echo: false
 plots$age_dist
 ```
 
 ## Interventions 
-```{r}
+```{r plot-interventions}
 #| echo: false
 #| warning: false
 plots$interventions
 ```
 
 ```{r,echo=FALSE}
-fheight_interventions = length(unique(plots$area_interventions$data$name)) * 1
+n_facets <- length(unique(plots$area_interventions$data$name))
+nrows <- plots$area_interventions$facet$params$nrow
+ncols <- ceiling(n_facets / nrows)
+fheight_interventions <- (facet_plot_width / ncols) * nrows
 ```
 
-```{r, fig.height=fheight_interventions}
+```{r plot-subnational-interventions, fig.height=fheight_interventions, fig.width=facet_plot_width}
 #| class: output
 #| echo: false
 plots$area_interventions
@@ -179,10 +197,10 @@ plots$area_interventions
 
 ## Seasonality
 ```{r,echo=FALSE}
-fheight_seasonality = length(unique(plots$rainfall$data$name)) * 2
+fheight_seasonality = min(length(unique(plots$rainfall$data$name)) * 2, 650)
 ```
 
-```{r, fig.height=fheight_seasonality}
+```{r plot-seasonality, fig.height=fheight_seasonality}
 #| class: output
 #| echo: false
 plots$rainfall | plots$seasonality
@@ -192,17 +210,17 @@ plots$rainfall | plots$seasonality
 
 ### Species
 ```{r,echo=FALSE}
-fheight_vectors = length(unique(plots$vectors$data$name)) * 0.25
+fheight_vectors = min(length(unique(plots$vectors$data$name)) * 0.25, 650)
 ```
 
-```{r, fig.height=fheight_vectors}
+```{r plot-species, fig.height=fheight_vectors}
 #| class: output
 #| echo: false
 plots$vectors
 ```
 
 ### Pyrethroid resistance
-```{r}
+```{r plot-resistance}
 #| echo: false
 plots$resistance
 ```
@@ -212,28 +230,28 @@ plots$resistance
 ::: panel-tabset
 ## GDP6
 
-```{r}
+```{r plot-gpd5}
 #| echo: false
 plots$gdp6
 ```
 
 ## Sicklecell
 
-```{r}
+```{r plot-sicklecell}
 #| echo: false
 plots$sickle
 ```
 
 ## Duffy negativity
 
-```{r}
+```{r plot-duffy-negativity}
 #| echo: false
 plots$duffy
 ```
 
 ## HPC
 
-```{r}
+```{r plot-hpc}
 #| echo: false
 plots$hpc
 ```
@@ -245,21 +263,21 @@ plots$hpc
 ::: panel-tabset
 ## Motor transport
 
-```{r}
+```{r plot-motor-access}
 #| echo: false
 plots$motor
 ```
 
 ## Walking
 
-```{r}
+```{r plot-walking-access}
 #| echo: false
 plots$walk
 ```
 
 ## To city
 
-```{r}
+```{r plot-city-access}
 #| echo: false
 plots$city
 ```

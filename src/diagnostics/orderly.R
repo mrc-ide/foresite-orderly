@@ -180,14 +180,15 @@ area_urban_rural_population_plot <- ggplot2::ggplot(
   data = area_urban_rural_pd, ggplot2::aes(x = year, y = pop / 1e6, col = urban_rural)
 ) +
   ggplot2::geom_line() +
-  ggplot2::facet_wrap(~ name, ncol = 2, scales = "free") +
+  ggplot2::facet_wrap(~ name, ncol = 4, scales = "free") +
   ggplot2::ylab("Population (millions)") +
   ggplot2::xlab("Year") +
   ggplot2::scale_fill_manual(values = c("forestgreen", "steelblue"), name = "") +
   ggplot2::theme_bw() +
   ggplot2::theme(
     legend.title = ggplot2::element_blank(), 
-    strip.background = ggplot2::element_rect(fill = "white")
+    strip.background = ggplot2::element_rect(fill = "white"),
+    aspect.ratio = 1
   ) +
   ggplot2::ggtitle(paste0(iso3c, ": Area Populations urban and rural"))
 
@@ -217,7 +218,7 @@ age_dist_plot <- ggplot2::ggplot(data = age_dist_pd,
   ggplot2::scale_alpha_manual(values = c(1, 0), name = "Source") +
   ggplot2::xlab("Age") +
   ggplot2::ylab("Proportion of the population") +
-  ggplot2::facet_wrap(~ year, ncol = 2, scales = "free_x") +
+  ggplot2::facet_wrap(~ year, ncol = 4, scales = "free_x") +
   ggplot2::theme_bw() +
   ggplot2::theme(
     strip.background = ggplot2::element_rect(fill = "white"),
@@ -228,20 +229,21 @@ age_dist_plot <- ggplot2::ggplot(data = age_dist_pd,
 
 # Geographic areas -------------------------------------------------------------
 levels <- length(site$shape)
-facets <- site$shape[[1]] |>
-  dplyr::rename(name = paste0("name_", levels - 1))
+
+geo_name_cols <- site$admin_level[!site$admin_level %in% c("country", "iso3c", "urban_rural")]
+site$shape[[1]]$name <- apply(sf::st_drop_geometry(site$shape[[1]])[,geo_name_cols], 1, paste, collapse = " | ")
 
 geom_graphic_areas_plot <-  geom_graphic_areas_plot <- ggplot2::ggplot() +
-  ggplot2::geom_sf(data = facets, ggplot2::aes(geometry = geom), fill = "deeppink", col = "grey50")
+  ggplot2::geom_sf(data = site$shape[[1]], ggplot2::aes(geometry = geom), fill = "deeppink", col = "grey50")
 
 border_cols <- rev(paste0("grey", round(seq(1, 50, length.out = levels))))
-for(i in 2:levels){
+for(i in 2:(levels - 1)){
   geom_graphic_areas_plot <- geom_graphic_areas_plot +
     ggplot2::geom_sf(data = site$shape[[i]], ggplot2::aes(geometry = geom), col = border_cols[i], alpha = 0)
 }
 
 geom_graphic_areas_plot <- geom_graphic_areas_plot +
-  ggplot2::facet_wrap(~ name, ncol = 2) +
+  ggplot2::facet_wrap(~ name, ncol = 4) +
   ggplot2::theme_bw() +
   ggplot2::theme(
     strip.background = ggplot2::element_rect(fill = "white"),
@@ -338,7 +340,7 @@ interventions_area_plot <- scene::plot_interventions(
   group_var = "name",
   include = c("itn_use", "itn_input_dist", "predicted_use", "tx_cov", "irs_cov", "rtss_cov", "smc_cov"),
   labels = c("ITN usage", "ITN model input", "ITN model usage", "Treatment", "IRS", "RTSS", "SMC"),
-  facet_rows = floor(length(unique(interventions$name)) / 2)
+  facet_rows = ceiling(length(unique(interventions$name)) / 4)
 ) +
   ggplot2::ggtitle(paste0(iso3c, ": Intervention coverage by area"))
 # ------------------------------------------------------------------------------
