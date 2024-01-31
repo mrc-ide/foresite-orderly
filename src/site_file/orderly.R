@@ -7,7 +7,7 @@ orderly2::orderly_description(
 orderly2::orderly_parameters(
   version_name = "testing",
   iso3c = "IND",
-  admin_level = 2,
+  admin_level = 1,
   urban_rural = TRUE
 )
 
@@ -150,7 +150,9 @@ if(iso3c %in% old_resistance$iso3c){
 # Interventions ----------------------------------------------------------------
 interventions <- spatial |>
   dplyr::summarise(
-    tx_cov = weighted.mean(tx_cov, par),
+    # Tx map has some areas with NA that we define as having PAR, these 
+    # shouldn't be interpreted as 0, so are dropped 
+    tx_cov = weighted.mean(tx_cov, par, na.rm = TRUE),
     itn_use = weighted.mean(itn_use, par),
     irs_cov = weighted.mean(irs_cov, par),
     rtss_cov = weighted.mean(rtss_cov, par),
@@ -191,6 +193,18 @@ if(urban_rural){
       dplyr::bind_rows(replaced)
   }
 }
+
+interventions <- interventions |>
+  # Some areas are not covered at all, so tx_cov gets the region year median
+  dplyr::mutate(
+    tx_cov = ifelse(is.na(tx_cov), median(tx_cov, na.rm = TRUE), tx_cov),
+    .by = c(grouping[1:3], "year")
+  ) |>
+  # Some areas are not covered at all, so tx_cov gets the country year median
+  dplyr::mutate(
+    tx_cov = ifelse(is.na(tx_cov), median(tx_cov, na.rm = TRUE), tx_cov),
+    .by = "year"
+  )
 
 ## Overwrite SMC, as we cannot currently use the new MAP estimates widely
 smc_overwrite <- interventions

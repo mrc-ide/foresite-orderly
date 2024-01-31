@@ -6,8 +6,8 @@ orderly2::orderly_description(
 
 orderly2::orderly_parameters(
   version_name = "testing",
-  iso3c = "BFA",
-  admin_level = 2,
+  iso3c = "IND",
+  admin_level = 1,
   urban_rural = TRUE
 )
 
