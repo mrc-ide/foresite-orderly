@@ -6,7 +6,7 @@ orderly2::orderly_description(
 
 orderly2::orderly_parameters(
   version_name = "testing",
-  iso3c = "IND",
+  iso3c = "BFA",
   admin_level = 1,
   urban_rural = TRUE
 )
@@ -373,6 +373,8 @@ if(use_relative){
   vector_year <- 2011
 }
 
+bionomics <- read.csv(paste0(external_data_address, "vector_bionomics.csv"))
+
 vectors <- spatial |>
   dplyr::filter(
     year == vector_year
@@ -394,15 +396,18 @@ vectors <- spatial |>
     .by = dplyr::all_of(grouping)
   ) |>
   tidyr::pivot_longer(
-    -grouping, names_to = "vector",  values_to = "prop"
+    -grouping, names_to = "species",  values_to = "prop"
   ) |>
   dplyr::group_by(dplyr::across(dplyr::all_of(grouping))) |>
   dplyr::mutate(rank = rank(-prop, ties = "first")) |>
   dplyr::filter(rank <= 3) |>
   dplyr::select(-rank) |>
+  # Missing values get assigned equal probability of occurence
+  dplyr::mutate(prop = ifelse(is.na(prop), 1/3, prop)) |>
   dplyr::mutate(prop = prop / sum(prop)) |>
   dplyr::ungroup() |>
-  dplyr::mutate(vector = stringr::str_replace(vector, "occurrence_", ""))
+  dplyr::mutate(species = stringr::str_replace(species, "occurrence_", "")) |>
+  dplyr::left_join(bionomics, by = "species")
 # ------------------------------------------------------------------------------
 
 # Blood disorders --------------------------------------------------------------
@@ -424,6 +429,31 @@ accessibility <- spatial |>
     city_travel_time = weighted.mean(city_travel_time, par, na.rm = TRUE),
     .by = dplyr::all_of(grouping)
   )
+# ------------------------------------------------------------------------------
+
+# EIR --------------------------------------------------------------------------
+prevalence_summary <- prevalence |>
+  dplyr::summarise(
+    pfpr = sum(pfpr, na.rm = TRUE),
+    pvpr = sum(pvpr, na.rm = TRUE),
+    .by = dplyr::all_of(grouping)
+  )
+
+pf_eir <- prevalence_summary |>
+  dplyr::filter(pfpr > 0) |>
+  dplyr::select(dplyr::all_of(grouping)) |>
+  dplyr::mutate(
+    sp = "pf",
+    eir = NA
+  )
+pv_eir <- prevalence_summary |>
+  dplyr::filter(pvpr > 0) |>
+  dplyr::select(dplyr::all_of(grouping)) |>
+  dplyr::mutate(
+    sp = "pv",
+    eir = NA
+  )
+eir <- dplyr::bind_rows(pf_eir, pv_eir)
 # ------------------------------------------------------------------------------
 
 # Create the site file ---------------------------------------------------------
@@ -464,6 +494,8 @@ site_file$seasonality = list(
 site_file$blood_disorders = blood_disorders
 
 site_file$accessibility = accessibility
+
+site_file$eir = eir
 
 format(object.size(site_file), "Mb")
 
