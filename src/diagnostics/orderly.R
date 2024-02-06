@@ -257,7 +257,7 @@ vector_pd <- site$vectors$vector_species
 vector_name_cols <- site$admin_level[!site$admin_level %in% c("country", "iso3c")]
 vector_pd$name <- apply(vector_pd[,vector_name_cols], 1, paste, collapse = " | ")
 
-vector_species_plot <- ggplot2::ggplot(data = vector_pd, ggplot2::aes(x = name, y = prop, fill = vector)) +
+vector_species_plot <- ggplot2::ggplot(data = vector_pd, ggplot2::aes(x = name, y = prop, fill = species)) +
   ggplot2::geom_bar(stat = "identity", position = "stack", width = 1) +
   ggplot2::xlab("") +
   ggplot2::ylab("Proportion") +

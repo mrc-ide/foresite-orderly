@@ -5,7 +5,18 @@ orderly2::orderly_description(
   population size would return the observed age distribution (at equilibrium)."
 )
 
+orderly2::orderly_parameters(
+  version_name = "testing",
+  iso3c = "BFA"
+)
+
 orderly2::orderly_resource("adjust_rates.R")
+
+orderly2::orderly_dependency(
+  name = "un_wpp",
+  query = "latest()",
+  files = c("un_wpp.rds")
+)
 
 orderly2::orderly_artefact(
   description = "Adjusted mortality rates",
@@ -15,8 +26,11 @@ orderly2::orderly_artefact(
 
 # Prepare data for parallel processing -----------------------------------------
 demography <- readRDS("un_wpp.rds") |>
-  dplyr::filter(year >= 2000)
-demography_split <- dplyr::group_split(demography, iso3c, year)[4100:4110]
+  dplyr::filter(
+    year >= 2000,
+    iso3c == {{iso3c}}
+  )
+demography_split <- dplyr::group_split(demography, iso3c, year)
 
 source("adjust_rates.R")
 

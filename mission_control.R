@@ -5,13 +5,20 @@ orderly2::orderly_run(
   name = "un_wpp"
 )
 
-# Demography adjustment - this would take days locally
-orderly2::orderly_run(
-  name = "demography"
-)
 
-isos <- c("BFA", "KEN", "IND")
+isos <- c("BFA", "NGA", "IND")
 admins <- 1:2
+
+# Demography adjustment - this would take days locally
+for(iso in isos){
+  orderly2::orderly_run(
+    name = "demography",
+    parameters = list(
+      version_name = "testing",
+      iso3c = iso
+    )
+  )
+}
 
 # Spatial processing
 for(iso in isos){

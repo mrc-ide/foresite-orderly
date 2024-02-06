@@ -16,6 +16,12 @@ orderly2::orderly_resource(
 )
 
 orderly2::orderly_dependency(
+  name = "demography",
+  query = "latest(parameter:version_name == this:version_name && parameter:iso3c ==  this:iso3c)",
+  files = c("adjusted_demography.rds")
+)
+
+orderly2::orderly_dependency(
   name = "spatial",
   query = "latest(parameter:version_name == this:version_name && parameter:iso3c ==  this:iso3c)",
   files = c("spatial.rds", "shape.rds")
@@ -209,9 +215,11 @@ interventions <- interventions |>
 ## Overwrite SMC, as we cannot currently use the new MAP estimates widely
 smc_overwrite <- interventions
 smc_overwrite$smc <- ifelse(rowSums(interventions[,paste0("smc_", 1:12)]) > 0, 1, 0)
+smc_overwrite$smc_n_rounds <- rowSums(interventions[,paste0("smc_", 1:12)] > 0.5) 
 smc_overwrite <- smc_overwrite |>
   dplyr::summarise(
     smc_cov = ifelse(mean(smc) > 0.5, 0.9, 0),
+    smc_n_rounds = round(mean(smc_n_rounds, na.rm = TRUE)),
     .by = dplyr::all_of(c(grouping[1:3], "year"))
   )
 interventions <- interventions |>
@@ -220,6 +228,11 @@ interventions <- interventions |>
     smc_overwrite,
     by = c(grouping[1:3], "year")
   )
+interventions <- interventions |>
+  dplyr::mutate(
+    smc_min_age = 91,
+    smc_max_age = 1825
+)
 
 # Add in IRS assumptions
 irs_parameters <- read.csv(
@@ -271,6 +284,13 @@ interventions <- interventions |>
   ) |>
   dplyr::mutate(mean_retention = mean_retention)
 
+# Assign an itn distribution day (currently associated with admin name length)
+interventions <- interventions |>
+  dplyr::mutate(
+    itn_distribution_day = round((365 / 12) * (nchar(name_1) %% 12) + 1),
+    .by = name_1
+  )
+
 ## Link with pyrethroid resistance
 interventions <- interventions |>
   dplyr::left_join(pyrethroid_resistance, by = c(grouping[grouping != "urban_rural"], "year"))
@@ -314,6 +334,11 @@ cases_deaths <- read.csv(paste0(external_data_address, "wmr_2023_cases_deaths.cs
     wmr_mortality = wmr_deaths / wmr_par,
     wmr_mortality_u = wmr_deaths_u / wmr_par,
   )
+# ------------------------------------------------------------------------------
+
+# Demography -------------------------------------------------------------------
+demography <- readRDS("adjusted_demography.rds") |>
+  dplyr::select(-"fitted_age_dist")
 # ------------------------------------------------------------------------------
 
 # Seasonality ------------------------------------------------------------------
@@ -478,7 +503,7 @@ site_file$population = list(
   population_by_age = population_age
 )
 
-site_file$demography = 1
+site_file$demography = demography
 
 site_file$vectors = list(
   vector_species = vectors,
