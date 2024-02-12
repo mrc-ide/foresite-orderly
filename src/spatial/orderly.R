@@ -5,8 +5,8 @@ orderly2::orderly_description(
 )
 
 orderly2::orderly_parameters(
-  version_name = NULL,
-  iso3c = NULL
+  version_name = "testing",
+  iso3c = "BFA"
 )
 
 orderly2::orderly_resource(
@@ -481,6 +481,47 @@ df$r21_cov <- 0
 df$lsm_cov <- 0
 # Historical PMC (formerly IPTi)
 df$pmc_cov <- 0
+
+# Proportion of treatment that is act
+prop_act <- read.csv(paste0(external_data_address, "proportion_act.csv"))
+if(iso3c %in% prop_act$iso3c){
+  prop_act <-
+    prop_act |>
+    dplyr::filter(iso3c == {{iso3c}}) |>
+    dplyr::select(year, prop_act)
+} else{
+  prop_act <-
+    prop_act |>
+    summarise(
+      prop_act = median(prop_act),
+      .by = "year"
+    )
+}
+prop_act <- prop_act |>
+  tidyr::complete(year = 2000:max(years)) |>
+  tidyr::fill(dplyr::all_of("prop_act"))
+df <- df |>
+  left_join(
+    prop_act,
+    by = "year"
+  )
+
+# Proportion of treatment in the public sector
+prop_public <- read.csv(paste0(external_data_address, "proportion_public.csv"))
+if(iso3c %in% prop_public$iso3c){
+  prop_public <-
+    prop_public |>
+    dplyr::filter(iso3c == {{iso3c}}) |>
+    dplyr::pull(prop_public)
+} else{
+  prop_act <- median(prop_public$prop_public)
+}
+prop_public <- data.frame(year = years, prop_public = prop_public)
+df <- df |>
+  left_join(
+    prop_public,
+    by = "year"
+  )
 # ------------------------------------------------------------------------------
 
 # Fill nets and IRS outside SSA ------------------------------------------------
