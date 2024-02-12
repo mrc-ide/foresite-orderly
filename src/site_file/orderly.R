@@ -301,6 +301,7 @@ interventions <- interventions |>
   dplyr::mutate(net_type = ifelse(year == 2000, "pyrethroid_only", NA)) |>
   dplyr::left_join(new_net_introductions, by = c("iso3c", "name_1", "year")) |>
   dplyr::mutate(net_type = ifelse(is.na(type), net_type, type)) |>
+  dplyr::select(-type) |>
   dplyr::group_by(dplyr::across(dplyr::all_of(grouping))) |>
   tidyr::fill(net_type) |>
   dplyr::ungroup()

@@ -5,7 +5,6 @@ orderly2::orderly_run(
   name = "un_wpp"
 )
 
-
 isos <- c("BFA", "NGA", "IND")
 admins <- 1:2
 
@@ -76,3 +75,18 @@ for(iso in isos){
   }
 }
 
+# Calibration
+for(iso in isos){
+  for(admin in admins){
+    orderly2::orderly_run(
+      name = "calibrate",
+      parameters = list(
+        version_name = "testing",
+        iso3c = iso,
+        admin_level = admin,
+        urban_rural = TRUE
+      ),
+      echo = FALSE
+    )
+  }
+}
