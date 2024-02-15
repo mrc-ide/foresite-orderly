@@ -44,11 +44,16 @@ title: "`r title`"
 title-block-banner: true
 ---
 
+Calibration is performed to be match prevalence in the period 2014:2018.
+Prevalence estimates are from the Malaria Atlas Project rasters, aggregated using
+our spatial boundaries and estimates of population at risk where necessary.
+
+
 ## National summaries
 
 ::: panel-tabset
 
-## PfPr
+## PfPr (MAP)
 
 ```{r plot-pf-prev}
 #| echo: false
@@ -56,7 +61,7 @@ title-block-banner: true
 plots$national_prev_pf_plot
 ```
 
-## PvPr
+## PvPr (MAP)
 
 ```{r plot-pv-prev}
 #| echo: false
@@ -64,7 +69,7 @@ plots$national_prev_pf_plot
 plots$national_prev_pv_plot
 ```
 
-## Clinical incidence
+## Clinical incidence (WMR)
 
 ```{r plot-incidence}
 #| echo: false
@@ -72,7 +77,7 @@ plots$national_prev_pv_plot
 plots$national_inc_plot
 ```
 
-## Cases
+## Cases (WMR)
 
 ```{r plot-cases}
 #| echo: false
@@ -80,7 +85,7 @@ plots$national_inc_plot
 plots$national_cases_plot
 ```
 
-## Mortality Rate
+## Mortality Rate (WMR)
 
 ```{r plot-mortality}
 #| echo: false
@@ -88,7 +93,7 @@ plots$national_cases_plot
 plots$national_mortality_plot
 ```
 
-## Deaths
+## Deaths (WMR)
 
 ```{r plot-deaths}
 #| echo: false

@@ -44,13 +44,13 @@ source("calibration_utils.R")
 # ------------------------------------------------------------------------------
 
 # Calibration ------------------------------------------------------------------
-parallel <- FALSE
+parallel <- TRUE
 # Split out individual jobs
-eirs <- site$eir[10,]
+eirs <- site$eir
 eirs <- split(eirs, 1:nrow(eirs))
 
 if(parallel){
-  cores <- 1
+  cores <- 10
   cluster <- parallel::makeCluster(cores)
   lp <- parallel::clusterEvalQ(cluster, library("sf"))
   lp <- parallel::clusterEvalQ(cluster, source("calibration_utils.R"))
@@ -153,7 +153,7 @@ calibration_fit_pf <- ggplot2::ggplot() +
   ggplot2::theme(
     strip.background = ggplot2::element_rect(fill = "white")
   ) +
-  ggplot2::annotate("rect", xmin = 2015, xmax = 2019, ymin = -Inf, ymax = Inf, alpha = 0.15, fill = "deeppink") +
+  ggplot2::annotate("rect", xmin = 2014, xmax = 2019, ymin = -Inf, ymax = Inf, alpha = 0.15, fill = "deeppink") +
   ggplot2::ylab("PfPr_2_10") +
   ggplot2::theme_bw()
 
@@ -173,7 +173,7 @@ calibration_fit_pv <- ggplot2::ggplot() +
   ggplot2::theme(
     strip.background = ggplot2::element_rect(fill = "white")
   ) +
-  ggplot2::annotate("rect", xmin = 2015, xmax = 2019, ymin = -Inf, ymax = Inf, alpha = 0.15, fill = "deeppink") +
+  ggplot2::annotate("rect", xmin = 2014, xmax = 2019, ymin = -Inf, ymax = Inf, alpha = 0.15, fill = "deeppink") +
   ggplot2::ylab("PvPr_1_100") +
   ggplot2::theme_bw()
 
@@ -204,7 +204,7 @@ national_prev_pf_plot <- ggplot2::ggplot() +
   ) +
   ggplot2::xlab("Year") +
   ggplot2::ylab("Pf prevalence 2-10") +
-  ggplot2::annotate("rect", xmin = 2015, xmax = 2019, ymin = -Inf, ymax = Inf, alpha = 0.15, fill = "deeppink") +
+  ggplot2::annotate("rect", xmin = 2014, xmax = 2019, ymin = -Inf, ymax = Inf, alpha = 0.15, fill = "deeppink") +
   ggplot2::theme_bw()
 
 national_prev_pv_plot <- ggplot2::ggplot() +
@@ -221,7 +221,7 @@ national_prev_pv_plot <- ggplot2::ggplot() +
   ) +
   ggplot2::xlab("Year") +
   ggplot2::ylab("Pv prevalence 1-100") +
-  ggplot2::annotate("rect", xmin = 2015, xmax = 2019, ymin = -Inf, ymax = Inf, alpha = 0.15, fill = "deeppink") +
+  ggplot2::annotate("rect", xmin = 2014, xmax = 2019, ymin = -Inf, ymax = Inf, alpha = 0.15, fill = "deeppink") +
   ggplot2::theme_bw()
 # ------------------------------------------------------------------------------
 
