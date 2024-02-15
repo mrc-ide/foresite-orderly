@@ -1,0 +1,122 @@
+---
+format: 
+  html:
+    toc: true
+    toc-location: left
+    embed-resources: true
+    grid:
+      sidebar-width: 200px
+      body-width: 1200px
+      margin-width: 100px
+editor: source
+params:
+  iso3c: "NULL"
+  country: "NULL"
+  admin_level: "NULL"
+  version: "NULL"
+  n_sites: "NULL"
+---
+
+```{css, echo = FALSE}
+.output {
+max-height: 500px;
+overflow-y: auto;
+max-width: 1000px
+}
+```
+
+```{r}
+#| echo: false
+#| warning: false
+plots <- readRDS("calibration_plots.rds")
+
+title <- paste0(
+  "Calibration report. ",
+  params$country, " (", params$iso3c, ").",
+  " Admin level: ", params$admin_level, ".",
+  " Version: ", params$version
+)
+facet_plot_width <- 10
+```
+
+---
+title: "`r title`"
+title-block-banner: true
+---
+
+## National summaries
+
+::: panel-tabset
+
+## PfPr
+
+```{r plot-pf-prev}
+#| echo: false
+#| warning: false
+plots$national_prev_pf_plot
+```
+
+## PvPr
+
+```{r plot-pv-prev}
+#| echo: false
+#| warning: false
+plots$national_prev_pv_plot
+```
+
+## Clinical incidence
+
+```{r plot-incidence}
+#| echo: false
+#| warning: false
+plots$national_inc_plot
+```
+
+## Cases
+
+```{r plot-cases}
+#| echo: false
+#| warning: false
+plots$national_cases_plot
+```
+
+## Mortality Rate
+
+```{r plot-mortality}
+#| echo: false
+#| warning: false
+plots$national_mortality_plot
+```
+
+## Deaths
+
+```{r plot-deaths}
+#| echo: false
+#| warning: false
+plots$national_deaths
+```
+:::
+
+
+### Calibration Pf
+
+```{r,echo=FALSE}
+fheight_prev = min(params$n_sites, 650)
+```
+
+```{r plot-pf_calibration, fig.height=fheight_prev}
+#| class: output
+#| echo: false
+#| warning: false
+plots$calibration_fit_pf
+```
+
+### Calibration Pv
+
+```{r plot-pv_calibration, fig.height=fheight_prev}
+#| class: output
+#| echo: false
+#| warning: false
+plots$calibration_fit_pv
+```
+

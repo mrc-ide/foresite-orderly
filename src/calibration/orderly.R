@@ -20,6 +20,21 @@ orderly2::orderly_dependency(
   query = "latest(parameter:version_name == this:version_name && parameter:iso3c ==  this:iso3c && parameter:admin_level == this:admin_level && parameter:urban_rural == this:urban_rural)",
   files = c("site.rds")
 )
+
+orderly2::orderly_artefact(
+  description = "Raw list of calibration plots",
+  files = "calibration_plots.rds"
+)
+
+orderly2::orderly_artefact(
+  description = "HTML calibration report",
+  files = "calibration_report.html"
+)
+
+orderly2::orderly_artefact(
+  description = "Calibrated site",
+  files = "site.rds"
+)
 # ------------------------------------------------------------------------------
 
 # Initial set up ---------------------------------------------------------------
@@ -111,7 +126,8 @@ diagnostic_prev <-  lapply(calibration_output, "[[", 3) |>
 diagnostic_prev$name <- apply(diagnostic_prev[,group_names], 1, paste, collapse = " | ")
 
 # TODO: update site EIR
-# site$eir <- eir_estimates
+site$eir <- eir_estimates
+saveRDS(site, "site.RDS")
 # ------------------------------------------------------------------------------
 
 # Prevalence diagnostic plots --------------------------------------------------
@@ -133,7 +149,7 @@ calibration_fit_pf <- ggplot2::ggplot() +
     ggplot2::aes(x = year + 0.5, y = pfpr),
     col = "darkred"
   ) +
-  ggplot2::facet_wrap(~ name, ncol = 4) +
+  ggplot2::facet_wrap(~ name, ncol = 2) +
   ggplot2::theme(
     strip.background = ggplot2::element_rect(fill = "white")
   ) +
@@ -153,7 +169,7 @@ calibration_fit_pv <- ggplot2::ggplot() +
     ggplot2::aes(x = year + 0.5, y = pvpr),
     col = "darkred"
   ) +
-  ggplot2::facet_wrap(~ name, ncol = 4) +
+  ggplot2::facet_wrap(~ name, ncol = 2) +
   ggplot2::theme(
     strip.background = ggplot2::element_rect(fill = "white")
   ) +
@@ -165,7 +181,7 @@ diagnostic_prev_national <- diagnostic_prev |>
   dplyr::summarise(
     prevalence_2_10 = weighted.mean(prevalence_2_10, par_2_10),
     prevalence_1_100 = weighted.mean(prevalence_1_100, par_1_100),
-    .by = c("year", "month", "week", "day", "time")
+    .by = c("year", "month", "week", "day", "time", "sp")
   )
 map_prev_national <- map_prev |>
   dplyr::summarise(
@@ -176,7 +192,7 @@ map_prev_national <- map_prev |>
 
 national_prev_pf_plot <- ggplot2::ggplot() +
   ggplot2::geom_line(
-    data  = dplyr::filter(diagnostic_prev, sp == "pf"),
+    data  = dplyr::filter(diagnostic_prev_national, sp == "pf"),
     ggplot2::aes(x = time, y = prevalence_2_10),
     col = "grey50"
   ) +
@@ -193,7 +209,7 @@ national_prev_pf_plot <- ggplot2::ggplot() +
 
 national_prev_pv_plot <- ggplot2::ggplot() +
   ggplot2::geom_line(
-    data  = dplyr::filter(diagnostic_prev, sp == "pv"),
+    data  = dplyr::filter(diagnostic_prev_national, sp == "pv"),
     ggplot2::aes(x = time, y = prevalence_1_100),
     col = "grey50"
   ) +
@@ -210,6 +226,129 @@ national_prev_pv_plot <- ggplot2::ggplot() +
 # ------------------------------------------------------------------------------
 
 # Epi diagnostic plots ---------------------------------------------------------
+national_epi <- diagnostic_epi |>
+  dplyr::summarise(
+    clinical = weighted.mean(clinical, par) * 365,
+    mortality = weighted.mean(mortality, par) * 365,
+    cases = sum(cases),
+    deaths = sum(deaths),
+    .by = "year"
+  )
+
+national_inc_plot <- ggplot2::ggplot() +
+  ggplot2::geom_line(
+    data  = national_epi,
+    ggplot2::aes(x = year, y = clinical),
+    col = "black",
+    linewidth = 1
+  ) +
+  ggplot2::geom_point(
+    data = site$cases_deaths,
+    ggplot2::aes(x = year, y = wmr_incidence),
+    col = "darkred",
+    size = 2
+  ) +
+  ggplot2::geom_errorbar(
+    data = site$cases_deaths,
+    ggplot2::aes(x = year , ymin = wmr_incidence_l, ymax = wmr_incidence_u),
+    col = "darkred"
+  ) +
+  ggplot2::ylim(0, NA) +
+  ggplot2::ylab("Clinical incidence\n(per person, per year") +
+  ggplot2::xlab("Year") +
+  ggplot2::theme_bw()
 
 
+national_cases_plot <- ggplot2::ggplot() +
+  ggplot2::geom_line(
+    data  = national_epi,
+    ggplot2::aes(x = year, y = cases),
+    col = "black",
+    linewidth = 1
+  ) +
+  ggplot2::geom_point(
+    data = site$cases_deaths,
+    ggplot2::aes(x = year, y = wmr_cases),
+    col = "darkred",
+    size = 2
+  ) +
+  ggplot2::geom_errorbar(
+    data = site$cases_deaths,
+    ggplot2::aes(x = year , ymin = wmr_cases_l, ymax = wmr_cases_u),
+    col = "darkred"
+  ) +
+  ggplot2::ylim(0, NA) +
+  ggplot2::ylab("Clinical cases") +
+  ggplot2::xlab("Year") +
+  ggplot2::theme_bw()
+
+national_mortality_plot <- ggplot2::ggplot() +
+  ggplot2::geom_line(
+    data  = national_epi,
+    ggplot2::aes(x = year, y = mortality),
+    col = "black",
+    linewidth = 1
+  ) +
+  ggplot2::geom_point(
+    data = site$cases_deaths,
+    ggplot2::aes(x = year, y = wmr_mortality),
+    col = "darkred",
+    size = 2
+  ) +
+  ggplot2::geom_errorbar(
+    data = site$cases_deaths,
+    ggplot2::aes(x = year, ymin = wmr_mortality_l, ymax = wmr_mortality_u),
+    col = "darkred"
+  ) +
+  ggplot2::ylim(0, NA) +
+  ggplot2::ylab("Mortality rate\n(per person, per year") +
+  ggplot2::xlab("Year") +
+  ggplot2::theme_bw()
+
+national_deaths <- ggplot2::ggplot() +
+  ggplot2::geom_line(
+    data  = national_epi,
+    ggplot2::aes(x = year, y = deaths),
+    col = "black",
+    linewidth = 1
+  ) +
+  ggplot2::geom_point(
+    data = site$cases_deaths,
+    ggplot2::aes(x = year + 0.5, y = wmr_deaths),
+    col = "darkred",
+    size = 2
+  ) +
+  ggplot2::geom_errorbar(
+    data = site$cases_deaths,
+    ggplot2::aes(x = year + 0.5, ymin = wmr_deaths_l, ymax = wmr_deaths_u),
+    col = "darkred"
+  ) +
+  ggplot2::ylim(0, NA) +
+  ggplot2::ylab("Deaths") +
+  ggplot2::theme_bw()
+# ------------------------------------------------------------------------------
+
+# Diagnostic report ------------------------------------------------------------
+calibration_plots <- list(
+  calibration_fit_pf = calibration_fit_pf, 
+  calibration_fit_pv = calibration_fit_pv,
+  national_prev_pf_plot = national_prev_pf_plot,
+  national_prev_pv_plot = national_prev_pv_plot,
+  national_inc_plot = national_inc_plot, 
+  national_cases_plot = national_cases_plot,
+  national_mortality_plot = national_mortality_plot,
+  national_deaths = national_deaths
+)
+saveRDS(calibration_plots, "calibration_plots.rds")
+
+quarto::quarto_render(
+  input = "calibration_report.qmd",
+  execute_params = list(
+    iso3c = iso3c,
+    country = site$country,
+    admin_level = admin_level,
+    version = site$version,
+    n_sites = nrow(site$sites)
+  )
+)
 # ------------------------------------------------------------------------------

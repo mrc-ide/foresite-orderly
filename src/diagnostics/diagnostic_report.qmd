@@ -99,7 +99,7 @@ plots$deaths
 plots$country_prevalence
 ```
 
-### Prevlance maps
+### Prevalence maps
 
 ```{r,echo=FALSE}
 fheight_prev = min(length(unique(plots$pfpr_map$data$year)) * 2, 650)

@@ -648,7 +648,7 @@ saveRDS(diagnostic_plots, "diagnostic_plots.rds")
 quarto::quarto_render(
   input = "diagnostic_report.qmd",
   execute_params = list(
-    iso3c =  iso3c,
+    iso3c = iso3c,
     country = site$country,
     admin_level = admin_level,
     version = site$version
