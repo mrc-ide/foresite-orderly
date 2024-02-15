@@ -501,7 +501,7 @@ prop_act <- prop_act |>
   tidyr::complete(year = 2000:max(years)) |>
   tidyr::fill(dplyr::all_of("prop_act"))
 df <- df |>
-  left_join(
+  dplyr::left_join(
     prop_act,
     by = "year"
   )
@@ -518,7 +518,7 @@ if(iso3c %in% prop_public$iso3c){
 }
 prop_public <- data.frame(year = years, prop_public = prop_public)
 df <- df |>
-  left_join(
+  dplyr::left_join(
     prop_public,
     by = "year"
   )

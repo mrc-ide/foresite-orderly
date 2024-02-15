@@ -165,6 +165,8 @@ interventions <- spatial |>
     r21_cov = weighted.mean(r21_cov, par),
     lsm_cov = weighted.mean(lsm_cov, par),
     pmc_cov = weighted.mean(pmc_cov, par),
+    prop_act = weighted.mean(prop_act, par),
+    prop_public = weighted.mean(prop_public, par),
     dplyr::across(dplyr::contains("smc"), \(x) weighted.mean(x, par)),
     .by = dplyr::all_of(c(grouping, "year"))
   )
@@ -231,7 +233,8 @@ interventions <- interventions |>
 interventions <- interventions |>
   dplyr::mutate(
     smc_min_age = 91,
-    smc_max_age = 1825
+    smc_max_age = 1825,
+    smc_drug = "sp_aq"
 )
 
 # Add in IRS assumptions

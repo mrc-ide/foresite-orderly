@@ -55,7 +55,7 @@ check_elimination <- function(output, target){
   any(output == 0 & target != 0)
 }
 
-check_fit <- function(eir, parameters, target, output_f){
+check_fit <- function(eir, parameters, target, output_f, return_raw = FALSE){
   parameters <- parameters |>
     malariasimulation::set_equilibrium(
       init_EIR = eir
@@ -64,6 +64,9 @@ check_fit <- function(eir, parameters, target, output_f){
     timesteps = parameters$timesteps,
     parameters = parameters
   )
+  if(return_raw){
+    return(simulation)
+  }
   output <- output_f(simulation)
   elimination <- check_elimination(output, target)
   objective <- ifelse(elimination, NA, sum(output - target))
@@ -106,7 +109,7 @@ print_update <- function(eir1 = NA, fit1 = NA, eir2 = NA, fit2 = NA, attempts = 
 output <- function(x){
   # Estimate annual prevalence
   x$pfpr <- x$n_detect_730_3649 / x$n_730_3649
-  year <- 2000:2022
+  year <- 2000:2024
   pfpr <- tapply(x$pfpr, rep(year, each = 365), mean)
   # extract years
   pfpr_subset <- pfpr[year %in% 2014:2018]
@@ -114,7 +117,8 @@ output <- function(x){
 }
 # ------------------------------------------------------------------------------
 
-calibrate <- function(x, site, human_population = 1000, burnin = 0, max_attempts = 10, eir_limits = c(0, 1000)){
+calibrate <- function(x, site, human_population = c(10000, 30000, 50000), burnin = 0, max_attempts = 10, eir_limits = c(0, 1000)){
+  #   browser()
   print(x)
   sub_site <- site::subset_site(site, x)
   species <- x$sp
@@ -125,16 +129,16 @@ calibrate <- function(x, site, human_population = 1000, burnin = 0, max_attempts
   } else {
     prevalence <- sub_site$prevalence$pvpr 
   }
-  target <- prevalence[site$prevalence$year %in% 2014:2018]
+  target <- prevalence[sub_site$prevalence$year %in% 2014:2018]
   
   # Set parameters
   p <- site::site_parameters(
     interventions = sub_site$interventions,
     demography = sub_site$demography,
-    vectors = sub_site$vectors,
-    seasonality = sub_site$seasonality,
+    vectors = sub_site$vectors$vector_species,
+    seasonality = sub_site$seasonality$seasonality_parameters,
     overrides = list(
-      human_population = human_population
+      human_population = human_population[1]
     ),
     species  = species,
     burnin = burnin
@@ -149,16 +153,23 @@ calibrate <- function(x, site, human_population = 1000, burnin = 0, max_attempts
   # Get fit of eir1
   fit1 <- NA
   min_eir <- 0
+  attempts <- 0
   while(is.na(fit1)){
     fit1 <- check_fit(eir = eir1, parameters = p, target = target, output_f = output)
     attempts <- attempts + 1
     print_update(eir1 = eir1, fit1 = fit1, attempts = attempts)
     
-    # In the case that our starting EIR leads to unwanted elimination, 
-    # we must increase eir, and can set a lower bound on future eir proposals
+    # In the case that our starting EIR leads to unwanted elimination:
+    ## First approach is to increasing human population if available, then
+    ## Second approach is to increase eir, and can set a lower bound on future eir proposals
     if(is.na(fit1)){
-      eir1 <- proposal(x = eir1, limits = eir_limits, direction = "increase")
-      min_eir <- eir1
+      if(p$human_population < max(human_population)){
+        message("Increasing human population due to elimination\n")
+        p$human_population <- human_population[which(human_population == p$human_population) + 1]
+      } else {
+        eir1 <- proposal(x = eir1, limits = eir_limits, direction = "increase")
+        min_eir <- eir1
+      }
     }
   }
   
@@ -215,11 +226,48 @@ calibrate <- function(x, site, human_population = 1000, burnin = 0, max_attempts
     }
     
     attempts <- attempts + 1
-    if(attemps == max_attempts){
+    if(attempts == max_attempts){
       x$eir <- mean(c(eir1, eir2))
       message("Terminating due to maximum attempts reached")
+      break
     }
   }
   
-  return(x)
+  diagnostic_run <- check_fit(
+    eir = x$eir,
+    parameters = p,
+    target = NULL,
+    output_f = NULL,
+    return_raw = TRUE
+  )
+  
+  prev <- postie::get_prevalence(
+    diagnostic_run
+  ) |>
+    dplyr::bind_cols(
+      dplyr::select(
+        sub_site$eir,
+        -c("eir")
+      )
+    )
+  
+  scaler <- ifelse(species == "pf", 0.215, 0.003)
+  epi <- postie::get_rates(
+    diagnostic_run,
+    scaler = scaler
+  ) |>
+    dplyr::bind_cols(
+      dplyr::select(
+        sub_site$eir,
+        -c("eir")
+      )
+    )
+  
+  return(
+    list(
+      eir_fit = x,
+      epi = epi,
+      prev = prev
+    )
+  )
 }

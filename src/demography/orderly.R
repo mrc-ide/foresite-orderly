@@ -1,6 +1,6 @@
 # Orderly set-up ---------------------------------------------------------------
 orderly2::orderly_description(
-  display = "Mortaltiy rate adjustments",
+  display = "Mortality rate adjustments",
   long = "Adjusts UN mortality rates such that a model run with a fixed simulation
   population size would return the observed age distribution (at equilibrium)."
 )
