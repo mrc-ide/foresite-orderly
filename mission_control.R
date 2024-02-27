@@ -2,7 +2,8 @@
 
 # Data inputs
 orderly2::orderly_run(name = "data_un")
-orderly2::orderly_run(name = "data_un")
+orderly2::orderly_run(name = "data_map")
+orderly2::orderly_run(name = "data_worldpop")
 
 # UN population and demography
 orderly2::orderly_run(

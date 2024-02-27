@@ -19,6 +19,21 @@ orderly2::orderly_dependency(
   files = "un_wup.rds"
 )
 
+orderly2::orderly_dependency(
+  name = "data_map",
+  query = "latest()",
+  files = c(
+    "data/access/",
+    "data/blood_disorders/",
+    "data/irs/",
+    "data/itn/",
+    "data/pfpr/",
+    "data/pvpr/",
+    "data/smc/",
+    "data/tx/"
+  )
+)
+
 orderly2::orderly_artefact(
   description = "Spatial data",
   files = "spatial.rds"
@@ -80,17 +95,15 @@ shape_df <- shape |>
 # ------------------------------------------------------------------------------
 
 # Prevalence -------------------------------------------------------------------
-pfpr_data <- paste0(external_data_address, "202206_Global_Pf_Parasite_Rate_2000/")
 pfpr_years <- 2000:2020
-pfpr_files <- paste0(pfpr_data, "202206_Global_Pf_Parasite_Rate_", pfpr_years, ".tif")
+pfpr_files <- paste0("data/pfpr/202206_Global_Pf_Parasite_Rate_", pfpr_years, ".tif")
 pfpr_raster <- terra::rast(pfpr_files) |>
   terra::crop(shape) |>
   pad_raster(pfpr_years, years)
 names(pfpr_raster) <- paste0("pfpr_", years)
 
-pvpr_data <- paste0(external_data_address, "202206_Global_Pv_Parasite_Rate_2000/")
 pvpr_years <- 2000:2020
-pvpr_files <- paste0(pvpr_data, "202206_Global_Pv_Parasite_Rate_", pvpr_years, ".tif")
+pvpr_files <- paste0("data/pvpr/202206_Global_Pv_Parasite_Rate_", pvpr_years, ".tif")
 pvpr_raster <- terra::rast(pvpr_files) |>
   terra::crop(shape) |>
   pad_raster(pfpr_years, years)
@@ -157,9 +170,8 @@ names(pop_at_risk_pv_raster) <- paste0("pop_at_risk_pv_", years)
 # ------------------------------------------------------------------------------
 
 # ITNs -------------------------------------------------------------------------
-itn_data <- paste0(external_data_address, "202106_Africa_Insecticide_Treated_Net_Use_2000/")
 itn_years <- 2000:2020
-itn_files <- paste0(itn_data, "202106_Africa_Insecticide_Treated_Net_Use_", itn_years, ".tiff")
+itn_files <- paste0("data/itn/202106_Africa_Insecticide_Treated_Net_Use_", itn_years, ".tiff")
 itn_raster <- terra::rast(itn_files) |>
   pad_raster(itn_years, years)
 approximate_itn <- FALSE
@@ -175,9 +187,8 @@ if(extents_overlap(itn_raster, shape)){
 # ------------------------------------------------------------------------------
 
 # IRS -------------------------------------------------------------------------
-irs_data <- paste0(external_data_address, "202106_Africa_Indoor_Residual_Spraying_Coverage_2000/")
 irs_years <- 2000:2020
-irs_files <- paste0(irs_data, "/202106_Africa_Indoor_Residual_Spraying_Coverage_", irs_years, ".tif")
+irs_files <- paste0("data/irs/202106_Africa_Indoor_Residual_Spraying_Coverage_", irs_years, ".tif")
 irs_raster <- terra::rast(irs_files) |>
   pad_raster(irs_years, years)
 approximate_irs <- FALSE
@@ -193,9 +204,8 @@ if(extents_overlap(irs_raster, shape)){
 # ------------------------------------------------------------------------------
 
 # Tx ---------------------------------------------------------------------------
-tx_data <- paste0(external_data_address, "202106_Global_Antimalarial_Effective_Treatment_2000/")
 tx_years <- 2000:2020
-tx_files <- paste0(tx_data, "/202106_Global_Antimalarial_Effective_Treatment_", tx_years, ".tif")
+tx_files <- paste0("data/tx/202106_Global_Antimalarial_Effective_Treatment_", tx_years, ".tif")
 tx_raster <- terra::rast(tx_files) |>
   pad_raster(tx_years, years)
 
@@ -210,13 +220,12 @@ if(extents_overlap(tx_raster, shape)){
 # ------------------------------------------------------------------------------
 
 # SMC --------------------------------------------------------------------------
-smc_data <- paste0(external_data_address, "SMC rasters-20231122T161433Z-001/")
 smc_years <- 2012:2020
 smc_months <- c("01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12")
 
 smc_raster <- list()
 for(m in seq_along(smc_months)){
-  smc_files <- paste0(smc_data, "SMC_", smc_years, ".", smc_months[m], ".tif")
+  smc_files <- paste0("data/smc/SMC_", smc_years, ".", smc_months[m], ".tif")
   smc_raster_month <- terra::rast(smc_files)
   if(extents_overlap(smc_raster_month, shape)){
     smc_raster[[m]] <- smc_raster_month |>
@@ -296,13 +305,9 @@ for(m in seq_along(rainfall_months)){
 # ------------------------------------------------------------------------------
 
 # Blood disorders --------------------------------------------------------------
-sicklecell_data <- paste0(external_data_address, "201201_Global_Sickle_Haemoglobin_HbS_Allele_Frequency_2010/")
-g6pd_data <- paste0(external_data_address, "201201_Global_G6PDd_Allele_Frequency_2010/")
-hpc_data <- paste0(external_data_address, "201201_Africa_HbC_Allele_Frequency_2010/")
-duffy_data <- paste0(external_data_address, "201201_Global_Duffy_Negativity_Phenotype_Frequency_2010/")
 blood_disorder_years <- 2010
 
-sicklecell_files <- list.files(sicklecell_data, pattern = "*.tif", full.names = TRUE)
+sicklecell_files <- "data/blood_disorders/201201_Global_Sickle_Haemoglobin_HbS_Allele_Frequency_2010.tif"
 sicklecell_raster <- terra::rast(sicklecell_files)
 if(extents_overlap(sicklecell_raster, shape)){
   sicklecell_raster <- sicklecell_raster |>
@@ -312,7 +317,7 @@ if(extents_overlap(sicklecell_raster, shape)){
   sicklecell_raster <- NA
 }
 
-g6pd_files <- list.files(g6pd_data, pattern = "*.tif", full.names = TRUE)
+g6pd_files <- "data/blood_disorders/201201_Global_G6PDd_Allele_Frequency_2010.tif"
 g6pd_raster <- terra::rast(g6pd_files)
 if(extents_overlap(g6pd_raster, shape)){
   g6pd_raster <- g6pd_raster |>
@@ -322,7 +327,7 @@ if(extents_overlap(g6pd_raster, shape)){
   g6pd_raster <- NA
 }
 
-hpc_files <- list.files(hpc_data, pattern = "*.tif", full.names = TRUE)
+hpc_files <- "data/blood_disorders/201201_Africa_HbC_Allele_Frequency_2010.tif"
 hpc_raster <- terra::rast(hpc_files)
 if(extents_overlap(hpc_raster, shape)){
   hpc_raster <- hpc_raster |>
@@ -332,7 +337,7 @@ if(extents_overlap(hpc_raster, shape)){
   hpc_raster <- NA
 }
 
-duffy_files <- list.files(duffy_data, pattern = "*.tif", full.names = TRUE)
+duffy_files <- "data/blood_disorders/201201_Global_Duffy_Negativity_Phenotype_Frequency_2010.tif"
 duffy_raster <- terra::rast(duffy_files)
 if(extents_overlap(duffy_raster, shape)){
   duffy_raster <- duffy_raster |>
@@ -344,39 +349,38 @@ if(extents_overlap(duffy_raster, shape)){
 # ------------------------------------------------------------------------------
 
 # Travel times -----------------------------------------------------------------
-motor_travel_healthcare_data <- paste0(external_data_address , "202001_Global_Motorized_Travel_Time_to_Healthcare_2019/")
-walking_travel_healthcare_data <- paste0(external_data_address , "202001_Global_Walking_Only_Travel_Time_To_Healthcare_2019/")
-city_travel_time_data <- paste0(external_data_address , "201501_Global_Travel_Time_to_Cities_2015/")
+travel_time_year <- 2019
+city_travel_time_year <- 2015
 
-motor_travel_healthcare_files <- list.files(motor_travel_healthcare_data, pattern = "*.tif", full.names = TRUE)
+motor_travel_healthcare_files <- "data/access/202001_Global_Motorized_Travel_Time_to_Healthcare_2019.tif"
 motor_travel_healthcare_raster <- terra::rast(motor_travel_healthcare_files)
 if(extents_overlap(motor_travel_healthcare_raster, shape)){
   motor_travel_healthcare_raster <- motor_travel_healthcare_raster |>
     terra::crop(shape) |>
     terra::resample(pfpr_raster) |>  
-    pad_raster(2019, years, forward_empty = TRUE)
+    pad_raster(travel_time_year, years, forward_empty = TRUE)
 } else {
   motor_travel_healthcare_raster <- NA
 }
 
-walking_travel_healthcare_files <- list.files(walking_travel_healthcare_data, pattern = "*.tif", full.names = TRUE)
+walking_travel_healthcare_files <- "data/access/202001_Global_Walking_Only_Travel_Time_To_Healthcare_2019.tif"
 walking_travel_healthcare_raster <- terra::rast(walking_travel_healthcare_files)
 if(extents_overlap(walking_travel_healthcare_raster, shape)){
   walking_travel_healthcare_raster <- walking_travel_healthcare_raster |>
     terra::crop(shape) |>
     terra::resample(pfpr_raster) |>  
-    pad_raster(2019, years, forward_empty = TRUE)
+    pad_raster(travel_time_year, years, forward_empty = TRUE)
 } else {
   walking_travel_healthcare_raster <- NA
 }
 
-city_travel_time_files <- list.files(city_travel_time_data, pattern = "*.tif", full.names = TRUE)
+city_travel_time_files <- "data/access/201501_Global_Travel_Time_to_Cities_2015.tif"
 city_travel_time_raster <- terra::rast(city_travel_time_files)
 if(extents_overlap(city_travel_time_raster, shape)){
   city_travel_time_raster <- city_travel_time_raster |>
     terra::crop(shape) |>
     terra::resample(pfpr_raster) |>  
-    pad_raster(2015, years, forward_empty = TRUE)
+    pad_raster(city_travel_time_year, years, forward_empty = TRUE)
 } else {
   city_travel_time_raster <- NA
 }
