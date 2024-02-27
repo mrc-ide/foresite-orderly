@@ -1,5 +1,8 @@
 # Mission control --------------------------------------------------------------
 
+# Data inputs
+orderly2::orderly_run(name = "data_un")
+
 # UN population and demography
 orderly2::orderly_run(
   name = "un_wpp"

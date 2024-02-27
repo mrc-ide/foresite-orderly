@@ -5,6 +5,19 @@ orderly2::orderly_description(
   single year age group death rates, population and population proportions"
 )
 
+orderly2::orderly_dependency(
+  name = "data_un",
+  query = "latest()",
+  files = c(
+    life_table_past.csv = "data/WPP2022_Life_Table_Complete_Medium_Both_1950-2021.csv",
+    life_table_future.csv = "data/WPP2022_Life_Table_Complete_Medium_Both_2022-2100.csv",
+    population_past.csv = "data/WPP2022_Population1JanuaryBySingleAgeSex_Medium_1950-2021.csv",
+    population_future.csv = "data/WPP2022_Population1JanuaryBySingleAgeSex_Medium_2022-2100.csv",
+    urbanisation_prospects.csv = "data/WUP2018-F02-Proportion_Urban.csv",
+    neonatal_mortality.csv = "data/Neonatal_Mortality_Rates_2022.csv"
+  )
+)
+
 orderly2::orderly_artefact(
   description = "UN WPP population and demography data", 
   files = "un_wpp.rds"
@@ -21,24 +34,9 @@ orderly2::orderly_artefact(
 )
 # ------------------------------------------------------------------------------
 
-# Fixed inputs -----------------------------------------------------------------
-external_data_address <- "C:/Users/pwinskil/OneDrive - Imperial College London/malaria_sites_data/2023/"
-# ------------------------------------------------------------------------------
-
 # Life tables ------------------------------------------------------------------
-historical_life_tables <- read.csv(
-  file = 
-    paste0(
-      external_data_address,
-      "WPP2022_Life_Table_Complete_Medium_Both_1950-2021.csv"
-    )
-)
-future_life_tables <- read.csv(
-  file = paste0(
-    external_data_address,
-    "WPP2022_Life_Table_Complete_Medium_Both_2022-2100.csv"
-  )
-)
+historical_life_tables <- read.csv("life_table_past.csv")
+future_life_tables <- read.csv("life_table_future.csv")
 
 life_tables <- historical_life_tables |>
   dplyr::bind_rows(future_life_tables) |>
@@ -68,18 +66,8 @@ life_tables <- historical_life_tables |>
 # ------------------------------------------------------------------------------
 
 # Population -------------------------------------------------------------------
-historical_populations <- read.csv(
-  file = paste0(
-    external_data_address,
-    "/WPP2022_Population1JanuaryBySingleAgeSex_Medium_1950-2021.csv"
-  )
-)
-future_populations <- read.csv(
-  file = paste0(
-    external_data_address,
-    "WPP2022_Population1JanuaryBySingleAgeSex_Medium_2022-2100.csv"
-  )
-)
+historical_populations <- read.csv("population_past.csv")
+future_populations <- read.csv("population_future.csv")
 
 populations <- historical_populations |>
   dplyr::bind_rows(future_populations) |>
@@ -125,12 +113,7 @@ saveRDS(un_wpp, "un_wpp.rds")
 # ------------------------------------------------------------------------------
 
 # Neonatal mortality -----------------------------------------------------------
-unicef_neonatal_mortality <- read.csv(
-  file = paste0(
-    external_data_address,
-    "Neonatal_Mortality_Rates_2022.csv"
-  )
-) |>
+unicef_neonatal_mortality <- read.csv("neonatal_mortality.csv") |>
   dplyr::filter(
     Uncertainty.Bounds. == "Median",
     Country.Name %in% countrycode::codelist$country.name.en
@@ -154,12 +137,7 @@ saveRDS(unicef_neonatal_mortality, "unicef_neonatal_mortality.rds")
 
 # Urbanisation -----------------------------------------------------------------
 # Format and interpolate between 5 year bands
-un_wup <- read.csv(
-  file = paste0(
-    external_data_address,
-    "WUP2018-F02-Proportion_Urban.csv"
-  )
-) |>
+un_wup <- read.csv("urbanisation_prospects.csv") |>
   dplyr::rename(
     name = `Region..subregion..country.or.area`,
     code = "Country.code") |>
