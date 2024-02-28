@@ -42,7 +42,7 @@ for(iso in isos){
     parameters = list(
       version_name = "testing",
       iso3c = iso,
-      boundary_version = "GADM_4.10"
+      boundary_version = "GADM_4.1.0"
     ),
     echo = FALSE
   )
@@ -69,7 +69,8 @@ for(iso in isos){
         version_name = "testing",
         iso3c = iso,
         admin_level = admin,
-        urban_rural = TRUE
+        urban_rural = TRUE,
+        boundary_version = "GADM_4.1.0"
       ),
       echo = FALSE
     )

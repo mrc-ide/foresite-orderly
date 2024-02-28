@@ -8,7 +8,8 @@ orderly2::orderly_parameters(
   version_name = "testing",
   iso3c = "BFA",
   admin_level = 1,
-  urban_rural = TRUE
+  urban_rural = TRUE,
+  boundary_version = "GADM_4.1.0"
 )
 
 orderly2::orderly_resource(
@@ -31,6 +32,20 @@ orderly2::orderly_dependency(
   name = "population",
   query = "latest(parameter:version_name == this:version_name && parameter:iso3c ==  this:iso3c)",
   files = c("population.rds", "population_age.rds")
+)
+
+orderly2::orderly_dependency(
+  name = "data_boundaries",
+  query = "latest(parameter:boundary_version == this:boundary_version)",
+  files = c("data/boundaries" = paste0("data/", boundary_version, "/", iso3c, "/"))
+)
+
+orderly2::orderly_dependency(
+  name = "data_vectors",
+  query = "latest()",
+  files = c(
+    "data/pyrethroid_resistance/" 
+  )
 )
 
 orderly2::orderly_artefact(
@@ -66,9 +81,7 @@ levels <- admin_level:0
 for(level in levels){
   
   shape_address <- paste0(
-    "C:/Users/pwinskil/OneDrive - Imperial College London/GADM/version_4.1.0/iso3c/",
-    iso3c,
-    "/",
+    "data/boundaries/",
     iso3c,
     "_",
     level,
@@ -119,7 +132,7 @@ population_age <- readRDS("population_age.rds") |>
 # ------------------------------------------------------------------------------
 
 # Pyrethroid resistance --------------------------------------------------------
-old_resistance <- read.csv(paste0(external_data_address, "pyrethroid_resistance_coordinate.csv"))
+old_resistance <- read.csv("data/pyrethroid_resistance/pyrethroid_resistance.csv")
 
 if(iso3c %in% old_resistance$iso3c){
   old_resistance <- old_resistance |>
@@ -235,12 +248,10 @@ interventions <- interventions |>
     smc_min_age = 91,
     smc_max_age = 1825,
     smc_drug = "sp_aq"
-)
+  )
 
 # Add in IRS assumptions
-irs_parameters <- read.csv(
-  paste0(external_data_address, "irs_insecticide_parameters.csv")
-)
+irs_parameters <- read.csv("data/insecticide_parameters/irs_insecticide_parameters.csv")
 actellic_switch_year <- 2017
 interventions <- interventions |>
   dplyr::mutate(
@@ -299,7 +310,7 @@ interventions <- interventions |>
   dplyr::left_join(pyrethroid_resistance, by = c(grouping[grouping != "urban_rural"], "year"))
 
 ## Link with net type and net efficacy
-new_net_introductions <- read.csv(paste0(external_data_address, "Alliance_for_malaria_prevention/new_net_introductions.csv"))
+new_net_introductions <- read.csv("data/alliance_malaria_prevention/new_net_introductions.csv")
 interventions <- interventions |>
   dplyr::mutate(net_type = ifelse(year == 2000, "pyrethroid_only", NA)) |>
   dplyr::left_join(new_net_introductions, by = c("iso3c", "name_1", "year")) |>
@@ -311,7 +322,7 @@ interventions <- interventions |>
 
 
 ## Add net efficacy | resistance and net type
-net_efficacy_parameters <- read.csv(paste0(external_data_address, "/net_efficacy_2023.csv"))
+net_efficacy_parameters <- read.csv("data/insecticide_parameters/net_efficacy_2023.csv")
 interventions <- interventions |>
   dplyr::mutate(pyrethroid_resistance = round(pyrethroid_resistance, 2)) |>
   dplyr::left_join(net_efficacy_parameters, by = c("pyrethroid_resistance", "net_type"))

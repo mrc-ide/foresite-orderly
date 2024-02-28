@@ -80,6 +80,7 @@ orderly2::orderly_artefact(
   files = "spatial.rds"
 )
 
+# TODO: This may not be used anywhere?
 orderly2::orderly_artefact(
   description = "Spatial polygons",
   files = "shape.rds"
