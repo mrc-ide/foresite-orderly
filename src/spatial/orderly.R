@@ -34,6 +34,12 @@ orderly2::orderly_dependency(
   )
 )
 
+orderly2::orderly_dependency(
+  name = "data_worldpop",
+  query = "latest()",
+  files = paste0("data/", iso3c, "/")
+)
+
 orderly2::orderly_artefact(
   description = "Spatial data",
   files = "spatial.rds"
@@ -118,9 +124,8 @@ pfpr_or_pvpr_limits <- pfpr_limits | pvpr_limits
 # ------------------------------------------------------------------------------
 
 # Population -------------------------------------------------------------------
-population_data <- paste0(external_data_address, "WorldPop/")
 population_years <- 2000:2020
-population_files <- paste0(population_data, "population_", iso3c, "_", population_years, ".tif")
+population_files <- paste0("data/", iso3c,  "/population_", iso3c, "_", population_years, ".tif")
 population_raster <- terra::rast(population_files) |>
   terra::crop(shape) |>
   terra::resample(pfpr_raster, method = "sum") |>

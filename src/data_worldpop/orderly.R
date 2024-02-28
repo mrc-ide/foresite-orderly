@@ -1,4 +1,4 @@
-wordpop_datafiles <- list.files("data/", pattern = "*.csv", full.names = TRUE)
+wordpop_datafiles <- list.files("data/", pattern = "*.tif", full.names = TRUE, recursive = TRUE)
 orderly2::orderly_resource(wordpop_datafiles)
 orderly2::orderly_artefact(
   description = "WorldPop population rasters. These are unconstrained, 
