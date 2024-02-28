@@ -9,7 +9,6 @@ boundaries_datafiles <- list.files(
 
 orderly2::orderly_resource(boundaries_datafiles)
 orderly2::orderly_artefact(
-  description = "WorldPop population rasters. These are unconstrained, 
-  un adjusted, individual country populations 2000-2020 at 1km resolution",
+  description = "Spatial boundaries",
   files = boundaries_datafiles
 )

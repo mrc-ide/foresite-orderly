@@ -42,6 +42,12 @@ orderly2::orderly_dependency(
 )
 
 orderly2::orderly_dependency(
+  name = "data_chirps",
+  query = "latest()",
+  files = "data/rainfall/"
+)
+
+orderly2::orderly_dependency(
   name = "data_boundaries",
   query = "latest(parameter:boundary_version == this:boundary_version)",
   files = c("data/boundaries" = paste0("data/", boundary_version, "/", iso3c, "/"))
@@ -70,9 +76,7 @@ source("spatial_utils.R")
 admin_levels <- 3:1
 for(level in admin_levels){
   shape_address <- paste0(
-    "data/",
-    boundaries,
-    "/",
+    "data/boundaries/",
     iso3c,
     "_",
     level,
@@ -299,13 +303,12 @@ colnames(vector_occurrence_df) <- paste0("occurrence_",names(vector_occurrence_r
 # ------------------------------------------------------------------------------
 
 # Rainfall ---------------------------------------------------------------------
-rainfall_data <- paste0(external_data_address, "chirps_monthly/")
 rainfall_years <- 2000:2022
 rainfall_months <- c("01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12")
 
 rainfall_raster <- list()
 for(m in seq_along(rainfall_months)){
-  rainfall_files <- paste0(rainfall_data, rainfall_years, "_", rainfall_months[m], ".tif")
+  rainfall_files <- paste0("data/rainfall/", rainfall_years, "_", rainfall_months[m], ".tif")
   rainfall_raster[[m]] <- terra:::rast(rainfall_files) |>
     terra::crop(shape) 
   terra::values(rainfall_raster[[m]])[terra::values(rainfall_raster[[m]]) == -9999] <- NA
