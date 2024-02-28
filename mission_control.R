@@ -4,6 +4,13 @@
 orderly2::orderly_run(name = "data_un")
 orderly2::orderly_run(name = "data_map")
 orderly2::orderly_run(name = "data_worldpop")
+orderly2::orderly_run(
+  name = "data_boundaries",
+  parameters = list(
+    boundary_version = "GADM_4.1.0"
+  )
+)
+
 
 # UN population and demography
 orderly2::orderly_run(
@@ -30,7 +37,8 @@ for(iso in isos){
     name = "spatial",
     parameters = list(
       version_name = "testing",
-      iso3c = iso
+      iso3c = iso,
+      boundary_version = "GADM_4.10"
     ),
     echo = FALSE
   )

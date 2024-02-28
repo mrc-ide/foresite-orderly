@@ -6,7 +6,8 @@ orderly2::orderly_description(
 
 orderly2::orderly_parameters(
   version_name = "testing",
-  iso3c = "BFA"
+  iso3c = "BFA",
+  boundary_version = "GADM_4.1.0"
 )
 
 orderly2::orderly_resource(
@@ -37,7 +38,13 @@ orderly2::orderly_dependency(
 orderly2::orderly_dependency(
   name = "data_worldpop",
   query = "latest()",
-  files = paste0("data/", iso3c, "/")
+  files = c("data/population" = paste0("data/population/", iso3c, "/"))
+)
+
+orderly2::orderly_dependency(
+  name = "data_boundaries",
+  query = "latest(parameter:boundary_version == this:boundary_version)",
+  files = c("data/boundaries" = paste0("data/", boundary_version, "/", iso3c, "/"))
 )
 
 orderly2::orderly_artefact(
@@ -63,8 +70,8 @@ source("spatial_utils.R")
 admin_levels <- 3:1
 for(level in admin_levels){
   shape_address <- paste0(
-    "C:/Users/pwinskil/OneDrive - Imperial College London/GADM/version_4.1.0/iso3c/",
-    iso3c,
+    "data/",
+    boundaries,
     "/",
     iso3c,
     "_",
@@ -125,7 +132,7 @@ pfpr_or_pvpr_limits <- pfpr_limits | pvpr_limits
 
 # Population -------------------------------------------------------------------
 population_years <- 2000:2020
-population_files <- paste0("data/", iso3c,  "/population_", iso3c, "_", population_years, ".tif")
+population_files <- paste0("data/population/population_", iso3c, "_", population_years, ".tif")
 population_raster <- terra::rast(population_files) |>
   terra::crop(shape) |>
   terra::resample(pfpr_raster, method = "sum") |>
