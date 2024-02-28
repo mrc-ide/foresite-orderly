@@ -60,6 +60,16 @@ orderly2::orderly_dependency(
 )
 
 orderly2::orderly_dependency(
+  name = "data_vectors",
+  query = "latest()",
+  files = c(
+    "data/vector_bionomics/",
+    "data/vector_occurrence/",
+    "data/vector_relative_abundance/"
+  )
+)
+
+orderly2::orderly_dependency(
   name = "data_boundaries",
   query = "latest(parameter:boundary_version == this:boundary_version)",
   files = c("data/boundaries" = paste0("data/", boundary_version, "/", iso3c, "/"))
@@ -77,7 +87,6 @@ orderly2::orderly_artefact(
 # ------------------------------------------------------------------------------
 
 # Fixed inputs -----------------------------------------------------------------
-external_data_address <- "C:/Users/pwinskil/OneDrive - Imperial College London/malaria_sites_data/2023/"
 years <- 2000:as.integer(format(Sys.Date(), "%Y"))
 source("spatial_utils.R")
 # ------------------------------------------------------------------------------
@@ -268,7 +277,7 @@ for(m in seq_along(smc_months)){
 # ------------------------------------------------------------------------------
 
 # Vectors ----------------------------------------------------------------------
-vector_data <- paste0(external_data_address, "Sinka_relative_abundance/")
+vector_data <- "data/vector_relative_abundance/"
 vectors <- c("gambiae", "arabiensis", "funestus")
 
 vector_raster <- list()
@@ -287,7 +296,7 @@ for(v in seq_along(vectors)){
   }
 }
 
-vector_occurrence_data <- paste0(external_data_address, "Sinka_occurrence/")
+vector_occurrence_data <- "data/vector_occurrence/"
 vectors_occurrence <- list.files(vector_occurrence_data) |>
   stringr::str_replace("occurrence_", "") |>
   stringr::str_replace(".tif", "")
