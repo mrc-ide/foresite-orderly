@@ -487,7 +487,7 @@ format(object.size(df), "Mb")
 # Fill interventions without spatial-raster inputs -----------------------------
 
 ## Vaccine
-rtss_cov_data <- read.csv(paste0(external_data_address, "rtss_coverage.csv")) |>
+rtss_cov_data <- read.csv("data/who/rtss_coverage.csv") |>
   dplyr::group_by(iso3c, name_1) |>
   tidyr::complete(year = min(year):as.integer(format(Sys.Date(), "%Y"))) |>
   tidyr::fill(rtss_cov) |>

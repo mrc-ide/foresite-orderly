@@ -26,4 +26,20 @@ TODO: URL
 
 TODO: Update
 
+---
+
+**Files**
+
+`who/rtss_coverage.csv`
+
+**Source**
+
+People protected by IRS as reported from the MVIP
+<https://files.givewell.org/files/DWDA%202009/PATH/WHO_WHO_Malaria_Vaccine_Implementation_Program_Briefing_2021.pdf>
+
+**Download date**
+
+2021/11/01
+
+
 
