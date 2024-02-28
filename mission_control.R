@@ -5,6 +5,8 @@ orderly2::orderly_run(name = "data_un")
 orderly2::orderly_run(name = "data_map")
 orderly2::orderly_run(name = "data_worldpop")
 orderly2::orderly_run(name = "data_chirps")
+orderly2::orderly_run(name = "data_dhs")
+orderly2::orderly_run(name = "data_who")
 orderly2::orderly_run(
   name = "data_boundaries",
   parameters = list(

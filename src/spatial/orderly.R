@@ -48,6 +48,18 @@ orderly2::orderly_dependency(
 )
 
 orderly2::orderly_dependency(
+  name = "data_dhs",
+  query = "latest()",
+  files = "data/dhs/"
+)
+
+orderly2::orderly_dependency(
+  name = "data_who",
+  query = "latest()",
+  files = "data/who/"
+)
+
+orderly2::orderly_dependency(
   name = "data_boundaries",
   query = "latest(parameter:boundary_version == this:boundary_version)",
   files = c("data/boundaries" = paste0("data/", boundary_version, "/", iso3c, "/"))
@@ -502,7 +514,7 @@ df$lsm_cov <- 0
 df$pmc_cov <- 0
 
 # Proportion of treatment that is act
-prop_act <- read.csv(paste0(external_data_address, "proportion_act.csv"))
+prop_act <- read.csv("data/dhs/proportion_act.csv")
 if(iso3c %in% prop_act$iso3c){
   prop_act <-
     prop_act |>
@@ -526,7 +538,7 @@ df <- df |>
   )
 
 # Proportion of treatment in the public sector
-prop_public <- read.csv(paste0(external_data_address, "proportion_public.csv"))
+prop_public <- read.csv("data/dhs/proportion_public.csv")
 if(iso3c %in% prop_public$iso3c){
   prop_public <-
     prop_public |>
@@ -571,7 +583,7 @@ if(approximate_itn){
     median()
   
   # Estimate the total people using nets each year | WHO net delivery/distribution
-  nets_distributed <- read.csv(paste0(external_data_address, "itn_delivered.csv")) |>
+  nets_distributed <- read.csv("data/who/itn_delivered.csv") |>
     dplyr::filter(iso3c == {{iso3c}}) |>
     dplyr::left_join(par, by = "year") |>
     dplyr::mutate(
@@ -617,7 +629,7 @@ if(approximate_itn){
 }
 
 if(approximate_irs){
-  irs_people <- read.csv(paste0(external_data_address, "irs_people_protected.csv")) |>
+  irs_people <- read.csv("data/who/irs_people_protected.csv") |>
     dplyr::filter(iso3c == {{iso3c}}) |>
     dplyr::select(year, irs_interpolated) |>
     tidyr::complete(year = years)
