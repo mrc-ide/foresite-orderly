@@ -1,19 +1,30 @@
 # Mission control --------------------------------------------------------------
 
 # Data inputs
-orderly2::orderly_run(name = "data_un")
-orderly2::orderly_run(name = "data_map")
-orderly2::orderly_run(name = "data_worldpop")
-orderly2::orderly_run(name = "data_chirps")
-orderly2::orderly_run(name = "data_dhs")
-orderly2::orderly_run(name = "data_who")
-orderly2::orderly_run(name = "data_vectors")
 orderly2::orderly_run(
   name = "data_boundaries",
   parameters = list(
     boundary_version = "GADM_4.1.0"
   )
 )
+orderly2::orderly_run(name = "data_un")
+orderly2::orderly_run(
+  name = "data_map",
+  parameters = list(
+    boundary_version = "GADM_4.1.0"
+  )
+)
+orderly2::orderly_run(name = "data_worldpop")
+orderly2::orderly_run(
+  name = "data_chirps",
+  parameters = list(
+    boundary_version = "GADM_4.1.0"
+  )
+)
+orderly2::orderly_run(name = "data_dhs")
+orderly2::orderly_run(name = "data_who")
+orderly2::orderly_run(name = "data_vectors")
+
 
 
 # UN population and demography
@@ -21,8 +32,8 @@ orderly2::orderly_run(
   name = "un_wpp"
 )
 
-isos <- c("BFA", "NGA", "IND")
-admins <- 1:2
+isos <- c("BFA")#, "NGA", "IND")
+admins <- 1
 
 # Demography adjustment - this would take days locally
 for(iso in isos){

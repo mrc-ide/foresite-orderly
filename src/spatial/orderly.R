@@ -23,28 +23,19 @@ orderly2::orderly_dependency(
 orderly2::orderly_dependency(
   name = "data_map",
   query = "latest()",
-  files = c(
-    "data/access/",
-    "data/blood_disorders/",
-    "data/irs/",
-    "data/itn/",
-    "data/pfpr/",
-    "data/pvpr/",
-    "data/smc/",
-    "data/tx/"
-  )
+  files = c("data/map" = paste0("map/", iso3c, "/"))
 )
 
 orderly2::orderly_dependency(
   name = "data_worldpop",
   query = "latest()",
-  files = c("data/population" = paste0("data/population/", iso3c, "/"))
+  files = c("data/population" = paste0("population/", iso3c, "/"))
 )
 
 orderly2::orderly_dependency(
   name = "data_chirps",
   query = "latest()",
-  files = "data/rainfall/"
+  files = c("data/rainfall" = paste0("rainfall/", iso3c, "/"))
 )
 
 orderly2::orderly_dependency(
@@ -72,7 +63,7 @@ orderly2::orderly_dependency(
 orderly2::orderly_dependency(
   name = "data_boundaries",
   query = "latest(parameter:boundary_version == this:boundary_version)",
-  files = c("data/boundaries" = paste0("data/", boundary_version, "/", iso3c, "/"))
+  files = c("data/boundaries" = paste0("boundaries/", boundary_version, "/", iso3c, "/"))
 )
 
 orderly2::orderly_artefact(
@@ -81,10 +72,10 @@ orderly2::orderly_artefact(
 )
 
 # TODO: This may not be used anywhere?
-orderly2::orderly_artefact(
-  description = "Spatial polygons",
-  files = "shape.rds"
-)
+#orderly2::orderly_artefact(
+#  description = "Spatial polygons",
+#  files = "shape.rds"
+#)
 # ------------------------------------------------------------------------------
 
 # Fixed inputs -----------------------------------------------------------------
@@ -93,6 +84,8 @@ source("spatial_utils.R")
 # ------------------------------------------------------------------------------
 
 # Shape file -------------------------------------------------------------------
+
+# TODO: Update to new netz package
 
 # Load shape file at lowest available admin level
 admin_levels <- 3:1
@@ -135,16 +128,12 @@ shape_df <- shape |>
 
 # Prevalence -------------------------------------------------------------------
 pfpr_years <- 2000:2020
-pfpr_files <- paste0("data/pfpr/202206_Global_Pf_Parasite_Rate_", pfpr_years, ".tif")
-pfpr_raster <- terra::rast(pfpr_files) |>
-  terra::crop(shape) |>
+pfpr_raster <- terra::rast("data/map/pfpr.tif") |>
   pad_raster(pfpr_years, years)
 names(pfpr_raster) <- paste0("pfpr_", years)
 
 pvpr_years <- 2000:2020
-pvpr_files <- paste0("data/pvpr/202206_Global_Pv_Parasite_Rate_", pvpr_years, ".tif")
-pvpr_raster <- terra::rast(pvpr_files) |>
-  terra::crop(shape) |>
+pvpr_raster <- terra::rast("data/map/pvpr.tif") |>
   pad_raster(pfpr_years, years)
 terra::values(pvpr_raster)[terra::values(pvpr_raster) == -1] <- NA
 names(pvpr_raster) <- paste0("pvpr_", years)
@@ -157,10 +146,9 @@ pfpr_or_pvpr_limits <- pfpr_limits | pvpr_limits
 # ------------------------------------------------------------------------------
 
 # Population -------------------------------------------------------------------
-population_years <- 2000:2020
-population_files <- paste0("data/population/population_", iso3c, "_", population_years, ".tif")
-population_raster <- terra::rast(population_files) |>
-  terra::crop(shape) |>
+population_raster <- terra::rast("data/population/population.tif")
+population_years <- as.integer(names(population_raster))
+population_raster <- population_raster |>
   terra::resample(pfpr_raster, method = "sum") |>
   pad_raster(population_years, years)
 names(population_raster) <- paste0("population_", years)
@@ -209,51 +197,35 @@ names(pop_at_risk_pv_raster) <- paste0("pop_at_risk_pv_", years)
 
 # ITNs -------------------------------------------------------------------------
 itn_years <- 2000:2020
-itn_files <- paste0("data/itn/202106_Africa_Insecticide_Treated_Net_Use_", itn_years, ".tiff")
-itn_raster <- terra::rast(itn_files) |>
-  pad_raster(itn_years, years)
-approximate_itn <- FALSE
-
-if(extents_overlap(itn_raster, shape)){
-  itn_raster <- itn_raster |>
-    terra::crop(shape)
+itn_raster <- NA
+approximate_itn <- TRUE
+if(file.exists("data/map/itn.tif")){
+  itn_raster <- terra::rast("data/map/itn.tif") |>
+    pad_raster(itn_years, years)
   names(itn_raster) <- paste0("itn_use_", years)
-} else {
-  itn_raster <- NA
-  approximate_itn <- TRUE
+  approximate_itn <- FALSE
 }
 # ------------------------------------------------------------------------------
 
 # IRS -------------------------------------------------------------------------
 irs_years <- 2000:2020
-irs_files <- paste0("data/irs/202106_Africa_Indoor_Residual_Spraying_Coverage_", irs_years, ".tif")
-irs_raster <- terra::rast(irs_files) |>
-  pad_raster(irs_years, years)
-approximate_irs <- FALSE
-
-if(extents_overlap(irs_raster, shape)){
-  irs_raster <- irs_raster |>
-    terra::crop(shape)
+irs_raster <- NA
+approximate_irs <- TRUE
+if(file.exists("data/map/irs.tif")){
+  irs_raster <- terra::rast("data/map/irs.tif") |>
+    pad_raster(irs_years, years)#
   names(irs_raster) <- paste0("irs_cov_", years)
-} else{
-  irs_raster <- NA
-  approximate_irs <- TRUE
+  approximate_irs <- FALSE
 }
 # ------------------------------------------------------------------------------
 
 # Tx ---------------------------------------------------------------------------
 tx_years <- 2000:2020
-tx_files <- paste0("data/tx/202106_Global_Antimalarial_Effective_Treatment_", tx_years, ".tif")
-tx_raster <- terra::rast(tx_files) |>
-  pad_raster(tx_years, years)
-
-
-if(extents_overlap(tx_raster, shape)){
-  tx_raster <- tx_raster |>
-    terra::crop(shape)
+tx_raster <- NA
+if(file.exists("data/map/tx.tif")){
+  tx_raster <- terra::rast("data/map/tx.tif") |>
+    pad_raster(tx_years, years)
   names(tx_raster) <- paste0("tx_cov_", years)
-} else{
-  tx_raster <- NA
 }
 # ------------------------------------------------------------------------------
 
@@ -262,19 +234,18 @@ smc_years <- 2012:2020
 smc_months <- c("01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12")
 
 smc_raster <- list()
-for(m in seq_along(smc_months)){
-  smc_files <- paste0("data/smc/SMC_", smc_years, ".", smc_months[m], ".tif")
-  smc_raster_month <- terra::rast(smc_files)
-  if(extents_overlap(smc_raster_month, shape)){
-    smc_raster[[m]] <- smc_raster_month |>
-      terra::crop(shape) |>
+if(file.exists("data/map/smc.tif")){
+  smc_raster_month <- terra::rast("data/map/smc.tif")
+  for(m in seq_along(smc_months)){
+    smc_raster[[m]] <- smc_raster_month[[paste0("SMC_", smc_years, ".", smc_months[m])]] |>
       pad_raster(smc_years, years)
     names(smc_raster[[m]]) <- paste0("smc_cov_", years, "_", m)
-  } else {
+  }
+} else {
+  for(m in seq_along(smc_months)){
     smc_raster[[m]] <- NA
   }
 }
-
 # ------------------------------------------------------------------------------
 
 # Vectors ----------------------------------------------------------------------
@@ -325,17 +296,15 @@ colnames(vector_occurrence_df) <- paste0("occurrence_",names(vector_occurrence_r
 # ------------------------------------------------------------------------------
 
 # Rainfall ---------------------------------------------------------------------
+all_rainfall_raster <- terra::rast("data/rainfall/rainfall.tif")|>
+  terra::resample(pfpr_raster)
+
 rainfall_years <- 2000:2022
 rainfall_months <- c("01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12")
-
 rainfall_raster <- list()
 for(m in seq_along(rainfall_months)){
-  rainfall_files <- paste0("data/rainfall/", rainfall_years, "_", rainfall_months[m], ".tif")
-  rainfall_raster[[m]] <- terra:::rast(rainfall_files) |>
-    terra::crop(shape) 
-  terra::values(rainfall_raster[[m]])[terra::values(rainfall_raster[[m]]) == -9999] <- NA
-  rainfall_raster[[m]] <- rainfall_raster[[m]]|>
-    terra::resample(pfpr_raster) |>
+  rainfall_raster[[m]] <-
+    all_rainfall_raster[[paste0(rainfall_years, "_", rainfall_months[m])]] |>
     pad_raster(rainfall_years, years)
   names(rainfall_raster[[m]]) <- paste0("rainfall_", years, "_", m)
 }
@@ -344,44 +313,28 @@ for(m in seq_along(rainfall_months)){
 # Blood disorders --------------------------------------------------------------
 blood_disorder_years <- 2010
 
-sicklecell_files <- "data/blood_disorders/201201_Global_Sickle_Haemoglobin_HbS_Allele_Frequency_2010.tif"
-sicklecell_raster <- terra::rast(sicklecell_files)
-if(extents_overlap(sicklecell_raster, shape)){
-  sicklecell_raster <- sicklecell_raster |>
-    terra::crop(shape) |>
+sicklecell_raster <- NA
+if(file.exists("data/map/sickle.tif")){
+  sicklecell_raster <- terra::rast("data/map/sickle.tif") |>
     pad_raster(blood_disorder_years, years, forward_empty = TRUE)
-} else {
-  sicklecell_raster <- NA
 }
 
-g6pd_files <- "data/blood_disorders/201201_Global_G6PDd_Allele_Frequency_2010.tif"
-g6pd_raster <- terra::rast(g6pd_files)
-if(extents_overlap(g6pd_raster, shape)){
-  g6pd_raster <- g6pd_raster |>
-    terra::crop(shape) |>
+g6pd_raster <- NA
+if(file.exists("data/map/g6pd.tif")){
+  g6pd_raster <- terra::rast("data/map/g6pd.tif") |>
     pad_raster(blood_disorder_years, years, forward_empty = TRUE)
-} else {
-  g6pd_raster <- NA
 }
 
-hpc_files <- "data/blood_disorders/201201_Africa_HbC_Allele_Frequency_2010.tif"
-hpc_raster <- terra::rast(hpc_files)
-if(extents_overlap(hpc_raster, shape)){
-  hpc_raster <- hpc_raster |>
-    terra::crop(shape) |>
+hpc_raster <- NA
+if(file.exists("data/map/hbc.tif")){
+  hpc_raster <- terra::rast("data/map/hbc.tif") |>
     pad_raster(blood_disorder_years, years, forward_empty = TRUE)
-} else {
-  hpc_raster <- NA
 }
 
-duffy_files <- "data/blood_disorders/201201_Global_Duffy_Negativity_Phenotype_Frequency_2010.tif"
-duffy_raster <- terra::rast(duffy_files)
-if(extents_overlap(duffy_raster, shape)){
-  duffy_raster <- duffy_raster |>
-    terra::crop(shape) |>
+duffy_raster <- NA
+if(file.exists("data/map/duffy.tif")){
+  duffy_raster <- terra::rast("data/map/duffy.tif") |>
     pad_raster(blood_disorder_years, years, forward_empty = TRUE)
-} else {
-  duffy_raster <- NA
 }
 # ------------------------------------------------------------------------------
 
@@ -389,38 +342,27 @@ if(extents_overlap(duffy_raster, shape)){
 travel_time_year <- 2019
 city_travel_time_year <- 2015
 
-motor_travel_healthcare_files <- "data/access/202001_Global_Motorized_Travel_Time_to_Healthcare_2019.tif"
-motor_travel_healthcare_raster <- terra::rast(motor_travel_healthcare_files)
-if(extents_overlap(motor_travel_healthcare_raster, shape)){
-  motor_travel_healthcare_raster <- motor_travel_healthcare_raster |>
-    terra::crop(shape) |>
+motor_travel_healthcare_raster <- NA
+if(file.exists("data/map/motor.tif")){
+  motor_raster <- terra::rast("data/map/motor.tif") |>
     terra::resample(pfpr_raster) |>  
     pad_raster(travel_time_year, years, forward_empty = TRUE)
-} else {
-  motor_travel_healthcare_raster <- NA
 }
 
-walking_travel_healthcare_files <- "data/access/202001_Global_Walking_Only_Travel_Time_To_Healthcare_2019.tif"
-walking_travel_healthcare_raster <- terra::rast(walking_travel_healthcare_files)
-if(extents_overlap(walking_travel_healthcare_raster, shape)){
-  walking_travel_healthcare_raster <- walking_travel_healthcare_raster |>
-    terra::crop(shape) |>
+walking_travel_healthcare_raster <- NA
+if(file.exists("data/map/walk.tif")){
+  walking_travel_healthcare_raster <- terra::rast("data/map/walk.tif") |>
     terra::resample(pfpr_raster) |>  
     pad_raster(travel_time_year, years, forward_empty = TRUE)
-} else {
-  walking_travel_healthcare_raster <- NA
 }
 
-city_travel_time_files <- "data/access/201501_Global_Travel_Time_to_Cities_2015.tif"
-city_travel_time_raster <- terra::rast(city_travel_time_files)
-if(extents_overlap(city_travel_time_raster, shape)){
-  city_travel_time_raster <- city_travel_time_raster |>
-    terra::crop(shape) |>
+city_travel_time_raster <- NA
+if(file.exists("data/map/cities.tif")){
+  city_travel_time_raster <- terra::rast("data/map/cities.tif") |>
     terra::resample(pfpr_raster) |>  
     pad_raster(city_travel_time_year, years, forward_empty = TRUE)
-} else {
-  city_travel_time_raster <- NA
 }
+
 # ------------------------------------------------------------------------------
 
 # Extract values ---------------------------------------------------------------
@@ -511,7 +453,7 @@ if(iso3c %in% rtss_cov_data$iso3c){
     tidyr::replace_na(
       replace = list(
         rtss_cov = 0
-        )
+      )
     )
 } else {
   df$rtss_cov = 0

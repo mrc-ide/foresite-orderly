@@ -4,12 +4,12 @@
 
 **Source**
 
-ITNs delivered as reported in the WMR
-TODO: URL
+ITNs delivered as reported in the WMR (annex4D)
+<https://www.who.int/teams/global-malaria-programme/reports/world-malaria-report-2023>
 
 **Download date**
 
-TODO: Update
+05/03/2024
 
 ---
 
@@ -19,12 +19,12 @@ TODO: Update
 
 **Source**
 
-People protected by IRS as reported in the WMR
-TODO: URL
+People protected by IRS as reported in the WMR (annex4D)
+<https://www.who.int/teams/global-malaria-programme/reports/world-malaria-report-2023>
 
 **Download date**
 
-TODO: Update
+05/03/2024
 
 ---
 
