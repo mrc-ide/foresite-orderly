@@ -1,7 +1,9 @@
 # Adds to rasters associated with years, such that rasters for all_years are
 # present. Missing years before data are given empty values (NA), missing years
 # after data are given replicates of the last raster
-pad_raster <- function(raster, years, all_years, forward_empty = FALSE){
+pad_raster <- function(raster, all_years, forward_empty = FALSE){
+  years <- as.integer(names(raster))
+  
   missing <- setdiff(all_years, years)
   if(length(missing) == 0){
     return(raster)
@@ -13,6 +15,7 @@ pad_raster <- function(raster, years, all_years, forward_empty = FALSE){
     terra::values(empty) <- NA
     pre_padding <- replicate(length(missing_pre), empty, simplify = FALSE) |>
       terra::rast()
+    names(pre_padding) <- missing_pre
     raster <- c(pre_padding, raster)
   }
   
@@ -25,10 +28,13 @@ pad_raster <- function(raster, years, all_years, forward_empty = FALSE){
     } else {
       last <- raster[[dim(raster)[3]]]
     }
-    post_paddding <- replicate(length(missing_post), last, simplify = FALSE) |>
+    post_padding <- replicate(length(missing_post), last, simplify = FALSE) |>
       terra::rast()
-    raster <- c(raster, post_paddding)
+    names(post_padding) <- missing_post
+    raster <- c(raster, post_padding)
   }
+  
+  return(raster)
 }
 
 # Create a binary classification for the spatial limits of transmission
@@ -117,4 +123,18 @@ crop_to_access2 <- function(crop, type = "loess", hybrid = TRUE){
   access_out <- stats::approx(x = pred, y = access, xout = crop)$y
   access_out[crop == 0] <- 0
   return(access_out)
+}
+
+# Reformat a Year X month raster into a list of months by year
+monthify <- function(raster, sep = "\\."){
+  months <- c("01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12")
+  month_labels <- paste0(sep, months)
+  raster_list <- lapply(month_labels, function(x){
+    subset <- raster[[grepl(x, names(raster))]]
+    subset_years <- as.integer(gsub(x, "", names(subset)))
+    names(subset) <- subset_years
+    return(subset)
+  })
+  names(raster_list) <- 1:12
+  return(raster_list)
 }

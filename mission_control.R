@@ -23,9 +23,12 @@ orderly2::orderly_run(
 )
 orderly2::orderly_run(name = "data_dhs")
 orderly2::orderly_run(name = "data_who")
-orderly2::orderly_run(name = "data_vectors")
-
-
+orderly2::orderly_run(
+  name = "data_vectors",
+  parameters = list(
+    boundary_version = "GADM_4.1.0"
+  )
+)
 
 # UN population and demography
 orderly2::orderly_run(

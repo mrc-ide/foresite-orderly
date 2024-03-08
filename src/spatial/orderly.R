@@ -53,11 +53,12 @@ orderly2::orderly_dependency(
 orderly2::orderly_dependency(
   name = "data_vectors",
   query = "latest()",
-  files = c(
-    "data/vector_bionomics/",
-    "data/vector_occurrence/",
-    "data/vector_relative_abundance/"
-  )
+  files = c("data/vectors" = paste0("vectors/", iso3c, "/"))
+)
+orderly2::orderly_dependency(
+  name = "data_vectors",
+  query = "latest()",
+  files = c("data/vectors/vector_bionomics.csv" = "vectors/vector_bionomics.csv")
 )
 
 orderly2::orderly_dependency(
@@ -127,15 +128,12 @@ shape_df <- shape |>
 # ------------------------------------------------------------------------------
 
 # Prevalence -------------------------------------------------------------------
-pfpr_years <- 2000:2020
 pfpr_raster <- terra::rast("data/map/pfpr.tif") |>
-  pad_raster(pfpr_years, years)
+  pad_raster(years)
 names(pfpr_raster) <- paste0("pfpr_", years)
 
-pvpr_years <- 2000:2020
 pvpr_raster <- terra::rast("data/map/pvpr.tif") |>
-  pad_raster(pfpr_years, years)
-terra::values(pvpr_raster)[terra::values(pvpr_raster) == -1] <- NA
+  pad_raster(years)
 names(pvpr_raster) <- paste0("pvpr_", years)
 
 pfpr_limits <- create_limits(pfpr_raster[[1]])
@@ -146,11 +144,9 @@ pfpr_or_pvpr_limits <- pfpr_limits | pvpr_limits
 # ------------------------------------------------------------------------------
 
 # Population -------------------------------------------------------------------
-population_raster <- terra::rast("data/population/population.tif")
-population_years <- as.integer(names(population_raster))
-population_raster <- population_raster |>
+population_raster <- terra::rast("data/population/population.tif") |>
   terra::resample(pfpr_raster, method = "sum") |>
-  pad_raster(population_years, years)
+  pad_raster(years)
 names(population_raster) <- paste0("population_", years)
 
 urban_population <- readRDS("un_wup.rds") |>
@@ -196,98 +192,85 @@ names(pop_at_risk_pv_raster) <- paste0("pop_at_risk_pv_", years)
 # ------------------------------------------------------------------------------
 
 # ITNs -------------------------------------------------------------------------
-itn_years <- 2000:2020
 itn_raster <- NA
 approximate_itn <- TRUE
 if(file.exists("data/map/itn.tif")){
   itn_raster <- terra::rast("data/map/itn.tif") |>
-    pad_raster(itn_years, years)
+    pad_raster(years)
   names(itn_raster) <- paste0("itn_use_", years)
   approximate_itn <- FALSE
 }
 # ------------------------------------------------------------------------------
 
 # IRS -------------------------------------------------------------------------
-irs_years <- 2000:2020
 irs_raster <- NA
 approximate_irs <- TRUE
 if(file.exists("data/map/irs.tif")){
   irs_raster <- terra::rast("data/map/irs.tif") |>
-    pad_raster(irs_years, years)#
+    pad_raster(years)
   names(irs_raster) <- paste0("irs_cov_", years)
   approximate_irs <- FALSE
 }
 # ------------------------------------------------------------------------------
 
 # Tx ---------------------------------------------------------------------------
-tx_years <- 2000:2020
 tx_raster <- NA
 if(file.exists("data/map/tx.tif")){
   tx_raster <- terra::rast("data/map/tx.tif") |>
-    pad_raster(tx_years, years)
+    pad_raster(years)
   names(tx_raster) <- paste0("tx_cov_", years)
 }
 # ------------------------------------------------------------------------------
 
 # SMC --------------------------------------------------------------------------
-smc_years <- 2012:2020
-smc_months <- c("01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12")
-
-smc_raster <- list()
 if(file.exists("data/map/smc.tif")){
-  smc_raster_month <- terra::rast("data/map/smc.tif")
-  for(m in seq_along(smc_months)){
-    smc_raster[[m]] <- smc_raster_month[[paste0("SMC_", smc_years, ".", smc_months[m])]] |>
-      pad_raster(smc_years, years)
-    names(smc_raster[[m]]) <- paste0("smc_cov_", years, "_", m)
-  }
+  smc_raster <- terra::rast("data/map/smc.tif") |>
+    monthify()
+  smc_raster <- lapply(smc_raster, pad_raster, all_years = years)
+  smc_raster <- lapply(smc_raster, function(x){
+    names(x) <- paste0("smc_cov_", years)
+    return(x)
+  })
 } else {
-  for(m in seq_along(smc_months)){
-    smc_raster[[m]] <- NA
-  }
+  smc_raster <- lapply(1:12, function(x){
+    NA
+  })
+  names(smc_raster) <- 1:12
 }
 # ------------------------------------------------------------------------------
 
 # Vectors ----------------------------------------------------------------------
-vector_data <- "data/vector_relative_abundance/"
+vector_data <- "data/vectors/"
 vectors <- c("gambiae", "arabiensis", "funestus")
 
 vector_raster <- list()
 for(v in seq_along(vectors)){
-  vector_files <- paste0(vector_data, "relative_", vectors[v], ".tif")
-  vector_raster[[vectors[v]]] <- terra::rast(vector_files) 
-  
-  if(extents_overlap(vector_raster[[v]], shape)){
-    vector_raster[[vectors[v]]] <- vector_raster[[vectors[v]]] |>
-      terra::crop(shape)  |>
+  vector_raster[[vectors[v]]] <- NA
+  vector_file <- paste0(vector_data, "relative_", vectors[v], ".tif")
+  if(file.exists(vector_file)){
+    vector_raster[[vectors[v]]] <- terra::rast(vector_file) |>
       terra::resample(pfpr_raster) |>
-      pad_raster(2016, years, forward_empty = TRUE)
+      pad_raster(years, forward_empty = TRUE)
     names(vector_raster[[vectors[v]]]) <- paste0(vectors[v], "_", years)
-  } else {
-    vector_raster[[vectors[v]]] <- NA
   }
 }
 
-vector_occurrence_data <- "data/vector_occurrence/"
-vectors_occurrence <- list.files(vector_occurrence_data) |>
+vectors_occurrence <- list.files(vector_data, pattern = "occurrence*") |>
   stringr::str_replace("occurrence_", "") |>
   stringr::str_replace(".tif", "")
 
 vector_occurrence_raster <- list()
 for(v in seq_along(vectors_occurrence)){
-  vector_files <- paste0(vector_occurrence_data, "occurrence_", vectors_occurrence[v], ".tif")
-  vector_occurrence_raster[[vectors_occurrence[v]]] <- terra::rast(vector_files) 
-  
-  if(extents_overlap(vector_occurrence_raster[[v]], shape)){
-    vector_occurrence_raster[[vectors_occurrence[v]]] <- vector_occurrence_raster[[vectors_occurrence[v]]] |>
-      terra::crop(shape)  |>
+  vector_occurrence_raster[[vectors_occurrence[v]]] <- NA
+  vector_file <- paste0(vector_data, "occurrence_", vectors_occurrence[v], ".tif")
+  if(file.exists(vector_file)){
+    vector_occurrence_raster[[vectors_occurrence[v]]] <- terra::rast(vector_file) |>
       terra::resample(pfpr_raster) |>
-      pad_raster(2011, years, forward_empty = TRUE)
+      pad_raster(years, forward_empty = TRUE)
     names(vector_occurrence_raster[[vectors_occurrence[v]]]) <- paste0(vectors_occurrence[v], "_", years)
-  } else {
-    vector_occurrence_raster[[vectors_occurrence[v]]] <- NA
   }
 }
+
 vector_occurrence_raster <- vector_occurrence_raster[!is.na(vector_occurrence_raster)]
 vector_occurrence_df <-
   lapply(vector_occurrence_raster, raster_values) |>
@@ -296,71 +279,64 @@ colnames(vector_occurrence_df) <- paste0("occurrence_",names(vector_occurrence_r
 # ------------------------------------------------------------------------------
 
 # Rainfall ---------------------------------------------------------------------
-all_rainfall_raster <- terra::rast("data/rainfall/rainfall.tif")|>
-  terra::resample(pfpr_raster)
+rainfall_raster <- terra::rast("data/rainfall/rainfall.tif") |>
+  terra::resample(pfpr_raster) |>
+  monthify(sep = "_")
 
-rainfall_years <- 2000:2022
-rainfall_months <- c("01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12")
-rainfall_raster <- list()
-for(m in seq_along(rainfall_months)){
-  rainfall_raster[[m]] <-
-    all_rainfall_raster[[paste0(rainfall_years, "_", rainfall_months[m])]] |>
-    pad_raster(rainfall_years, years)
-  names(rainfall_raster[[m]]) <- paste0("rainfall_", years, "_", m)
-}
+rainfall_raster <- lapply(rainfall_raster, pad_raster, all_years = years)
+rainfall_raster <- lapply(rainfall_raster, function(x){
+  names(x) <- paste0("rainfall_", years)
+  return(x)
+})
 # ------------------------------------------------------------------------------
 
 # Blood disorders --------------------------------------------------------------
-blood_disorder_years <- 2010
 
 sicklecell_raster <- NA
 if(file.exists("data/map/sickle.tif")){
   sicklecell_raster <- terra::rast("data/map/sickle.tif") |>
-    pad_raster(blood_disorder_years, years, forward_empty = TRUE)
+    pad_raster(years, forward_empty = TRUE)
 }
 
 g6pd_raster <- NA
 if(file.exists("data/map/g6pd.tif")){
   g6pd_raster <- terra::rast("data/map/g6pd.tif") |>
-    pad_raster(blood_disorder_years, years, forward_empty = TRUE)
+    pad_raster(years, forward_empty = TRUE)
 }
 
 hpc_raster <- NA
 if(file.exists("data/map/hbc.tif")){
   hpc_raster <- terra::rast("data/map/hbc.tif") |>
-    pad_raster(blood_disorder_years, years, forward_empty = TRUE)
+    pad_raster(years, forward_empty = TRUE)
 }
 
 duffy_raster <- NA
 if(file.exists("data/map/duffy.tif")){
   duffy_raster <- terra::rast("data/map/duffy.tif") |>
-    pad_raster(blood_disorder_years, years, forward_empty = TRUE)
+    pad_raster(years, forward_empty = TRUE)
 }
 # ------------------------------------------------------------------------------
 
 # Travel times -----------------------------------------------------------------
-travel_time_year <- 2019
-city_travel_time_year <- 2015
-
 motor_travel_healthcare_raster <- NA
 if(file.exists("data/map/motor.tif")){
   motor_raster <- terra::rast("data/map/motor.tif") |>
     terra::resample(pfpr_raster) |>  
-    pad_raster(travel_time_year, years, forward_empty = TRUE)
+    pad_raster(years, forward_empty = TRUE)
 }
 
 walking_travel_healthcare_raster <- NA
 if(file.exists("data/map/walk.tif")){
   walking_travel_healthcare_raster <- terra::rast("data/map/walk.tif") |>
     terra::resample(pfpr_raster) |>  
-    pad_raster(travel_time_year, years, forward_empty = TRUE)
+    pad_raster(years, forward_empty = TRUE)
 }
 
 city_travel_time_raster <- NA
 if(file.exists("data/map/cities.tif")){
   city_travel_time_raster <- terra::rast("data/map/cities.tif") |>
     terra::resample(pfpr_raster) |>  
-    pad_raster(city_travel_time_year, years, forward_empty = TRUE)
+    pad_raster(years, forward_empty = TRUE)
 }
 
 # ------------------------------------------------------------------------------
