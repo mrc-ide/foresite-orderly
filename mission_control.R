@@ -35,7 +35,7 @@ orderly2::orderly_run(
   name = "un_wpp"
 )
 
-isos <- c("BFA")#, "NGA", "IND")
+isos <- c("BFA")
 admins <- 1
 
 # Demography adjustment - this would take days locally

@@ -47,7 +47,7 @@ orderly2::orderly_dependency(
 orderly2::orderly_dependency(
   name = "data_who",
   query = "latest()",
-  files = "data/who/"
+  files = c("data/who/" = "data/")
 )
 
 orderly2::orderly_dependency(
@@ -71,12 +71,6 @@ orderly2::orderly_artefact(
   description = "Spatial data",
   files = "spatial.rds"
 )
-
-# TODO: This may not be used anywhere?
-#orderly2::orderly_artefact(
-#  description = "Spatial polygons",
-#  files = "shape.rds"
-#)
 # ------------------------------------------------------------------------------
 
 # Fixed inputs -----------------------------------------------------------------
@@ -320,7 +314,7 @@ if(file.exists("data/map/duffy.tif")){
 # Travel times -----------------------------------------------------------------
 motor_travel_healthcare_raster <- NA
 if(file.exists("data/map/motor.tif")){
-  motor_raster <- terra::rast("data/map/motor.tif") |>
+  motor_travel_healthcare_raster <- terra::rast("data/map/motor.tif") |>
     terra::resample(pfpr_raster) |>  
     pad_raster(years, forward_empty = TRUE)
 }
@@ -451,7 +445,7 @@ if(iso3c %in% prop_act$iso3c){
 } else{
   prop_act <-
     prop_act |>
-    summarise(
+    dplyr::summarise(
       prop_act = median(prop_act),
       .by = "year"
     )
@@ -598,5 +592,4 @@ if(approximate_irs){
 
 # Save outputs -----------------------------------------------------------------
 saveRDS(df, "spatial.rds")
-saveRDS(shape, "shape.rds")
 # ------------------------------------------------------------------------------

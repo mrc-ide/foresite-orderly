@@ -56,29 +56,23 @@ for(iso in isos){
   for(i in 1:length(relative_occurence_raster)){
     split(relative_occurence_raster[[i]], extent, iso, relative_occurence_names[[i]])
   }
-  
-  new_net_introductions <- read.csv("data/alliance_malaria_prevention/new_net_introductions.csv") |>
-    dplyr::filter(iso3c == {{iso}})
-  if(nrow(new_net_introductions) > 0){
-    address <- paste0("vectors/", iso, "/new_net_introductions.csv")
-    orderly2::orderly_artefact(
-      description = "New net introductions",
-      files = address
-    )
-    write.csv(new_net_introductions, address, row.names = FALSE)
-  }
-  
-  pyrethroid_resistance <- read.csv("data/pyrethroid_resistance/pyrethroid_resistance.csv") |>
-    dplyr::filter(iso3c == {{iso}})
-  if(nrow(pyrethroid_resistance) > 0){
-    address <- paste0("vectors/", iso, "/pyrethroid_resistance.csv")
-    orderly2::orderly_artefact(
-      description = "Pyrethroid resistance",
-      files = address
-    )
-    write.csv(pyrethroid_resistance, address, row.names = FALSE)
-  }
 }
+
+new_net_introductions <- read.csv("data/alliance_malaria_prevention/new_net_introductions.csv")
+address <- paste0("vectors/new_net_introductions.csv")
+orderly2::orderly_artefact(
+  description = "New net introductions",
+  files = address
+)
+write.csv(new_net_introductions, address, row.names = FALSE)
+
+pyrethroid_resistance <- read.csv("data/pyrethroid_resistance/pyrethroid_resistance.csv")
+address <- paste0("vectors/pyrethroid_resistance.csv")
+orderly2::orderly_artefact(
+  description = "Pyrethroid resistance",
+  files = address
+)
+write.csv(pyrethroid_resistance, address, row.names = FALSE)
 
 irs_insecticide_parameters <- read.csv("data/insecticide_parameters/irs_insecticide_parameters.csv")
 address <- "vectors/irs_insecticide_parameters.csv"

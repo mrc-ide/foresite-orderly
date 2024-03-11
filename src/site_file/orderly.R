@@ -25,7 +25,7 @@ orderly2::orderly_dependency(
 orderly2::orderly_dependency(
   name = "spatial",
   query = "latest(parameter:version_name == this:version_name && parameter:iso3c ==  this:iso3c)",
-  files = c("spatial.rds", "shape.rds")
+  files = c("spatial.rds")
 )
 
 orderly2::orderly_dependency(
@@ -37,15 +37,25 @@ orderly2::orderly_dependency(
 orderly2::orderly_dependency(
   name = "data_boundaries",
   query = "latest(parameter:boundary_version == this:boundary_version)",
-  files = c("data/boundaries" = paste0("data/", boundary_version, "/", iso3c, "/"))
+  files = c("boundaries" = paste0("boundaries/", boundary_version, "/", iso3c, "/"))
 )
 
 orderly2::orderly_dependency(
   name = "data_vectors",
   query = "latest()",
   files = c(
-    "data/pyrethroid_resistance/" 
-  )
+    "vectors/irs_insecticide_parameters.csv" = "vectors/irs_insecticide_parameters.csv",
+    "vectors/net_efficacy_adjusted.csv" = "vectors/net_efficacy_adjusted.csv",
+    "vectors/pyrethroid_resistance.csv" = "vectors/pyrethroid_resistance.csv",
+    "vectors/new_net_introductions.csv" = "vectors/new_net_introductions.csv",
+    "vectors/vector_bionomics.csv" = "vectors/vector_bionomics.csv"
+    )
+)
+
+orderly2::orderly_dependency(
+  name = "data_who",
+  query = "latest()",
+  files = c("wmr_cases_deaths.csv" = "data/wmr_cases_deaths.csv")
 )
 
 orderly2::orderly_artefact(
@@ -57,7 +67,7 @@ orderly2::orderly_artefact(
 # Load inputs ------------------------------------------------------------------
 source("site_file_utils.R")
 spatial <- readRDS("spatial.rds")
-external_data_address <- "C:/Users/pwinskil/OneDrive - Imperial College London/malaria_sites_data/2023/"
+#external_data_address <- "C:/Users/pwinskil/OneDrive - Imperial College London/malaria_sites_data/2023/"
 # ------------------------------------------------------------------------------
 
 # Grouping variable ------------------------------------------------------------
@@ -81,7 +91,7 @@ levels <- admin_level:0
 for(level in levels){
   
   shape_address <- paste0(
-    "data/boundaries/",
+    "boundaries/",
     iso3c,
     "_",
     level,
@@ -132,7 +142,7 @@ population_age <- readRDS("population_age.rds") |>
 # ------------------------------------------------------------------------------
 
 # Pyrethroid resistance --------------------------------------------------------
-old_resistance <- read.csv("data/pyrethroid_resistance/pyrethroid_resistance.csv")
+old_resistance <- read.csv("vectors/pyrethroid_resistance.csv")
 
 if(iso3c %in% old_resistance$iso3c){
   old_resistance <- old_resistance |>
@@ -251,7 +261,7 @@ interventions <- interventions |>
   )
 
 # Add in IRS assumptions
-irs_parameters <- read.csv("data/insecticide_parameters/irs_insecticide_parameters.csv")
+irs_parameters <- read.csv("vectors/irs_insecticide_parameters.csv")
 actellic_switch_year <- 2017
 interventions <- interventions |>
   dplyr::mutate(
@@ -310,7 +320,7 @@ interventions <- interventions |>
   dplyr::left_join(pyrethroid_resistance, by = c(grouping[grouping != "urban_rural"], "year"))
 
 ## Link with net type and net efficacy
-new_net_introductions <- read.csv("data/alliance_malaria_prevention/new_net_introductions.csv")
+new_net_introductions <- read.csv("vectors/new_net_introductions.csv")
 interventions <- interventions |>
   dplyr::mutate(net_type = ifelse(year == 2000, "pyrethroid_only", NA)) |>
   dplyr::left_join(new_net_introductions, by = c("iso3c", "name_1", "year")) |>
@@ -322,7 +332,7 @@ interventions <- interventions |>
 
 
 ## Add net efficacy | resistance and net type
-net_efficacy_parameters <- read.csv("data/insecticide_parameters/net_efficacy_2023.csv")
+net_efficacy_parameters <- read.csv("vectors/net_efficacy_adjusted.csv")
 interventions <- interventions |>
   dplyr::mutate(pyrethroid_resistance = round(pyrethroid_resistance, 2)) |>
   dplyr::left_join(net_efficacy_parameters, by = c("pyrethroid_resistance", "net_type"))
@@ -338,7 +348,7 @@ prevalence <- spatial |>
 # ------------------------------------------------------------------------------
 
 # Cases and Deaths from WMR ----------------------------------------------------
-cases_deaths <- read.csv(paste0(external_data_address, "wmr_2023_cases_deaths.csv")) |>
+cases_deaths <- read.csv("wmr_cases_deaths.csv") |>
   tidyr::fill(country, iso3c) |>
   dplyr::filter(iso3c == {{iso3c}}) |>
   dplyr::mutate(
@@ -413,7 +423,7 @@ if(use_relative){
   vector_year <- 2011
 }
 
-bionomics <- read.csv(paste0(external_data_address, "vector_bionomics.csv"))
+bionomics <- read.csv("vectors/vector_bionomics.csv")
 
 vectors <- spatial |>
   dplyr::filter(
@@ -441,7 +451,7 @@ vectors <- spatial |>
   dplyr::group_by(dplyr::across(dplyr::all_of(grouping))) |>
   dplyr::mutate(rank = rank(-prop, ties = "first")) |>
   dplyr::filter(rank <= 3) |>
-  dplyr::select(-rank) |>
+  dplyr::select(-"rank") |>
   # Missing values get assigned equal probability of occurence
   dplyr::mutate(prop = ifelse(is.na(prop), 1/3, prop)) |>
   dplyr::mutate(prop = prop / sum(prop)) |>

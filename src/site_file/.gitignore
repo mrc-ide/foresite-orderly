@@ -3,3 +3,6 @@ population_age.rds
 spatial.rds
 shape.rds
 adjusted_demography.rds
+boundaries/
+who/
+vectors/
