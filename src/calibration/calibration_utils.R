@@ -233,6 +233,8 @@ calibrate <- function(x, site, human_population = c(10000, 30000, 50000), burnin
     }
   }
   
+  # TODO: This should be with a full burn in to assess clinical inc
+  
   diagnostic_run <- check_fit(
     eir = x$eir,
     parameters = p,

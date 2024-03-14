@@ -42,4 +42,44 @@ NA
 
 ---
 
-TODO: add other file
+**Files**
+
+`pyrethroid_resistance/`
+
+**Source**
+
+Personal correspondence. Research by Tom Churcher's group
+
+**Download date**
+
+NA
+
+---
+
+**Files**
+
+`insecticide_parameters/`
+
+**Source**
+
+Personal correspondence. Research by Ellie Sherrard-Smith
+
+**Download date**
+
+NA
+
+---
+
+**Files**
+
+`alliance_malaria_prevention/`
+
+**Source**
+
+<https://allianceformalariaprevention.com/itn-dashboards/mass-campaign-tracker/?_sfm_mc_date_of_import=20221201>
+
+**Download date**
+
+04/01/2024
+
+---
