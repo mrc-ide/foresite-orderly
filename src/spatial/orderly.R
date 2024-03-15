@@ -189,7 +189,9 @@ names(pop_at_risk_pv_raster) <- paste0("pop_at_risk_pv_", years)
 itn_raster <- NA
 approximate_itn <- TRUE
 if(file.exists("data/map/itn.tif")){
-  itn_raster <- terra::rast("data/map/itn.tif") |>
+  itn_raster <- terra::rast("data/map/itn.tif")
+  itn_max_year <- max(names(itn_raster))
+  itn_raster <- itn_raster |>
     pad_raster(years)
   names(itn_raster) <- paste0("itn_use_", years)
   approximate_itn <- FALSE
@@ -477,41 +479,79 @@ df <- df |>
   )
 # ------------------------------------------------------------------------------
 
-# Fill nets and IRS outside SSA ------------------------------------------------
 
-if(approximate_itn | approximate_irs){
-  par <- df |>
+
+# Additional nets and IRS interpolation ----------------------------------------
+par <- df |>
+  dplyr::summarise(
+    par = sum(par),
+    .by = "year"
+  )
+
+rank <- df |>
+  dplyr::filter(year == 2000) |>
+  dplyr::mutate(pr = 1 - (1 - pfpr) * (1 - pvpr)) |>
+  dplyr::arrange(-pr) |>
+  dplyr::mutate(rank = 1:dplyr::n()) |>
+  dplyr::select(pixel, rank)
+
+
+# Update itn use for years post last itn use raster, where we have information
+# on nets delivered to the country
+if(!approximate_itn){
+  # Assume median half life and usage rate
+  hl <- netz::get_halflife(iso3c)
+  ur <- netz::get_usage_rate(iso3c)
+  
+  # Estimate the total people using nets each year | WHO net delivery/distribution
+  wmr_use <- read.csv("data/who/llins_delivered.csv") |>
+    dplyr::filter(iso3c == {{iso3c}}) |>
+    dplyr::left_join(par, by = "year") |>
+    dplyr::mutate(
+      # Assume here distributions are made on first day of year and crop measured at the midpoint
+      crop = netz::distribution_to_crop(
+        distribution = itn_interpolated,
+        distribution_timesteps = 365 * (year - 2000) + 1,
+        crop_timesteps = 365 * (year - 2000) + (365 / 2),
+        netz::net_loss_map, half_life = hl) / par,
+      access = netz::crop_to_access(crop),
+      usage = netz::access_to_usage(access, ur)
+    ) |>
+    dplyr::filter(year > itn_max_year) |>
+    dplyr::select(year, usage)
+  
+  df_use <- df |>
     dplyr::summarise(
-      par = sum(par),
+      wu = weighted.mean(itn_use, par),
       .by = "year"
     )
   
-  rank <- df |>
-    dplyr::filter(year == 2000) |>
-    dplyr::mutate(pr = 1 - (1 - pfpr) * (1 - pvpr)) |>
-    dplyr::arrange(-pr) |>
-    dplyr::mutate(rank = 1:dplyr::n()) |>
-    dplyr::select(pixel, rank)
+  max_observed_use <- max(df$itn_use, na.rm = TRUE)
+  for(i in seq_along(wmr_use$year)){
+    year <- wmr_use$year[i]
+    scaler <- wmr_use[wmr_use$year == year, "usage"] / df_use[df_use$year == year, "wu"]
+    df[df$year == year, "itn_use"] <- pmin(max_observed_use, df[df$year == year, "itn_use"] * scaler)
+  }
 }
 
 if(approximate_itn){
   
   # Assume median half life and usage rate
-  hl <- netz::get_halflife_data() |>
-    dplyr::pull(half_life) |>
-    median()
-  ur <- netz::get_usage_rate_data() |>
-    dplyr::pull(usage_rate) |>
-    median()
+  hl <- netz::get_halflife()
+  ur <- netz::get_usage_rate()
   
   # Estimate the total people using nets each year | WHO net delivery/distribution
-  nets_distributed <- read.csv("data/who/itn_delivered.csv") |>
+  nets_distributed <- read.csv("data/who/llins_delivered.csv") |>
     dplyr::filter(iso3c == {{iso3c}}) |>
     dplyr::left_join(par, by = "year") |>
     dplyr::mutate(
-      crop = netz::distribution_to_crop_dynamic(itn_interpolated, netz::net_loss_map, half_life = hl) / par,
-      # TODO: using a hybrid here, forcing linear at access < 0.5, might be worth adding to netz package?
-      access = crop_to_access2(crop),
+      # Assume here distributions are made on first day of year and crop measured at the midpoint
+      crop = netz::distribution_to_crop(
+        distribution = itn_interpolated,
+        distribution_timesteps = 365 * (year - 2000) + 1,
+        crop_timesteps = 365 * (year - 2000) + (365 / 2),
+        netz::net_loss_map, half_life = hl) / par,
+      access = netz::crop_to_access(crop),
       usage = netz::access_to_usage(access, ur),
       people_using_nets = usage * par
     ) |>
