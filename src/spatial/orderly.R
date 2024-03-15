@@ -190,7 +190,7 @@ itn_raster <- NA
 approximate_itn <- TRUE
 if(file.exists("data/map/itn.tif")){
   itn_raster <- terra::rast("data/map/itn.tif")
-  itn_max_year <- max(names(itn_raster))
+  itn_max_year <- as.integer(max(names(itn_raster)))
   itn_raster <- itn_raster |>
     pad_raster(years)
   names(itn_raster) <- paste0("itn_use_", years)
@@ -202,7 +202,9 @@ if(file.exists("data/map/itn.tif")){
 irs_raster <- NA
 approximate_irs <- TRUE
 if(file.exists("data/map/irs.tif")){
-  irs_raster <- terra::rast("data/map/irs.tif") |>
+  irs_raster <- terra::rast("data/map/irs.tif")
+  irs_max_year <- as.integer(max(names(irs_raster)))
+  irs_raster <- irs_raster |>
     pad_raster(years)
   names(irs_raster) <- paste0("irs_cov_", years)
   approximate_irs <- FALSE
@@ -495,9 +497,8 @@ rank <- df |>
   dplyr::mutate(rank = 1:dplyr::n()) |>
   dplyr::select(pixel, rank)
 
-
 # Update itn use for years post last itn use raster, where we have information
-# on nets delivered to the country
+# on nets delivered to the country from WMR
 if(!approximate_itn){
   # Assume median half life and usage rate
   hl <- netz::get_halflife(iso3c)
@@ -531,6 +532,30 @@ if(!approximate_itn){
     year <- wmr_use$year[i]
     scaler <- wmr_use[wmr_use$year == year, "usage"] / df_use[df_use$year == year, "wu"]
     df[df$year == year, "itn_use"] <- pmin(max_observed_use, df[df$year == year, "itn_use"] * scaler)
+  }
+}
+
+# Update IRS cov for years post last IRS cov raster, where we have information
+# on people protected from WRM
+if(!approximate_irs){
+  irs_people <- read.csv("data/who/irs_people_protected.csv") |>
+    dplyr::filter(iso3c == {{iso3c}}) |>
+    dplyr::filter(year > irs_max_year) |>
+    dplyr::select(year, irs_interpolated) |>
+    dplyr::filter(!is.na(irs_interpolated))
+  
+  df_pp <- df |>
+    dplyr::summarise(
+      pp = sum(irs_cov * par),
+      .by = "year"
+    )
+  
+  # We assume no change in IRS targeted areas
+  max_cov <- 0.8
+  for(i in seq_along(irs_people$year)){
+    year <- irs_people$year[i]
+    scaler <- irs_people[irs_people$year == year, "irs_interpolated"] / df_pp[df_pp$year == year, "pp"]
+    df[df$year == year, "irs_cov"] <- pmin(max_cov, df[df$year == year, "irs_cov"] * scaler)
   }
 }
 
