@@ -272,16 +272,13 @@ interventions <- interventions |>
   ) |>
   dplyr::left_join(irs_parameters, by = "irs_insecticide")
 
-## ITN half-life to mean rentention conversion
+## ITN half-life to mean retention conversion
 ## Match our exponential mean retention as closely as possible to the MAP 
 ## function with given half life (min sum of squared differences over first 3 years):
-hl_data <- netz::get_halflife_data()
-if(iso3c %in% hl_data$iso3){
-  hl <- hl_data |>
-    dplyr::filter(iso3 == {{iso3c}}) |>
-    dplyr::pull(half_life)
+if(iso3c %in% netz::halflife$iso3c){
+  hl <- netz::get_halflife(iso3c)
 } else {
-  hl <- median(hl_data$half_life)
+  hl <- netz::get_halflife()
 }
 
 mean_retention <- optimise(
@@ -292,14 +289,14 @@ mean_retention <- optimise(
 interventions <- interventions |>
   dplyr::arrange(dplyr::across(dplyr::all_of(c(grouping, "year")))) |>
   dplyr::mutate(
-    itn_input_dist = netz::fit_usage_sequential(
-      target_usage = itn_use,
-      target_usage_timesteps = (year - 2000) * 365 + 183,
+    itn_input_dist = netz::usage_to_model_distribution(
+      usage = itn_use,
+      usage_timesteps = (year - 2000) * 365 + 183,
       distribution_timesteps = (year - 2000) * 365 + 1,
       mean_retention = mean_retention
     ),
-    predicted_use = netz::population_usage_t(
-      timesteps = (year - 2000) * 365 + 183,
+    predicted_use = netz::model_distribution_to_usage(
+      usage_timesteps = (year - 2000) * 365 + 183,
       distribution = itn_input_dist,
       distribution_timesteps = (year - 2000) * 365 + 1,
       mean_retention = mean_retention
