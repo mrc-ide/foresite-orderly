@@ -504,35 +504,54 @@ if(!approximate_itn){
   hl <- netz::get_halflife(iso3c)
   ur <- netz::get_usage_rate(iso3c)
   
-  # Estimate the total people using nets each year | WHO net delivery/distribution
   wmr_use <- read.csv("data/who/llins_delivered.csv") |>
     dplyr::filter(iso3c == {{iso3c}}) |>
-    dplyr::left_join(par, by = "year") |>
-    dplyr::mutate(
-      # Assume here distributions are made on first day of year and crop measured at the midpoint
-      crop = netz::distribution_to_crop(
-        distribution = itn_interpolated,
-        distribution_timesteps = 365 * (year - 2000) + 1,
-        crop_timesteps = 365 * (year - 2000) + (365 / 2),
-        netz::net_loss_map, half_life = hl) / par,
-      access = netz::crop_to_access(crop),
-      usage = netz::access_to_usage(access, ur)
-    ) |>
     dplyr::filter(year > itn_max_year) |>
-    dplyr::select(year, usage)
+    dplyr::select(year, llins_sold_or_delivered)
   
+  # Summarise ITN use country-wide
   df_use <- df |>
     dplyr::summarise(
-      wu = weighted.mean(itn_use, par),
+      itn_use = weighted.mean(itn_use, par),
+      par = sum(par),
       .by = "year"
+    ) |>
+    dplyr::mutate(
+      access = usage_to_access(itn_use, ur),
+      crop = access_to_crop(access),
+      dist = crop_to_distribution(
+        crop,
+        crop_timesteps = 365 * (year - 2000) + (365 / 2),
+        distribution_timesteps = 365 * (year - 2000) + 1,
+        netz::net_loss_map, half_life = hl
+      ),
+      n_nets = round(dist * par)
+    ) |>
+    dplyr::left_join(wmr_use, by = "year") |>
+    dplyr::mutate(
+      n_nets = ifelse(is.na(llins_sold_or_delivered), n_nets , llins_sold_or_delivered),
+      dist2 = n_nets / par,
+      crop2 = distribution_to_crop(
+        dist2,
+        distribution_timesteps = 365 * (year - 2000) + 1,
+        crop_timesteps = 365 * (year - 2000) + (365 / 2),
+        netz::net_loss_map, half_life = hl
+      ),
+      access2 = crop_to_access(crop2),
+      itn_use2 = access_to_usage(access2, ur),
+      use_multiplier = round(itn_use2 / itn_use, 2)
     )
   
   max_observed_use <- max(df$itn_use, na.rm = TRUE)
-  for(i in seq_along(wmr_use$year)){
-    year <- wmr_use$year[i]
-    scaler <- wmr_use[wmr_use$year == year, "usage"] / df_use[df_use$year == year, "wu"]
-    df[df$year == year, "itn_use"] <- pmin(max_observed_use, df[df$year == year, "itn_use"] * scaler)
-  }
+  df <- df |>
+    dplyr::left_join(
+      dplyr::select(df_use, year, use_multiplier),
+      by = "year"
+    ) |>
+    dplyr::mutate(
+      itn_use = pmin(itn_use * use_multiplier, max_observed_use),
+    ) |>
+    dplyr::select(-use_multiplier)
 }
 
 # Update IRS cov for years post last IRS cov raster, where we have information
