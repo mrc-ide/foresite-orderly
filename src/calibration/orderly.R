@@ -26,10 +26,13 @@ orderly2::orderly_artefact(
   files = "calibration_plots.rds"
 )
 
-orderly2::orderly_artefact(
-  description = "HTML calibration report",
-  files = "calibration_report.html"
-)
+# TODO:  Waiting for cluster fix for this to work
+if(FALSE){
+  orderly2::orderly_artefact(
+    description = "HTML calibration report",
+    files = "calibration_report.html"
+  )
+}
 
 orderly2::orderly_artefact(
   description = "Calibrated site",
