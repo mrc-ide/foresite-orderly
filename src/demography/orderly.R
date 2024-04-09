@@ -34,18 +34,27 @@ demography_split <- dplyr::group_split(demography, iso3c, year)
 
 source("adjust_rates.R")
 
-system.time({
-  cores <- 5 # parallel::detectCores()
-  cluster <- parallel::makeCluster(cores)
-  adjusted_demography_split <- parallel::parLapply(
-    cl = cluster,
-    X = demography_split,
-    fun = adjust_rates
-  )
-  parallel::stopCluster(cl = cluster)
-  
-  adjusted_demography <- dplyr::bind_rows(adjusted_demography_split)
+cores <- Sys.getenv("CCP_NUMCPUS")
+
+cluster <- parallel::makeCluster(as.integer(cores))
+
+invisible(parallel::clusterCall(cluster, ".libPaths", .libPaths()))
+
+parallel::clusterCall(cluster, function() {
+  library(peeps)
+  source("adjust_rates.R")
+  TRUE
 })
+
+adjusted_demography_split <- parallel::parLapply(
+  cl = cluster,
+  X = demography_split,
+  fun = adjust_rates
+)
+
+parallel::stopCluster(cl = cluster)
+
+adjusted_demography <- dplyr::bind_rows(adjusted_demography_split)
 
 saveRDS(adjusted_demography, "adjusted_demography.rds")
 # ------------------------------------------------------------------------------

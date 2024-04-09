@@ -35,17 +35,30 @@ orderly2::orderly_run(
   name = "un_wpp"
 )
 
+# Run options ------------------------------------------------------------------
 isos <- c("BFA")
 admins <- 1
+# ------------------------------------------------------------------------------
 
-# Demography adjustment - this would take days locally
+# Set up cluster ---------------------------------------------------------------
+hipercow::hipercow_init(driver = 'windows')
+hipercow::hipercow_provision()
+# hipercow::hipercow_configuration()
+# ------------------------------------------------------------------------------
+
+# Demography adjustment - on cluster
+demog_task_ids <- list()
 for(iso in isos){
-  orderly2::orderly_run(
-    name = "demography",
-    parameters = list(
-      version_name = "testing",
-      iso3c = iso
-    )
+  demog_task_ids[[iso]] <- hipercow::task_create_expr(
+    orderly2::orderly_run(
+      name = "demography",
+      parameters = list(
+        version_name = "testing",
+        iso3c = iso
+      )
+    ),
+    parallel = hipercow::hipercow_parallel("parallel"),
+    resources = hipercow::hipercow_resources(cores = 32)
   )
 }
 
@@ -108,17 +121,24 @@ for(iso in isos){
 }
 
 # Calibration
+cali_task_ids <- list()
 for(iso in isos){
   for(admin in admins){
-    orderly2::orderly_run(
-      name = "calibration",
-      parameters = list(
-        version_name = "testing",
-        iso3c = iso,
-        admin_level = admin,
-        urban_rural = TRUE
+    cali_task_ids[[paste0(iso, "_", admin)]] <- hipercow::task_create_expr(
+      orderly2::orderly_run(
+        name = "calibration",
+        parameters = list(
+          version_name = "testing",
+          iso3c = iso,
+          admin_level = admin,
+          urban_rural = TRUE
+        ),
+        echo = FALSE
       ),
-      echo = FALSE
+      parallel = hipercow::hipercow_parallel("parallel"),
+      resources = hipercow::hipercow_resources(cores = 32)
     )
   }
 }
+
+hipercow::task_status(cali_task_ids$BFA_1)

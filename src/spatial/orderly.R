@@ -80,8 +80,6 @@ source("spatial_utils.R")
 
 # Shape file -------------------------------------------------------------------
 
-# TODO: Update to new netz package
-
 # Load shape file at lowest available admin level
 admin_levels <- 3:1
 for(level in admin_levels){

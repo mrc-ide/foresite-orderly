@@ -33,7 +33,7 @@ orderly2::orderly_artefact(
 
 orderly2::orderly_artefact(
   description = "Calibrated site",
-  files = "site.rds"
+  files = "calibrated_site.rds"
 )
 # ------------------------------------------------------------------------------
 
@@ -45,24 +45,39 @@ source("calibration_utils.R")
 
 # Calibration ------------------------------------------------------------------
 parallel <- TRUE
+human_population <- c(5000, 10000, 100000)
+diagnostic_burnin <- 2  # TODO: increase for full run 
+max_attempts <- 10
+
 # Split out individual jobs
 eirs <- site$eir
 eirs <- split(eirs, 1:nrow(eirs))
 
 if(parallel){
-  cores <- 10
-  cluster <- parallel::makeCluster(cores)
-  lp <- parallel::clusterEvalQ(cluster, library("sf"))
-  lp <- parallel::clusterEvalQ(cluster, source("calibration_utils.R"))
+  cores <- Sys.getenv("CCP_NUMCPUS")
+  cluster <- parallel::makeCluster(as.integer(cores))
+  invisible(parallel::clusterCall(cluster, ".libPaths", .libPaths()))
+  parallel::clusterCall(cluster, function() {
+    library(sf)
+    library(site)
+    library(postie)
+    library(cali)
+    library(knitr)
+    library(dplyr)
+    library(ggplot2)
+    library(quarto)
+    source("calibration_utils.R")
+    TRUE
+  })
   
   calibration_output <- parallel::parLapply(
     cl = cluster,
     X = eirs,
     fun = calibrate_site,
     site = site,
-    human_population = c(2000, 10000, 100000),
-    diagnostic_burnin = 2, # TODO: increase for full run 
-    max_attempts = 10
+    human_population = human_population,
+    diagnostic_burnin = diagnostic_burnin,
+    max_attempts = max_attempts
   )
   parallel::stopCluster(cl = cluster)
 } else {
@@ -70,9 +85,9 @@ if(parallel){
     X = eirs,
     FUN = calibrate_site,
     site = site,
-    human_population = c(2000, 10000, 100000),
-    diagnostic_burnin = 2, # TODO: increase for full run 
-    max_attempts = 10
+    human_population = human_population,
+    diagnostic_burnin = diagnostic_burnin,
+    max_attempts = max_attempts
   )
 }
 
@@ -123,9 +138,8 @@ diagnostic_prev <-  lapply(calibration_output, "[[", 3) |>
 
 diagnostic_prev$name <- apply(diagnostic_prev[,group_names], 1, paste, collapse = " | ")
 
-# TODO: update site EIR
 site$eir <- eir_estimates
-saveRDS(site, "site.RDS")
+saveRDS(site, "calibrated_site.rds")
 # ------------------------------------------------------------------------------
 
 # Prevalence diagnostic plots --------------------------------------------------
@@ -339,14 +353,17 @@ calibration_plots <- list(
 )
 saveRDS(calibration_plots, "calibration_plots.rds")
 
-quarto::quarto_render(
-  input = "calibration_report.qmd",
-  execute_params = list(
-    iso3c = iso3c,
-    country = site$country,
-    admin_level = admin_level,
-    version = site$version,
-    n_sites = nrow(site$sites)
+if(FALSE){
+  # TODO:  Waiting for cluster fix for this to work
+  quarto::quarto_render(
+    input = "calibration_report.qmd",
+    execute_params = list(
+      iso3c = iso3c,
+      country = site$country,
+      admin_level = admin_level,
+      version = site$version,
+      n_sites = nrow(site$sites)
+    )
   )
-)
+}
 # ------------------------------------------------------------------------------
