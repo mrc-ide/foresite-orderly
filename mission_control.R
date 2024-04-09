@@ -111,7 +111,7 @@ for(iso in isos){
 for(iso in isos){
   for(admin in admins){
     orderly2::orderly_run(
-      name = "calibrate",
+      name = "calibration",
       parameters = list(
         version_name = "testing",
         iso3c = iso,

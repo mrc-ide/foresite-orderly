@@ -58,23 +58,21 @@ if(parallel){
   calibration_output <- parallel::parLapply(
     cl = cluster,
     X = eirs,
-    fun = calibrate,
+    fun = calibrate_site,
     site = site,
-    human_population = c(1000, 10000, 100000),
-    burnin = 0,
-    max_attempts = 10,
-    eir_limits = c(0, 1000)
+    human_population = c(2000, 10000, 100000),
+    diagnostic_burnin = 2, # TODO: increase for full run 
+    max_attempts = 10
   )
   parallel::stopCluster(cl = cluster)
 } else {
   calibration_output <- lapply(
     X = eirs,
-    FUN = calibrate,
+    FUN = calibrate_site,
     site = site,
-    human_population = c(1000, 10000, 100000),
-    burnin = 0,
-    max_attempts = 10,
-    eir_limits = c(0, 1000)
+    human_population = c(2000, 10000, 100000),
+    diagnostic_burnin = 2, # TODO: increase for full run 
+    max_attempts = 10
   )
 }
 

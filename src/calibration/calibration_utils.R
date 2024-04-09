@@ -32,9 +32,9 @@ summary_function_pv <- function(x){
 
 calibrate_site <- function(
     x, site,
-    human_population = c(1000, 30000, 50000),
-    diagnostic_burnin = 20,
-    max_attempts = 10
+    human_population,
+    diagnostic_burnin,
+    max_attempts
 ){
   print(x)
   sub_site <- site::subset_site(site, x)
@@ -69,11 +69,12 @@ calibrate_site <- function(
   calibration <- cali::calibrate(
     parameters = p,
     target = target,
-    summary_function = summary_function, #TODO adjust summary function for sp
+    summary_function = summary_function,
     eq_prevalence = max(prevalence),
     eq_ft = sub_site$interventions$tx_cov[1],
     human_population = human_population,
-    max_attempts = max_attempts
+    max_attempts = max_attempts,
+    eir_limits = c(0.00001, 1000)
   )
 
   p <- site::site_parameters(
@@ -82,7 +83,7 @@ calibrate_site <- function(
     vectors = sub_site$vectors$vector_species,
     seasonality = sub_site$seasonality$seasonality_parameters,
     overrides = list(
-      human_population = 50000
+      human_population = 10000 # TODO: increase for full run
     ),
     species  = species,
     burnin = diagnostic_burnin,
@@ -117,10 +118,10 @@ calibrate_site <- function(
         -c("eir")
       )
     )
-  
+  x$eir <- calibration
   return(
     list(
-      eir_fit = calibration,
+      eir_fit = x,
       epi = epi,
       prev = prev
     )
