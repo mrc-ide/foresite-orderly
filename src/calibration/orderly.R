@@ -27,16 +27,27 @@ orderly2::orderly_artefact(
 )
 
 # TODO:  Waiting for cluster fix for this to work
-if(FALSE){
-  orderly2::orderly_artefact(
-    description = "HTML calibration report",
-    files = "calibration_report.html"
-  )
-}
+#if(FALSE){
+orderly2::orderly_artefact(
+  description = "HTML calibration report",
+  files = "calibration_report.html"
+)
+#}
 
 orderly2::orderly_artefact(
   description = "Calibrated site",
   files = "calibrated_site.rds"
+)
+
+
+orderly2::orderly_artefact(
+  description = "National prevalence estimates",
+  "national_prev.rds"
+)
+
+orderly2::orderly_artefact(
+  description = "National epi estimates",
+  "national_epi.rds"
 )
 # ------------------------------------------------------------------------------
 
@@ -103,6 +114,8 @@ eir_estimates <-
 group_names <- site$admin_level[!site$admin_level %in% c("country", "iso3c", "year")]
 breaks <- c(-Inf, 4, 14, Inf)
 labels <- c("0-5", "5-15", "15+")
+
+# TODO: Save diagnostic data as output
 
 pop <- site$population$population_by_age |>
   dplyr::mutate(
@@ -205,6 +218,8 @@ map_prev_national <- map_prev |>
     .by = "year"
   )
 
+saveRDS(diagnostic_prev_national, "national_prev.rds")
+
 national_prev_pf_plot <- ggplot2::ggplot() +
   ggplot2::geom_line(
     data  = dplyr::filter(diagnostic_prev_national, sp == "pf"),
@@ -249,6 +264,8 @@ national_epi <- diagnostic_epi |>
     deaths = sum(deaths),
     .by = "year"
   )
+
+saveRDS(national_epi, "national_epi.rds")
 
 national_inc_plot <- ggplot2::ggplot() +
   ggplot2::geom_line(
@@ -356,17 +373,17 @@ calibration_plots <- list(
 )
 saveRDS(calibration_plots, "calibration_plots.rds")
 
-if(FALSE){
-  # TODO:  Waiting for cluster fix for this to work
-  quarto::quarto_render(
-    input = "calibration_report.qmd",
-    execute_params = list(
-      iso3c = iso3c,
-      country = site$country,
-      admin_level = admin_level,
-      version = site$version,
-      n_sites = nrow(site$sites)
-    )
+#if(FALSE){
+# TODO:  Waiting for cluster fix for this to work
+quarto::quarto_render(
+  input = "calibration_report.qmd",
+  execute_params = list(
+    iso3c = iso3c,
+    country = site$country,
+    admin_level = admin_level,
+    version = site$version,
+    n_sites = nrow(site$sites)
   )
-}
+)
+#}
 # ------------------------------------------------------------------------------
