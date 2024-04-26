@@ -141,4 +141,4 @@ for(iso in isos){
   }
 }
 
-hipercow::task_status(cali_task_ids$BFA_1)
+hipercow::task_status(cali_task_ids$SLE_2)

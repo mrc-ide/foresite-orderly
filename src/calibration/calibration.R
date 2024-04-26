@@ -17,7 +17,7 @@ orderly2::orderly_resource(
 
 orderly2::orderly_dependency(
   name = "site_file",
-  query = "latest(parameter:version_name == this:version_name && parameter:iso3c ==  this:iso3c && parameter:admin_level == this:admin_level && parameter:urban_rural == this:urban_rural)",
+  query = "latest(parameter:version_name == this:version_name && parameter:iso3c == this:iso3c && parameter:admin_level == this:admin_level && parameter:urban_rural == this:urban_rural)",
   files = c("site.rds")
 )
 
@@ -27,12 +27,12 @@ orderly2::orderly_artefact(
 )
 
 # TODO:  Waiting for cluster fix for this to work
-#if(FALSE){
+if(FALSE){
 orderly2::orderly_artefact(
   description = "HTML calibration report",
   files = "calibration_report.html"
 )
-#}
+}
 
 orderly2::orderly_artefact(
   description = "Calibrated site",
@@ -373,7 +373,7 @@ calibration_plots <- list(
 )
 saveRDS(calibration_plots, "calibration_plots.rds")
 
-#if(FALSE){
+if(FALSE){
 # TODO:  Waiting for cluster fix for this to work
 quarto::quarto_render(
   input = "calibration_report.qmd",
@@ -385,5 +385,5 @@ quarto::quarto_render(
     n_sites = nrow(site$sites)
   )
 )
-#}
+}
 # ------------------------------------------------------------------------------

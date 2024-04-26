@@ -515,9 +515,9 @@ if(!approximate_itn){
       .by = "year"
     ) |>
     dplyr::mutate(
-      access = usage_to_access(itn_use, ur),
-      crop = access_to_crop(access),
-      dist = crop_to_distribution(
+      access = netz::usage_to_access(itn_use, ur),
+      crop = netz::access_to_crop(access),
+      dist = netz::crop_to_distribution(
         crop,
         crop_timesteps = 365 * (year - 2000) + (365 / 2),
         distribution_timesteps = 365 * (year - 2000) + 1,
