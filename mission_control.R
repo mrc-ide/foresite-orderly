@@ -1,9 +1,9 @@
 # Mission control --------------------------------------------------------------
 
 # Run options ------------------------------------------------------------------
+version <- "GADM_4.1.0"
 isos <- c("BFA")
 admins <- 1:2
-boundary_version <- "GADM_4.1.0"
 # ------------------------------------------------------------------------------
 
 # Set up cluster ---------------------------------------------------------------
@@ -151,3 +151,4 @@ for(iso in isos){
 }
 
 hipercow::task_status(cali_task_ids$BFA_1)
+hipercow::task_log_show(cali_task_ids$BFA_1)
