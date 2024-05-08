@@ -1,43 +1,9 @@
 # Mission control --------------------------------------------------------------
 
-# Data inputs
-orderly2::orderly_run(
-  name = "data_boundaries",
-  parameters = list(
-    boundary_version = "GADM_4.1.0"
-  )
-)
-orderly2::orderly_run(name = "data_un")
-orderly2::orderly_run(
-  name = "data_map",
-  parameters = list(
-    boundary_version = "GADM_4.1.0"
-  )
-)
-orderly2::orderly_run(name = "data_worldpop")
-orderly2::orderly_run(
-  name = "data_chirps",
-  parameters = list(
-    boundary_version = "GADM_4.1.0"
-  )
-)
-orderly2::orderly_run(name = "data_dhs")
-orderly2::orderly_run(name = "data_who")
-orderly2::orderly_run(
-  name = "data_vectors",
-  parameters = list(
-    boundary_version = "GADM_4.1.0"
-  )
-)
-
-# UN population and demography
-orderly2::orderly_run(
-  name = "un_wpp"
-)
-
 # Run options ------------------------------------------------------------------
 isos <- c("BFA")
-admins <- 1
+admins <- 1:2
+boundary_version <- "GADM_4.1.0"
 # ------------------------------------------------------------------------------
 
 # Set up cluster ---------------------------------------------------------------
@@ -45,6 +11,49 @@ hipercow::hipercow_init(driver = 'windows')
 hipercow::hipercow_provision()
 # hipercow::hipercow_configuration()
 # ------------------------------------------------------------------------------
+
+# Data inputs
+orderly2::orderly_run(
+  name = "data_boundaries",
+  parameters = list(
+    boundary_version = boundary_version
+  )
+)
+orderly2::orderly_run(
+  name = "data_un"
+)
+orderly2::orderly_run(
+  name = "data_map",
+  parameters = list(
+    boundary_version = boundary_version
+  )
+)
+orderly2::orderly_run(
+  name = "data_worldpop"
+)
+orderly2::orderly_run(
+  name = "data_chirps",
+  parameters = list(
+    boundary_version = boundary_version
+  )
+)
+orderly2::orderly_run(
+  name = "data_dhs"
+)
+orderly2::orderly_run(
+  name = "data_who"
+)
+orderly2::orderly_run(
+  name = "data_vectors",
+  parameters = list(
+    boundary_version = boundary_version
+  )
+)
+
+# UN population and demography
+orderly2::orderly_run(
+  name = "un_wpp"
+)
 
 # Demography adjustment - on cluster
 demog_task_ids <- list()
@@ -69,7 +78,7 @@ for(iso in isos){
     parameters = list(
       version_name = "testing",
       iso3c = iso,
-      boundary_version = "GADM_4.1.0"
+      boundary_version = boundary_version
     ),
     echo = FALSE
   )
@@ -97,7 +106,7 @@ for(iso in isos){
         iso3c = iso,
         admin_level = admin,
         urban_rural = TRUE,
-        boundary_version = "GADM_4.1.0"
+        boundary_version = boundary_version
       ),
       echo = FALSE
     )
@@ -141,4 +150,4 @@ for(iso in isos){
   }
 }
 
-hipercow::task_status(cali_task_ids$SLE_2)
+hipercow::task_status(cali_task_ids$BFA_1)
