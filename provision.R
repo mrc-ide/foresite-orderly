@@ -8,6 +8,7 @@ install.packages(
 )
 install.packages("sf")
 install.packages("knitr")
+install.packages("rmarkdown")
 install.packages("dplyr")
 install.packages("ggplot2")
 install.packages("quarto")
