@@ -83,7 +83,7 @@ calibrate_site <- function(
     vectors = sub_site$vectors$vector_species,
     seasonality = sub_site$seasonality$seasonality_parameters,
     overrides = list(
-      human_population = 10000 # TODO: increase for full run
+      human_population = 50000
     ),
     species  = species,
     burnin = diagnostic_burnin,

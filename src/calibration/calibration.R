@@ -6,13 +6,17 @@ orderly2::orderly_description(
 
 orderly2::orderly_parameters(
   version_name = "testing",
-  iso3c = "BFA",
+  iso3c = NULL,
   admin_level = 1,
   urban_rural = TRUE
 )
 
 orderly2::orderly_resource(
   files = "calibration_utils.R"
+)
+
+orderly2::orderly_resource(
+  files = "calibration_report.qmd"
 )
 
 orderly2::orderly_dependency(
@@ -22,17 +26,22 @@ orderly2::orderly_dependency(
 )
 
 orderly2::orderly_artefact(
+  description = "Raw list calibration output",
+  files = "calibration_output_raw.rds"
+)
+
+orderly2::orderly_artefact(
   description = "Raw list of calibration plots",
   files = "calibration_plots.rds"
 )
 
 # TODO:  Waiting for cluster fix for this to work
-if(FALSE){
-orderly2::orderly_artefact(
-  description = "HTML calibration report",
-  files = "calibration_report.html"
-)
-}
+#if(FALSE){
+  orderly2::orderly_artefact(
+    description = "HTML calibration report",
+    files = "calibration_report.html"
+  )
+#}
 
 orderly2::orderly_artefact(
   description = "Calibrated site",
@@ -104,6 +113,9 @@ if(parallel){
     max_attempts = max_attempts
   )
 }
+
+# TODO: might be able to remove this once debugged.
+saveRDS(calibration_output, "calibration_output_raw.rds")
 
 # Collate EIR
 eir_estimates <- 
@@ -373,17 +385,17 @@ calibration_plots <- list(
 )
 saveRDS(calibration_plots, "calibration_plots.rds")
 
-if(FALSE){
-# TODO:  Waiting for cluster fix for this to work
-quarto::quarto_render(
-  input = "calibration_report.qmd",
-  execute_params = list(
-    iso3c = iso3c,
-    country = site$country,
-    admin_level = admin_level,
-    version = site$version,
-    n_sites = nrow(site$sites)
+#if(FALSE){
+  # TODO:  Waiting for cluster fix for this to work
+  quarto::quarto_render(
+    input = "calibration_report.qmd",
+    execute_params = list(
+      iso3c = iso3c,
+      country = site$country,
+      admin_level = admin_level,
+      version = site$version,
+      n_sites = nrow(site$sites)
+    )
   )
-)
-}
+#}
 # ------------------------------------------------------------------------------
