@@ -36,7 +36,6 @@ orderly2::orderly_artefact(
   files = "calibrated_site.rds"
 )
 
-
 orderly2::orderly_artefact(
   description = "National prevalence estimates",
   "national_prev.rds"

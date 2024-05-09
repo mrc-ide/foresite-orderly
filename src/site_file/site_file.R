@@ -359,7 +359,7 @@ cases_deaths <- read.csv("wmr_cases_deaths.csv") |>
 
 # Demography -------------------------------------------------------------------
 demography <- readRDS("adjusted_demography.rds") |>
-  dplyr::select(-"fitted_age_dist")
+  dplyr::select(-fitted_age_dist)
 # ------------------------------------------------------------------------------
 
 # Seasonality ------------------------------------------------------------------
@@ -447,7 +447,7 @@ vectors <- spatial |>
   dplyr::group_by(dplyr::across(dplyr::all_of(grouping))) |>
   dplyr::mutate(rank = rank(-prop, ties = "first")) |>
   dplyr::filter(rank <= 3) |>
-  dplyr::select(-"rank") |>
+  dplyr::select(-rank) |>
   # Missing values get assigned equal probability of occurence
   dplyr::mutate(prop = ifelse(is.na(prop), 1/3, prop)) |>
   dplyr::mutate(prop = prop / sum(prop)) |>

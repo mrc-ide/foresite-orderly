@@ -528,14 +528,14 @@ if(!approximate_itn){
     dplyr::mutate(
       n_nets = ifelse(is.na(llins_sold_or_delivered), n_nets , llins_sold_or_delivered),
       dist2 = n_nets / par,
-      crop2 = distribution_to_crop(
+      crop2 = netz::distribution_to_crop(
         dist2,
         distribution_timesteps = 365 * (year - 2000) + 1,
         crop_timesteps = 365 * (year - 2000) + (365 / 2),
         netz::net_loss_map, half_life = hl
       ),
-      access2 = crop_to_access(crop2),
-      itn_use2 = access_to_usage(access2, ur),
+      access2 = netz::crop_to_access(crop2),
+      itn_use2 = netz::access_to_usage(access2, ur),
       use_multiplier = round(itn_use2 / itn_use, 2)
     )
   

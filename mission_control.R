@@ -4,8 +4,9 @@
 # A version identifier that must correspond to a boundaries folder in 
 # data_boundaries/boundaries
 version <- "GADM_4.1.0" 
-isos <- c("BFA")
-admins <- 1
+isos <- list.files(paste0("src/data_boundaries/boundaries/", version))
+#isos <- c("BFA")
+admins <- 1:2
 urban_rural <- TRUE
 # ------------------------------------------------------------------------------
 
