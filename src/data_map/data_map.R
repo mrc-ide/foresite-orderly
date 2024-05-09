@@ -1,13 +1,15 @@
 orderly2::orderly_parameters(
-  boundary_version = "GADM_4.1.0"
+  version = NULL
 )
 
 orderly2::orderly_resource("data/")
 orderly2::orderly_resource("README.md")
 
+orderly2::orderly_shared_resource("utils.R")
+
 orderly2::orderly_dependency(
   name = "data_boundaries",
-  query = "latest(parameter:boundary_version == this:boundary_version)",
+  query = "latest(parameter:version == this:version)",
   files = "extents.rds"
 )
 
@@ -48,15 +50,7 @@ duffy_raster <- raster_stack("blood_disorders/201201_Global_Duffy_Negativity_Phe
 g6pd_raster <- raster_stack("blood_disorders/201201_Global_G6PDd_Allele_Frequency_", 2010) 
 sickle_raster <- raster_stack("blood_disorders/201201_Global_Sickle_Haemoglobin_HbS_Allele_Frequency_", 2010) 
 
-# Check if raster extents overlap
-extents_overlap <- function(x, extent){
-  extent_x <- terra::ext(x)
-  overlap <- TRUE
-  if(is.null(terra::intersect(extent_x, extent))){
-    overlap <- FALSE
-  }
-  return(overlap)
-}
+source("utils.R")
 
 split <- function(raster, extent, iso, name, NAflag = NULL){
   if(extents_overlap(raster, extent)){

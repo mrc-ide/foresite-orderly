@@ -1,18 +1,22 @@
 orderly2::orderly_parameters(
-  boundary_version = "GADM_4.1.0"
+  version = NULL
 )
 
 orderly2::orderly_resource("data/")
 orderly2::orderly_resource("README.md")
 
+orderly2::orderly_shared_resource("utils.R")
+
 orderly2::orderly_dependency(
   name = "data_boundaries",
-  query = "latest(parameter:boundary_version == this:boundary_version)",
+  query = "latest(parameter:version == this:version)",
   files = "extents.rds"
 )
 
 extents <- readRDS("extents.rds")
 isos <- names(extents)
+
+source("utils.R")
 
 split <- function(raster, extent, iso, name, NAflag = NULL){
   if(extents_overlap(raster, extent)){

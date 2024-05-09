@@ -11,7 +11,7 @@ orderly2::orderly_description(
 )
 
 orderly2::orderly_parameters(
-  version_name = NULL,
+  version = NULL,
   iso3c = NULL
 )
 
@@ -27,7 +27,7 @@ orderly2::orderly_dependency(
 
 orderly2::orderly_dependency(
   name = "spatial",
-  query = "latest(parameter:version_name == this:version_name && parameter:iso3c ==  this:iso3c)",
+  query = "latest(parameter:version == this:version && parameter:iso3c ==  this:iso3c)",
   files = c("spatial.rds")
 )
 

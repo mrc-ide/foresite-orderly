@@ -1,9 +1,12 @@
 # Mission control --------------------------------------------------------------
 
 # Run options ------------------------------------------------------------------
-version <- "GADM_4.1.0"
+# A version identifier that must correspond to a boundaries folder in 
+# data_boundaries/boundaries
+version <- "GADM_4.1.0" 
 isos <- c("BFA")
 admins <- 1:2
+urban_rural <- TRUE
 # ------------------------------------------------------------------------------
 
 # Set up cluster ---------------------------------------------------------------
@@ -16,43 +19,67 @@ hipercow::hipercow_provision()
 orderly2::orderly_run(
   name = "data_boundaries",
   parameters = list(
-    boundary_version = boundary_version
-  )
+    version = version
+  ),
+  echo = FALSE
 )
 orderly2::orderly_run(
-  name = "data_un"
+  name = "data_un",
+  parameters = list(
+    version = version
+  ),
+  echo = FALSE
 )
 orderly2::orderly_run(
   name = "data_map",
   parameters = list(
-    boundary_version = boundary_version
-  )
+    version = version
+  ),
+  echo = FALSE
 )
 orderly2::orderly_run(
-  name = "data_worldpop"
+  name = "data_worldpop",
+  parameters = list(
+    version = version
+  ),
+  echo = FALSE
 )
 orderly2::orderly_run(
   name = "data_chirps",
   parameters = list(
-    boundary_version = boundary_version
-  )
+    version = version
+  ),
+  echo = FALSE
 )
 orderly2::orderly_run(
-  name = "data_dhs"
+  name = "data_dhs",
+  parameters = list(
+    version = version
+  ),
+  echo = FALSE
 )
 orderly2::orderly_run(
-  name = "data_who"
+  name = "data_who",
+  parameters = list(
+    version = version
+  ),
+  echo = FALSE
 )
 orderly2::orderly_run(
   name = "data_vectors",
   parameters = list(
-    boundary_version = boundary_version
-  )
+    version = version
+  ),
+  echo = FALSE
 )
 
 # UN population and demography
 orderly2::orderly_run(
-  name = "un_wpp"
+  name = "un_wpp",
+  parameters = list(
+    version = version
+  ),
+  echo = FALSE
 )
 
 # Demography adjustment - on cluster
@@ -62,12 +89,12 @@ for(iso in isos){
     orderly2::orderly_run(
       name = "demography",
       parameters = list(
-        version_name = "testing",
+        version = version,
         iso3c = iso
       )
     ),
     parallel = hipercow::hipercow_parallel("parallel"),
-    resources = hipercow::hipercow_resources(cores = 32)
+    resources = hipercow::hipercow_resources(cores = 16)
   )
 }
 
@@ -76,9 +103,8 @@ for(iso in isos){
   orderly2::orderly_run(
     name = "spatial",
     parameters = list(
-      version_name = "testing",
-      iso3c = iso,
-      boundary_version = boundary_version
+      version = version,
+      iso3c = iso
     ),
     echo = FALSE
   )
@@ -89,7 +115,7 @@ for(iso in isos){
   orderly2::orderly_run(
     name = "population",
     parameters = list(
-      version_name = "testing",
+      version = version,
       iso3c = iso
     ),
     echo = FALSE
@@ -102,11 +128,10 @@ for(iso in isos){
     orderly2::orderly_run(
       name = "site_file",
       parameters = list(
-        version_name = "testing",
+        version = version,
         iso3c = iso,
         admin_level = admin,
-        urban_rural = TRUE,
-        boundary_version = boundary_version
+        urban_rural = urban_rural
       ),
       echo = FALSE
     )
@@ -119,10 +144,10 @@ for(iso in isos){
     orderly2::orderly_run(
       name = "diagnostics",
       parameters = list(
-        version_name = "testing",
+        version = version,
         iso3c = iso,
         admin_level = admin,
-        urban_rural = TRUE
+        urban_rural = urban_rural
       ),
       echo = FALSE
     )
@@ -137,10 +162,10 @@ for(iso in isos){
       orderly2::orderly_run(
         name = "calibration",
         parameters = list(
-          version_name = "testing",
+          version = version,
           iso3c = iso,
           admin_level = admin,
-          urban_rural = TRUE
+          urban_rural = urban_rural
         ),
         echo = FALSE
       ),

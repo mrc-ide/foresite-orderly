@@ -5,11 +5,10 @@ orderly2::orderly_description(
 )
 
 orderly2::orderly_parameters(
-  version_name = "testing",
-  iso3c = "BFA",
-  admin_level = 1,
-  urban_rural = TRUE,
-  boundary_version = "GADM_4.1.0"
+  version = NULL,
+  iso3c = NULL,
+  admin_level = NULL,
+  urban_rural = NULL
 )
 
 orderly2::orderly_resource(
@@ -18,31 +17,31 @@ orderly2::orderly_resource(
 
 orderly2::orderly_dependency(
   name = "demography",
-  query = "latest(parameter:version_name == this:version_name && parameter:iso3c ==  this:iso3c)",
+  query = "latest(parameter:version == this:version && parameter:iso3c ==  this:iso3c)",
   files = c("adjusted_demography.rds")
 )
 
 orderly2::orderly_dependency(
   name = "spatial",
-  query = "latest(parameter:version_name == this:version_name && parameter:iso3c ==  this:iso3c)",
+  query = "latest(parameter:version == this:version && parameter:iso3c ==  this:iso3c)",
   files = c("spatial.rds")
 )
 
 orderly2::orderly_dependency(
   name = "population",
-  query = "latest(parameter:version_name == this:version_name && parameter:iso3c ==  this:iso3c)",
+  query = "latest(parameter:version == this:version && parameter:iso3c ==  this:iso3c)",
   files = c("population.rds", "population_age.rds")
 )
 
 orderly2::orderly_dependency(
   name = "data_boundaries",
-  query = "latest(parameter:boundary_version == this:boundary_version)",
-  files = c("boundaries" = paste0("boundaries/", boundary_version, "/", iso3c, "/"))
+  query = "latest(parameter:version == this:version)",
+  files = c("boundaries" = paste0("boundaries/", version, "/", iso3c, "/"))
 )
 
 orderly2::orderly_dependency(
   name = "data_vectors",
-  query = "latest()",
+  query = "latest(parameter:version == this:version)",
   files = c(
     "vectors/irs_insecticide_parameters.csv" = "vectors/irs_insecticide_parameters.csv",
     "vectors/net_efficacy_adjusted.csv" = "vectors/net_efficacy_adjusted.csv",
@@ -54,7 +53,7 @@ orderly2::orderly_dependency(
 
 orderly2::orderly_dependency(
   name = "data_who",
-  query = "latest()",
+  query = "latest(parameter:version == this:version)",
   files = c("wmr_cases_deaths.csv" = "data/wmr_cases_deaths.csv")
 )
 
@@ -507,7 +506,7 @@ eir <- dplyr::bind_rows(pf_eir, pv_eir)
 site_file <- list()
 
 site_file$country = unique(spatial$country)
-site_file$version = version_name
+site_file$version = version
 site_file$admin_level = grouping
 
 site_file$sites = sites

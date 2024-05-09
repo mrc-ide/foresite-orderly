@@ -5,9 +5,8 @@ orderly2::orderly_description(
 )
 
 orderly2::orderly_parameters(
-  version_name = "testing",
-  iso3c = "BFA",
-  boundary_version = "GADM_4.1.0"
+  version = NULL,
+  iso3c = NULL
 )
 
 orderly2::orderly_resource(
@@ -16,55 +15,55 @@ orderly2::orderly_resource(
 
 orderly2::orderly_dependency(
   name = "un_wpp",
-  query = "latest()",
+  query = "latest(parameter:version == this:version)",
   files = "un_wup.rds"
 )
 
 orderly2::orderly_dependency(
   name = "data_map",
-  query = "latest()",
+  query = "latest(parameter:version == this:version)",
   files = c("data/map" = paste0("map/", iso3c, "/"))
 )
 
 orderly2::orderly_dependency(
   name = "data_worldpop",
-  query = "latest()",
+  query = "latest(parameter:version == this:version)",
   files = c("data/population" = paste0("population/", iso3c, "/"))
 )
 
 orderly2::orderly_dependency(
   name = "data_chirps",
-  query = "latest()",
+  query = "latest(parameter:version == this:version)",
   files = c("data/rainfall" = paste0("rainfall/", iso3c, "/"))
 )
 
 orderly2::orderly_dependency(
   name = "data_dhs",
-  query = "latest()",
+  query = "latest(parameter:version == this:version)",
   files = "data/dhs/"
 )
 
 orderly2::orderly_dependency(
   name = "data_who",
-  query = "latest()",
+  query = "latest(parameter:version == this:version)",
   files = c("data/who/" = "data/")
 )
 
 orderly2::orderly_dependency(
   name = "data_vectors",
-  query = "latest()",
+  query = "latest(parameter:version == this:version)",
   files = c("data/vectors" = paste0("vectors/", iso3c, "/"))
 )
 orderly2::orderly_dependency(
   name = "data_vectors",
-  query = "latest()",
+  query = "latest(parameter:version == this:version)",
   files = c("data/vectors/vector_bionomics.csv" = "vectors/vector_bionomics.csv")
 )
 
 orderly2::orderly_dependency(
   name = "data_boundaries",
-  query = "latest(parameter:boundary_version == this:boundary_version)",
-  files = c("data/boundaries" = paste0("boundaries/", boundary_version, "/", iso3c, "/"))
+  query = "latest(parameter:version == this:version)",
+  files = c("data/boundaries" = paste0("boundaries/", version, "/", iso3c, "/"))
 )
 
 orderly2::orderly_artefact(

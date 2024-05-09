@@ -62,17 +62,6 @@ create_urban_rural_raster <- function(population_raster, urban_population){
   return(urban_rural)
 }
 
-# Check if raster extents overlap
-extents_overlap <- function(x, y){
-  extent_x <- terra::ext(x)
-  extent_y <- terra::ext(y)
-  overlap <- TRUE
-  if(is.null(terra::intersect(extent_x, extent_y))){
-    overlap <- FALSE
-  }
-  return(overlap)
-}
-
 # Mean of positive values
 mean_pos <- function(x){
   mean(x[x > 0])
