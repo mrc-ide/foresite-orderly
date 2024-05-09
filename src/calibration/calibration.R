@@ -15,10 +15,6 @@ orderly2::orderly_resource(
   files = "calibration_utils.R"
 )
 
-orderly2::orderly_resource(
-  files = "calibration_report.qmd"
-)
-
 orderly2::orderly_dependency(
   name = "site_file",
   query = "latest(parameter:version == this:version && parameter:iso3c == this:iso3c && parameter:admin_level == this:admin_level && parameter:urban_rural == this:urban_rural)",
@@ -34,14 +30,6 @@ orderly2::orderly_artefact(
   description = "Raw list of calibration plots",
   files = "calibration_plots.rds"
 )
-
-# TODO:  Waiting for cluster fix for this to work
-#if(FALSE){
-  orderly2::orderly_artefact(
-    description = "HTML calibration report",
-    files = "calibration_report.html"
-  )
-#}
 
 orderly2::orderly_artefact(
   description = "Calibrated site",
@@ -370,9 +358,7 @@ national_deaths <- ggplot2::ggplot() +
   ggplot2::ylim(0, NA) +
   ggplot2::ylab("Deaths") +
   ggplot2::theme_bw()
-# ------------------------------------------------------------------------------
 
-# Diagnostic report ------------------------------------------------------------
 calibration_plots <- list(
   calibration_fit_pf = calibration_fit_pf, 
   calibration_fit_pv = calibration_fit_pv,
@@ -384,18 +370,4 @@ calibration_plots <- list(
   national_deaths = national_deaths
 )
 saveRDS(calibration_plots, "calibration_plots.rds")
-
-#if(FALSE){
-  # TODO:  Waiting for cluster fix for this to work
-  quarto::quarto_render(
-    input = "calibration_report.qmd",
-    execute_params = list(
-      iso3c = iso3c,
-      country = site$country,
-      admin_level = admin_level,
-      version = site$version,
-      n_sites = nrow(site$sites)
-    )
-  )
-#}
 # ------------------------------------------------------------------------------

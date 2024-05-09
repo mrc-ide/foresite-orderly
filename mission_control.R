@@ -5,7 +5,7 @@
 # data_boundaries/boundaries
 version <- "GADM_4.1.0" 
 isos <- c("BFA")
-admins <- 1:2
+admins <- 1
 urban_rural <- TRUE
 # ------------------------------------------------------------------------------
 
@@ -98,6 +98,8 @@ for(iso in isos){
   )
 }
 
+# hipercow::task_status(demog_task_ids$BFA)
+
 # Spatial processing
 for(iso in isos){
   orderly2::orderly_run(
@@ -175,5 +177,21 @@ for(iso in isos){
   }
 }
 
-hipercow::task_status(cali_task_ids$BFA_1)
-hipercow::task_log_show(cali_task_ids$BFA_1)
+# hipercow::task_status(cali_task_ids$BFA_1)
+# hipercow::task_log_show(cali_task_ids$BFA_1)
+
+# Calibration diagnostic report
+for(iso in isos){
+  for(admin in admins){
+    orderly2::orderly_run(
+      name = "calibration_diagnostics",
+      parameters = list(
+        version = version,
+        iso3c = iso,
+        admin_level = admin,
+        urban_rural = urban_rural
+      ),
+      echo = FALSE
+    )
+  }
+}
