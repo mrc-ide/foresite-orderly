@@ -498,8 +498,14 @@ rank <- df |>
 # on nets delivered to the country from WMR
 if(!approximate_itn){
   # Assume median half life and usage rate
-  hl <- netz::get_halflife(iso3c)
-  ur <- netz::get_usage_rate(iso3c)
+  hl <- netz::get_halflife()
+  if(iso3c %in% netz::halflife$iso3c){
+    hl <- netz::get_halflife(iso3c)
+  }
+  ur <- netz::get_usage_rate()
+  if(iso3c %in% netz::usage_rate$iso3c){
+    ur <- netz::get_usage_rate(iso3c)
+  }
   
   wmr_use <- read.csv("data/who/llins_delivered.csv") |>
     dplyr::filter(iso3c == {{iso3c}}) |>
