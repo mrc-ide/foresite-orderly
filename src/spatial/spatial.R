@@ -468,7 +468,7 @@ if(iso3c %in% prop_public$iso3c){
     dplyr::filter(iso3c == {{iso3c}}) |>
     dplyr::pull(prop_public)
 } else{
-  prop_act <- median(prop_public$prop_public)
+  prop_public <- median(prop_public$prop_public)
 }
 prop_public <- data.frame(year = years, prop_public = prop_public)
 df <- df |>

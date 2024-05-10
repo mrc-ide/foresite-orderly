@@ -4,7 +4,7 @@
 # A version identifier that must correspond to a boundaries folder in 
 # data_boundaries/boundaries
 version <- "GADM_4.1.0" 
-isos <- list.files(paste0("src/data_boundaries/boundaries/", version))
+isos <- list.files("src/data_worldpop/data/")
 #isos <- c("BFA")
 admins <- 1:2
 urban_rural <- TRUE
@@ -99,6 +99,7 @@ for(iso in isos){
   )
 }
 
+# table(sapply(demog_task_ids, hipercow::task_status))
 # hipercow::task_status(demog_task_ids$BFA)
 
 # Spatial processing
