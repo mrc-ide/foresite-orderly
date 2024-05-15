@@ -598,7 +598,7 @@ if(approximate_itn){
         distribution_timesteps = 365 * (year - 2000) + 1,
         crop_timesteps = 365 * (year - 2000) + (365 / 2),
         netz::net_loss_map, half_life = hl) / par,
-      access = netz::crop_to_access(crop),
+      access = netz::crop_to_access(pmin(1, crop)),
       usage = netz::access_to_usage(access, ur),
       people_using_nets = usage * par
     ) |>

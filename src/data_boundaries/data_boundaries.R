@@ -10,6 +10,7 @@ boundary_files <- list.files(
 )
 
 orderly2::orderly_resource(boundary_files)
+
 orderly2::orderly_artefact(
   description = "Boundary files",
   files = boundary_files
