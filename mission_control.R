@@ -125,74 +125,91 @@ for(iso in isos){
   )
 }
 
-# Site file creation
-for(iso in isos){
-  for(admin in admins){
-    orderly2::orderly_run(
-      name = "site_file",
-      parameters = list(
-        version = version,
-        iso3c = iso,
-        admin_level = admin,
-        urban_rural = urban_rural
-      ),
-      echo = FALSE
+# Check what site-admin combinations exist
+iso_admin <-
+  tidyr::expand_grid(
+    iso = isos,
+    admin = admins
+  )
+iso_admin$exists <- 
+  apply(iso_admin, 1, function(x){
+    boundary <- readRDS(
+      paste0("src/data_boundaries/boundaries/", version, "/", x[1], "/", x[1], "_", x[2] ,".rds")
     )
-  }
+    nrow(boundary) > 1
+  })
+iso_admin <- iso_admin[iso_admin$exists,]
+
+# Site file creation
+for(i in 1:nrow(iso_admin)){
+  iso <- iso_admin[[i, "iso"]]
+  admin <- iso_admin[[i, "admin"]]
+  orderly2::orderly_run(
+    name = "site_file",
+    parameters = list(
+      version = version,
+      iso3c = iso,
+      admin_level = admin,
+      urban_rural = urban_rural
+    ),
+    echo = FALSE
+  )
 }
 
+
 # Diagnostics
-for(iso in isos){
-  for(admin in admins){
-    orderly2::orderly_run(
-      name = "diagnostics",
-      parameters = list(
-        version = version,
-        iso3c = iso,
-        admin_level = admin,
-        urban_rural = urban_rural
-      ),
-      echo = FALSE
-    )
-  }
+for(i in 1:nrow(iso_admin)){
+  iso <- iso_admin[[i, "iso"]]
+  admin <- iso_admin[[i, "admin"]]
+  orderly2::orderly_run(
+    name = "diagnostics",
+    parameters = list(
+      version = version,
+      iso3c = iso,
+      admin_level = admin,
+      urban_rural = urban_rural
+    ),
+    echo = FALSE
+  )
 }
+
 
 # Calibration
 cali_task_ids <- list()
-for(iso in isos){
-  for(admin in admins){
-    cali_task_ids[[paste0(iso, "_", admin)]] <- hipercow::task_create_expr(
-      orderly2::orderly_run(
-        name = "calibration",
-        parameters = list(
-          version = version,
-          iso3c = iso,
-          admin_level = admin,
-          urban_rural = urban_rural
-        ),
-        echo = FALSE
+for(i in 1:nrow(iso_admin)){
+  iso <- iso_admin[[i, "iso"]]
+  admin <- iso_admin[[i, "admin"]]
+  cali_task_ids[[paste0(iso, "_", admin)]] <- hipercow::task_create_expr(
+    orderly2::orderly_run(
+      name = "calibration",
+      parameters = list(
+        version = version,
+        iso3c = iso,
+        admin_level = admin,
+        urban_rural = urban_rural
       ),
-      parallel = hipercow::hipercow_parallel("parallel"),
-      resources = hipercow::hipercow_resources(cores = 32)
-    )
-  }
+      echo = FALSE
+    ),
+    parallel = hipercow::hipercow_parallel("parallel"),
+    resources = hipercow::hipercow_resources(cores = 32)
+  )
 }
 
 # hipercow::task_status(cali_task_ids$BFA_1)
 # hipercow::task_log_show(cali_task_ids$BFA_1)
 
 # Calibration diagnostic report
-for(iso in isos){
-  for(admin in admins){
-    orderly2::orderly_run(
-      name = "calibration_diagnostics",
-      parameters = list(
-        version = version,
-        iso3c = iso,
-        admin_level = admin,
-        urban_rural = urban_rural
-      ),
-      echo = FALSE
-    )
-  }
+for(i in 1:nrow(iso_admin)){
+  iso <- iso_admin[[i, "iso"]]
+  admin <- iso_admin[[i, "admin"]]
+  orderly2::orderly_run(
+    name = "calibration_diagnostics",
+    parameters = list(
+      version = version,
+      iso3c = iso,
+      admin_level = admin,
+      urban_rural = urban_rural
+    ),
+    echo = FALSE
+  )
 }
