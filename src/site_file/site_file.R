@@ -48,7 +48,7 @@ orderly2::orderly_dependency(
     "vectors/pyrethroid_resistance.csv" = "vectors/pyrethroid_resistance.csv",
     "vectors/new_net_introductions.csv" = "vectors/new_net_introductions.csv",
     "vectors/vector_bionomics.csv" = "vectors/vector_bionomics.csv"
-    )
+  )
 )
 
 orderly2::orderly_dependency(
@@ -151,7 +151,9 @@ if(iso3c %in% old_resistance$iso3c){
     unique() |>
     dplyr::filter(!(is.na(X) | is.na(Y)))
   
-  new_centroids <- shape[[paste0("level_", admin_level)]] |>
+  new_centroids <- shape[[paste0("level_", admin_level)]]
+  sf::st_agr(new_centroids) <- "constant"
+  new_centroids <- new_centroids |>
     sf::st_centroid()
   
   unit <- c()
@@ -165,7 +167,10 @@ if(iso3c %in% old_resistance$iso3c){
   pyrethroid_resistance <- shape[[paste0("level_", admin_level)]] |>
     sf::st_drop_geometry() |>
     dplyr::mutate(unit = unit) |>
-    dplyr::left_join(old_resistance, by = c("iso3c", "unit"), relationship = "many-to-many") |>
+    dplyr::left_join(old_resistance,
+                     by = c("iso3c", "unit"),
+                     relationship = "many-to-many"
+    ) |>
     dplyr::select(-unit, -X, -Y)
 } else {
   pyrethroid_resistance <- shape[[paste0("level_", admin_level)]] |>
@@ -442,7 +447,7 @@ vectors <- spatial |>
     .by = dplyr::all_of(grouping)
   ) |>
   tidyr::pivot_longer(
-    -grouping, names_to = "species",  values_to = "prop"
+    -dplyr::all_of(grouping), names_to = "species",  values_to = "prop"
   ) |>
   dplyr::group_by(dplyr::across(dplyr::all_of(grouping))) |>
   dplyr::mutate(rank = rank(-prop, ties = "first")) |>
