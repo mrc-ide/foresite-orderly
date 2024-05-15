@@ -14,25 +14,35 @@ orderly2::orderly_dependency(
   files = "extents.rds"
 )
 
-rainfall_datafiles <- list.files("data/", pattern = "*.tif", full.names = TRUE)
-rainfall_stack <- terra::rast(rainfall_datafiles)
 extents <- readRDS("extents.rds")
 isos <- names(extents)
+# TODO: Why does this not cleanup properly?
+country_boundary_files <- paste0("boundaries/", version, "/", isos, "/", isos, "_0.RDS")
+names(country_boundary_files) <- paste0("country_boundaries/", isos, "_0.RDS")
+orderly2::orderly_dependency(
+  name = "data_boundaries",
+  query = "latest(parameter:version == this:version)",
+  files = country_boundary_files
+)
+
+
+rainfall_datafiles <- list.files("data/", pattern = "*.tif", full.names = TRUE)
+rainfall_stack <- terra::rast(rainfall_datafiles)
 
 source("utils.R")
 
 dir.create("rainfall/")
 for(iso in isos){
   dir.create(paste0("rainfall/", iso, "/"))
-  extent <- terra::ext(extents[[iso]])
-  if(extents_overlap(rainfall_stack, extent)){
+  boundary <- readRDS(paste0("country_boundaries/", iso, "_0.RDS"))
+  raster <- process_raster(rainfall_stack, boundary)
+  if(!is.null(raster)){
     address <- paste0("rainfall/", iso, "/rainfall.tif")
     orderly2::orderly_artefact(
       description = "CHIRPS rainfall raster",
       files = address
     )
-    chirps <- terra::crop(rainfall_stack, extent)
-    terra::writeRaster(chirps, address, NAflag = -9999)
+    terra::writeRaster(raster, address, NAflag = -9999)
   }
 }
 

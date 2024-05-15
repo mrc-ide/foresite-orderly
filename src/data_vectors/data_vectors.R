@@ -16,20 +16,30 @@ orderly2::orderly_dependency(
 extents <- readRDS("extents.rds")
 isos <- names(extents)
 
+# TODO: Why does this not cleanup properly?
+country_boundary_files <- paste0("boundaries/", version, "/", isos, "/", isos, "_0.RDS")
+names(country_boundary_files) <- paste0("country_boundaries/", isos, "_0.RDS")
+
+orderly2::orderly_dependency(
+  name = "data_boundaries",
+  query = "latest(parameter:version == this:version)",
+  files = country_boundary_files
+)
+
 source("utils.R")
 
-split <- function(raster, extent, iso, name, NAflag = NULL){
-  if(extents_overlap(raster, extent)){
+split <- function(raster, boundary, iso, name, NAflag = NULL){
+  raster <- process_raster(raster, boundary)
+  if(!is.null(raster)){
     address <- paste0("vectors/", iso, "/", name, ".tif")
-    cropped <- terra::crop(raster, extent)
     orderly2::orderly_artefact(
       description = paste("Sinka", name, "raster"),
       files = address
     )
     if(is.null(NAflag)){
-      terra::writeRaster(cropped, address)
+      terra::writeRaster(raster, address)
     } else {
-      terra::writeRaster(cropped, address, NAflag = NAflag)
+      terra::writeRaster(raster, address, NAflag = NAflag)
     }
   }
 }
@@ -49,16 +59,17 @@ relative_occurence_raster <- lapply(relative_occurence_files, function(x){
 } )
 relative_occurence_names <- gsub(".tif", "", list.files("data/vector_occurrence"))
 
+library(sf)
 dir.create("vectors/")
 for(iso in isos){
   dir.create(paste0("vectors/", iso, "/"))
-  extent <- extents[[iso]]
-  split(relative_abundance_arabiensis, extent, iso, "relative_arabiensis")
-  split(relative_abundance_funestus, extent, iso, "relative_funestus")
-  split(relative_abundance_gambiae, extent, iso, "relative_gambiae")
+  boundary <- readRDS(paste0("country_boundaries/", iso, "_0.RDS"))
+  split(relative_abundance_arabiensis, boundary, iso, "relative_arabiensis")
+  split(relative_abundance_funestus, boundary, iso, "relative_funestus")
+  split(relative_abundance_gambiae, boundary, iso, "relative_gambiae")
   
   for(i in 1:length(relative_occurence_raster)){
-    split(relative_occurence_raster[[i]], extent, iso, relative_occurence_names[[i]])
+    split(relative_occurence_raster[[i]], boundary, iso, relative_occurence_names[[i]])
   }
 }
 
