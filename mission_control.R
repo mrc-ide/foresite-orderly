@@ -125,7 +125,6 @@ for(iso in isos){
   )
 }
 
-# Check what site-admin combinations exist
 iso_admin <-
   tidyr::expand_grid(
     iso = isos,
@@ -156,7 +155,6 @@ for(i in 1:nrow(iso_admin)){
   )
 }
 
-
 # Diagnostics
 iso_admin_diagnostics <- dplyr::filter(iso_admin, admin == 1)
 for(i in 1:nrow(iso_admin_diagnostics)){
@@ -175,6 +173,29 @@ for(i in 1:nrow(iso_admin_diagnostics)){
 }
 
 # Calibration
+# Check what site-admin combinations exist, and how many units they have
+get_active_sites <- function(version, iso, admin_level, urban_rural){
+  parameters <- list(
+    version = version,
+    iso3c = iso,
+    admin_level = admin_level,
+    urban_rural = urban_rural
+  )
+  path <- orderly2::orderly_search(
+    "latest(parameter:version == this:version && parameter:iso3c ==  this:iso3c && parameter:admin_level == this:admin_level && parameter:urban_rural == this:urban_rural)",
+    parameters = parameters,
+    name = "site_file"
+  )
+  
+  site <- readRDS(paste0("archive/site_file/", path, "/site.rds"))
+  nrow(site$eir)
+}
+
+iso_admin$n_units <- 
+  purrr::map2_dbl(iso_admin$iso, iso_admin$admin, .f = function(x, y){
+    get_active_sites(version = version, iso = x, admin_level = y, urban_rural = urban_rural)
+  })
+
 cali_task_ids <- list()
 for(i in 1:nrow(iso_admin)){
   iso <- iso_admin[[i, "iso"]]
@@ -191,7 +212,7 @@ for(i in 1:nrow(iso_admin)){
       echo = FALSE
     ),
     parallel = hipercow::hipercow_parallel("parallel"),
-    resources = hipercow::hipercow_resources(cores = 32)
+    resources = hipercow::hipercow_resources(cores = min(32, iso_admin[[i, "n_units"]]))
   )
 }
 
