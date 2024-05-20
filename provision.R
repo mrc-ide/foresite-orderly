@@ -1,6 +1,7 @@
 remotes::install_github("mrc-ide/site@site2")
 remotes::install_github("mrc-ide/cali@cali2")
 remotes::install_github("mrc-ide/postie@postie2")
+remotes::install_github("mrc-ide/scene@scene2")
 remotes::install_github("mrc-ide/peeps")
 install.packages(
   "orderly2",

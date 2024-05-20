@@ -5,7 +5,7 @@
 # data_boundaries/boundaries
 version <- "GADM_4.1.0" 
 isos <- list.files(paste0("src/data_boundaries/boundaries/", version))
-admins <- 1:2
+admins <- 1
 urban_rural <- TRUE
 # ------------------------------------------------------------------------------
 
@@ -158,8 +158,9 @@ for(i in 1:nrow(iso_admin)){
 
 
 # Diagnostics
-for(i in 1:nrow(iso_admin)){
-  iso <- iso_admin[[i, "iso"]]
+iso_admin_diagnostics <- dplyr::filter(iso_admin, admin == 1)
+for(i in 1:nrow(iso_admin_diagnostics)){
+  iso <- iso_admin_diagnostics[[i, "iso"]]
   admin <- iso_admin[[i, "admin"]]
   orderly2::orderly_run(
     name = "diagnostics",
@@ -172,7 +173,6 @@ for(i in 1:nrow(iso_admin)){
     echo = FALSE
   )
 }
-
 
 # Calibration
 cali_task_ids <- list()
@@ -195,8 +195,10 @@ for(i in 1:nrow(iso_admin)){
   )
 }
 
-# hipercow::task_status(cali_task_ids$BFA_1)
-# hipercow::task_log_show(cali_task_ids$BFA_1)
+hipercow::task_status(cali_task_ids$RWA_1)
+hipercow::task_log_show(cali_task_ids$RWA_1)
+hipercow::task_status(cali_task_ids$SLE_1)
+hipercow::task_log_show(cali_task_ids$SLE_1)
 
 # Calibration diagnostic report
 for(i in 1:nrow(iso_admin)){

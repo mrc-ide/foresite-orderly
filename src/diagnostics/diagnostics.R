@@ -37,6 +37,9 @@ orderly2::orderly_artefact(
   files = "diagnostic_report.html"
 )
 # ------------------------------------------------------------------------------
+library(knitr)
+library(rmarkdown)
+library(quarto)
 
 # Load inputs ------------------------------------------------------------------
 site <- readRDS("site.rds")

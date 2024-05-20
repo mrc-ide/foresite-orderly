@@ -3,29 +3,32 @@
 summary_function_pf <- function(x){
   prev <- x |>
     postie::drop_burnin(
-    burnin = 5 * 365
+    burnin = 5 * 365 # TODO: Burnins must allign!
   ) |>
     postie::get_prevalence(
-    )
-  # Estimate annual prevalence
-  year <- 2000:2024
-  pfpr <- tapply(prev$prevalence_2_10, rep(year, each = 365), mean)
-  # extract years
-  pfpr_subset <- pfpr[year %in% 2014:2018]
-  return(pfpr_subset)
+    ) |>
+    dplyr::summarise(
+      prevalence_2_10 = mean(prevalence_2_10),
+      .by = "year"
+    ) |>
+    dplyr::filter(year %in% 2014:2018) |>
+    dplyr::pull(prevalence_2_10)
+
+  return(prev)
 }
 summary_function_pv <- function(x){
   prev <- x |>
     postie::drop_burnin(
-      burnin = 5 * 365
+      burnin = 5 * 365 # TODO: Burnins must allign!
     ) |>
     postie::get_prevalence(
-    )
-  # Estimate annual prevalence
-  year <- 2000:2024
-  pvpr <- tapply(prev$prevalence_1_100, rep(year, each = 365), mean)
-  # extract years
-  pvpr_subset <- pvpr[year %in% 2014:2018]
+    ) |>
+    dplyr::summarise(
+      prevalence_1_100 = mean(prevalence_1_100),
+      .by = "year"
+    ) |>
+    dplyr::filter(year %in% 2014:2018) |>
+    dplyr::pull(prevalence_1_100)
   return(pvpr_subset)
 }
 # ------------------------------------------------------------------------------

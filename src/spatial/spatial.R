@@ -540,9 +540,9 @@ if(!approximate_itn){
         crop_timesteps = 365 * (year - 2000) + (365 / 2),
         netz::net_loss_map, half_life = hl
       ),
-      access2 = netz::crop_to_access(crop2),
+      access2 = netz::crop_to_access(pmin(1, crop2)),
       itn_use2 = netz::access_to_usage(access2, ur),
-      use_multiplier = round(itn_use2 / itn_use, 2)
+      use_multiplier = ifelse(year > itn_max_year, round(itn_use2 / itn_use, 2), 1)
     )
   
   max_observed_use <- max(df$itn_use, na.rm = TRUE)
