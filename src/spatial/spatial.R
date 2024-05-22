@@ -611,9 +611,9 @@ if(approximate_itn){
     nets_distributed$people_using_nets[na_index] <- nets_distributed$people_using_nets[pmax(0, na_index - 3)]
   }
   
-  # Target nets at maximum of 50% use (to be in linear section of net model),
+  # Target nets at maximum of 55% use (to be in linear section of net model),
   # Targeting is based on 2000 prevalence
-  max_use <- 0.5
+  max_use <- 0.55
   df <- df |>
     dplyr::left_join(
       rank,
