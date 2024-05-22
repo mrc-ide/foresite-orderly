@@ -277,12 +277,22 @@ interventions <- interventions |>
   ) |>
   dplyr::left_join(irs_parameters, by = "irs_insecticide")
 
-# Any remaining missing values we extrapolate from last available data point
+# Any remaining missing values we extrapolate forwards from last available data point
 interventions <- interventions |>
   scene::fill_extrapolate(
     group_var = grouping,
     not = NULL
   )
+
+# In rare cases we miss early data (if pops don't exist in urban areas), here
+# we extrapolate backwards to ensure a complete data frame for interventions
+interventions <- interventions |>
+  scene::fill_extrapolate(
+    group_var = grouping,
+    not = NULL,
+    dir = "up"
+  )
+
 
 ## ITN half-life to mean retention conversion
 ## Match our exponential mean retention as closely as possible to the MAP 
