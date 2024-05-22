@@ -196,7 +196,8 @@ interventions <- spatial |>
     prop_public = weighted.mean(prop_public, par),
     dplyr::across(dplyr::contains("smc"), \(x) weighted.mean(x, par)),
     .by = dplyr::all_of(c(grouping, "year"))
-  )
+  ) |>
+  dplyr::arrange(dplyr::across(dplyr::all_of(c(grouping, "year"))))
 
 if(urban_rural){
   # Some areas (usually urban) may come into (or drop out of) existence after 2000
@@ -275,6 +276,13 @@ interventions <- interventions |>
     irs_spray_rounds = 1
   ) |>
   dplyr::left_join(irs_parameters, by = "irs_insecticide")
+
+# Any remaining missing values we extrapolate from last available data point
+interventions <- interventions |>
+  scene::fill_extrapolate(
+    group_var = grouping,
+    not = NULL
+  )
 
 ## ITN half-life to mean retention conversion
 ## Match our exponential mean retention as closely as possible to the MAP 
