@@ -354,7 +354,7 @@ df <- data.frame(
   pfpr = raster_values(pfpr_raster),
   pvpr = raster_values(pvpr_raster),
   itn_use = raster_values(itn_raster),
-  irs_cov = raster_values(irs_raster),
+  irs_cov = raster_values(irs_raster, na_replace = 0),
   tx_cov = raster_values(tx_raster),
   smc_1 = raster_values(smc_raster[[1]], na_replace = 0),
   smc_2 = raster_values(smc_raster[[2]], na_replace = 0),
