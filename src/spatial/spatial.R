@@ -339,7 +339,7 @@ if(file.exists("data/map/cities.tif")){
 # Extract values ---------------------------------------------------------------
 
 # Extract unique ID for each pixel to link to shape file
-shape_raster <- terra::rasterize(shape, pfpr_raster, field = "uid")
+shape_raster <- terra::rasterize(shape, pfpr_raster, field = "uid", touches = TRUE)
 uid <- terra::values(shape_raster)
 
 df <- data.frame(
