@@ -515,7 +515,7 @@ if(!approximate_itn){
   # Summarise ITN use country-wide
   df_use <- df |>
     dplyr::summarise(
-      itn_use = weighted.mean(itn_use, par),
+      itn_use = weighted.mean(itn_use, par, na.rm = TRUE),
       par = sum(par),
       .by = "year"
     ) |>
@@ -568,7 +568,7 @@ if(!approximate_irs){
   
   df_pp <- df |>
     dplyr::summarise(
-      pp = sum(irs_cov * par),
+      pp = sum(irs_cov * par, na.rm = TRUE),
       .by = "year"
     )
   

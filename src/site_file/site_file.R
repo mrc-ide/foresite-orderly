@@ -183,18 +183,19 @@ if(iso3c %in% old_resistance$iso3c){
 # Interventions ----------------------------------------------------------------
 interventions <- spatial |>
   dplyr::summarise(
-    # Tx map has some areas with NA that we define as having PAR, these 
+    # Some map has some areas with NA (usually due to a misalignment between)
+    # boundary file and raster) that we define as having PAR, these 
     # shouldn't be interpreted as 0, so are dropped 
     tx_cov = weighted.mean(tx_cov, par, na.rm = TRUE),
-    itn_use = weighted.mean(itn_use, par),
-    irs_cov = weighted.mean(irs_cov, par),
-    rtss_cov = weighted.mean(rtss_cov, par),
-    r21_cov = weighted.mean(r21_cov, par),
-    lsm_cov = weighted.mean(lsm_cov, par),
-    pmc_cov = weighted.mean(pmc_cov, par),
-    prop_act = weighted.mean(prop_act, par),
-    prop_public = weighted.mean(prop_public, par),
-    dplyr::across(dplyr::contains("smc"), \(x) weighted.mean(x, par)),
+    itn_use = weighted.mean(itn_use, par, na.rm = TRUE),
+    irs_cov = weighted.mean(irs_cov, par), na.rm = TRUE,
+    rtss_cov = weighted.mean(rtss_cov, par, na.rm = TRUE),
+    r21_cov = weighted.mean(r21_cov, par, na.rm = TRUE),
+    lsm_cov = weighted.mean(lsm_cov, par, na.rm = TRUE),
+    pmc_cov = weighted.mean(pmc_cov, par, na.rm = TRUE),
+    prop_act = weighted.mean(prop_act, par, na.rm = TRUE),
+    prop_public = weighted.mean(prop_public, par, na.rm = TRUE),
+    dplyr::across(dplyr::contains("smc"), \(x) weighted.mean(x, par, na.rm = TRUE)),
     .by = dplyr::all_of(c(grouping, "year"))
   ) |>
   dplyr::arrange(dplyr::across(dplyr::all_of(c(grouping, "year"))))
