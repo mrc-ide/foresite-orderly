@@ -8,7 +8,7 @@ summary_function_pf <- function(x){
     postie::get_prevalence(
     ) |>
     dplyr::summarise(
-      prevalence_2_10 = mean(prevalence_2_10),
+      prevalence_2_10 = mean(lm_prevalence_2_10),
       .by = "year"
     ) |>
     dplyr::filter(year %in% 2014:2018) |>
@@ -24,7 +24,7 @@ summary_function_pv <- function(x){
     postie::get_prevalence(
     ) |>
     dplyr::summarise(
-      prevalence_1_100 = mean(prevalence_1_100),
+      prevalence_1_100 = mean(lm_prevalence_1_100),
       .by = "year"
     ) |>
     dplyr::filter(year %in% 2014:2018) |>
