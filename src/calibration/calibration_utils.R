@@ -106,7 +106,8 @@ calibrate_site <- function(
         sub_site$eir,
         -c("eir")
       )
-    )
+    ) |>
+    dplyr::rename(prevalence_2_10 = lm_prevalence_2_10)
 
   epi <- s |>
     postie::drop_burnin(

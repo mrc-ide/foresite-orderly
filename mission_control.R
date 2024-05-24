@@ -216,10 +216,8 @@ for(i in 1:nrow(iso_admin)){
   )
 }
 
-hipercow::task_status(cali_task_ids$RWA_1)
-hipercow::task_log_show(cali_task_ids$RWA_1)
-hipercow::task_status(cali_task_ids$SLE_1)
-hipercow::task_log_show(cali_task_ids$SLE_1)
+hipercow::task_status(cali_task_ids$CMR_1)
+hipercow::task_log_show(cali_task_ids$CMR_1)
 
 # Calibration diagnostic report
 for(i in 1:nrow(iso_admin)){
