@@ -15,6 +15,8 @@ orderly2::orderly_resource(
   files = c("diagnostic_report.qmd")
 )
 
+orderly2::orderly_shared_resource("utils.R")
+
 orderly2::orderly_dependency(
   name = "site_file",
   query = "latest(parameter:version == this:version && parameter:iso3c ==  this:iso3c && parameter:admin_level == this:admin_level && parameter:urban_rural == this:urban_rural)",
@@ -40,6 +42,7 @@ orderly2::orderly_artefact(
 library(knitr)
 library(rmarkdown)
 library(quarto)
+source("utils.R")
 
 # Load inputs ------------------------------------------------------------------
 site <- readRDS("site.rds")
@@ -355,9 +358,9 @@ access_pd <- site$accessibility |>
     by = c(site$admin_level)
   ) |>
   dplyr::summarise(
-    motor_travel_time_healthcare = weighted.mean(motor_travel_time_healthcare, pop, na.rm = TRUE),
-    walking_travel_time_healthcare = weighted.mean(walking_travel_time_healthcare, pop, na.rm = TRUE),
-    city_travel_time = weighted.mean(city_travel_time, pop, na.rm = TRUE),
+    motor_travel_time_healthcare = weighted.mean2(motor_travel_time_healthcare, pop),
+    walking_travel_time_healthcare = weighted.mean2(walking_travel_time_healthcare, pop),
+    city_travel_time = weighted.mean2(city_travel_time, pop),
     .by = c(site$admin_level[!site$admin_level == "urban_rural"])
   ) |>
   dplyr::left_join(
@@ -420,10 +423,10 @@ blood_pd <- site$blood_disorders  |>
   by = c(site$admin_level)
 ) |>
   dplyr::summarise(
-    sicklecell = weighted.mean(sicklecell, par, na.rm = TRUE),
-    gdp6 = weighted.mean(gdp6, par, na.rm = TRUE),
-    hpc = weighted.mean(hpc, par, na.rm = TRUE),
-    duffy_negativity = weighted.mean(duffy_negativity, par, na.rm = TRUE),
+    sicklecell = weighted.mean2(sicklecell, par),
+    gdp6 = weighted.mean2(gdp6, par),
+    hpc = weighted.mean2(hpc, par),
+    duffy_negativity = weighted.mean2(duffy_negativity, par),
     .by = c(site$admin_level[!site$admin_level == "urban_rural"])
   ) |>
   dplyr::left_join(
@@ -503,8 +506,8 @@ prevalence_area_pd <- site$prevalence |>
     by = c(site$admin_level, "year")
   ) |>
   dplyr::summarise(
-    pfpr = weighted.mean(pfpr, par_pf),
-    pvpr = weighted.mean(pvpr, par_pv),
+    pfpr = weighted.mean2(pfpr, par_pf),
+    pvpr = weighted.mean2(pvpr, par_pv),
     .by = c(site$admin_level[!site$admin_level == "urban_rural"], "year")
   ) |>
   dplyr::left_join(
@@ -541,8 +544,8 @@ country_prevalence_pd <- site$prevalence |>
     by = c(site$admin_level, "year")
   ) |>
   dplyr::summarise(
-    pfpr = weighted.mean(pfpr, par_pf),
-    pvpr = weighted.mean(pvpr, par_pv),
+    pfpr = weighted.mean2(pfpr, par_pf),
+    pvpr = weighted.mean2(pvpr, par_pv),
     .by = "year"
   ) |>
   tidyr::pivot_longer(-year, names_to = "Species", values_to = "Prevalence")

@@ -20,3 +20,15 @@ process_raster <- function(raster, boundary){
   }
   NULL
 }
+
+weighted.mean2 <- function(x, w, na.rm = TRUE){
+  out <- weighted.mean(x, w, na.rm = na.rm)
+  if(sum(w) == 0){
+    if(all(is.na(x))){
+      out <- 0
+    } else {
+      out <- mean(x, na.rm = na.rm)
+    }
+  }
+  return(out)
+}

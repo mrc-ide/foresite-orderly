@@ -15,6 +15,8 @@ orderly2::orderly_resource(
   files = "site_file_utils.R"
 )
 
+orderly2::orderly_shared_resource("utils.R")
+
 orderly2::orderly_dependency(
   name = "demography",
   query = "latest(parameter:version == this:version && parameter:iso3c ==  this:iso3c)",
@@ -64,6 +66,7 @@ orderly2::orderly_artefact(
 # ------------------------------------------------------------------------------
 
 # Load inputs ------------------------------------------------------------------
+source("utils.R")
 source("site_file_utils.R")
 spatial <- readRDS("spatial.rds")
 #external_data_address <- "C:/Users/pwinskil/OneDrive - Imperial College London/malaria_sites_data/2023/"
@@ -186,16 +189,16 @@ interventions <- spatial |>
     # Some map has some areas with NA (usually due to a misalignment between)
     # boundary file and raster) that we define as having PAR, these 
     # shouldn't be interpreted as 0, so are dropped 
-    tx_cov = weighted.mean(tx_cov, par, na.rm = TRUE),
-    itn_use = weighted.mean(itn_use, par, na.rm = TRUE),
-    irs_cov = weighted.mean(irs_cov, par), na.rm = TRUE,
-    rtss_cov = weighted.mean(rtss_cov, par, na.rm = TRUE),
-    r21_cov = weighted.mean(r21_cov, par, na.rm = TRUE),
-    lsm_cov = weighted.mean(lsm_cov, par, na.rm = TRUE),
-    pmc_cov = weighted.mean(pmc_cov, par, na.rm = TRUE),
-    prop_act = weighted.mean(prop_act, par, na.rm = TRUE),
-    prop_public = weighted.mean(prop_public, par, na.rm = TRUE),
-    dplyr::across(dplyr::contains("smc"), \(x) weighted.mean(x, par, na.rm = TRUE)),
+    tx_cov = weighted.mean2(tx_cov, par, na.rm = TRUE),
+    itn_use = weighted.mean2(itn_use, par, na.rm = TRUE),
+    irs_cov = weighted.mean2(irs_cov, par), na.rm = TRUE,
+    rtss_cov = weighted.mean2(rtss_cov, par, na.rm = TRUE),
+    r21_cov = weighted.mean2(r21_cov, par, na.rm = TRUE),
+    lsm_cov = weighted.mean2(lsm_cov, par, na.rm = TRUE),
+    pmc_cov = weighted.mean2(pmc_cov, par, na.rm = TRUE),
+    prop_act = weighted.mean2(prop_act, par, na.rm = TRUE),
+    prop_public = weighted.mean2(prop_public, par, na.rm = TRUE),
+    dplyr::across(dplyr::contains("smc"), \(x) weighted.mean2(x, par, na.rm = TRUE)),
     .by = dplyr::all_of(c(grouping, "year"))
   ) |>
   dplyr::arrange(dplyr::across(dplyr::all_of(c(grouping, "year"))))
@@ -361,8 +364,8 @@ interventions <- interventions |>
 # Prevalence -------------------------------------------------------------------
 prevalence <- spatial |>
   dplyr::summarise(
-    pfpr = weighted.mean(pfpr, par_pf),
-    pvpr = weighted.mean(pvpr, par_pv),
+    pfpr = weighted.mean2(pfpr, par_pf),
+    pvpr = weighted.mean2(pvpr, par_pv),
     .by = dplyr::all_of(c(grouping, "year"))
   )
 # ------------------------------------------------------------------------------
@@ -389,7 +392,7 @@ demography <- readRDS("adjusted_demography.rds") |>
 # Seasonality ------------------------------------------------------------------
 rainfall <- spatial |>
   dplyr::summarise(
-    dplyr::across(paste0("rainfall_", 1:12), \(x) weighted.mean(x, w = par)),
+    dplyr::across(paste0("rainfall_", 1:12), \(x) weighted.mean2(x, w = par)),
     .by = dplyr::all_of(c(grouping, "year"))
   ) |>
   tidyr::pivot_longer(
@@ -461,7 +464,7 @@ vectors <- spatial |>
   ) |>
   dplyr::summarise(
     dplyr::across(
-      dplyr::all_of(vector_columns), \(x) weighted.mean(x, par, na.rm =)
+      dplyr::all_of(vector_columns), \(x) weighted.mean2(x, par, na.rm =)
     ),
     .by = dplyr::all_of(grouping)
   ) |>
@@ -483,10 +486,10 @@ vectors <- spatial |>
 # Blood disorders --------------------------------------------------------------
 blood_disorders <- spatial |>
   dplyr::summarise(
-    sicklecell = weighted.mean(sicklecell, par, na.rm = TRUE),
-    gdp6 = weighted.mean(gdp6, par, na.rm = TRUE),
-    hpc = weighted.mean(hpc, par, na.rm = TRUE),
-    duffy_negativity = weighted.mean(duffy_negativity, par, na.rm = TRUE),
+    sicklecell = weighted.mean2(sicklecell, par, na.rm = TRUE),
+    gdp6 = weighted.mean2(gdp6, par, na.rm = TRUE),
+    hpc = weighted.mean2(hpc, par, na.rm = TRUE),
+    duffy_negativity = weighted.mean2(duffy_negativity, par, na.rm = TRUE),
     .by = dplyr::all_of(grouping)
   )
 # ------------------------------------------------------------------------------
@@ -494,9 +497,9 @@ blood_disorders <- spatial |>
 # Accessibility -----------------------------------------------------------------
 accessibility <- spatial |>
   dplyr::summarise(
-    motor_travel_time_healthcare = weighted.mean(motor_travel_time_healthcare, par, na.rm = TRUE),
-    walking_travel_time_healthcare = weighted.mean(walking_travel_time_healthcare, par, na.rm = TRUE),
-    city_travel_time = weighted.mean(city_travel_time, par, na.rm = TRUE),
+    motor_travel_time_healthcare = weighted.mean2(motor_travel_time_healthcare, par, na.rm = TRUE),
+    walking_travel_time_healthcare = weighted.mean2(walking_travel_time_healthcare, par, na.rm = TRUE),
+    city_travel_time = weighted.mean2(city_travel_time, par, na.rm = TRUE),
     .by = dplyr::all_of(grouping)
   )
 # ------------------------------------------------------------------------------

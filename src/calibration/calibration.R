@@ -56,7 +56,7 @@ source("calibration_utils.R")
 # Calibration ------------------------------------------------------------------
 parallel <- TRUE
 human_population <- c(5000, 10000, 100000)
-diagnostic_burnin <- 20  # TODO: increase for full run 
+diagnostic_burnin <- 20 
 max_attempts <- 10
 
 # Split out individual jobs
