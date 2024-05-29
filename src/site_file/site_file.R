@@ -572,6 +572,10 @@ site_file$eir = eir
 
 format(object.size(site_file), "Mb")
 
+# Check that the resulting site file can be used to create a malariasimulation
+## parameter list
+check_params(site_file)
+
 saveRDS(site_file, "site.rds")
 # ------------------------------------------------------------------------------
 

@@ -197,7 +197,7 @@ iso_admin$n_units <-
   })
 
 cali_task_ids <- list()
-for(i in 43:nrow(iso_admin)){
+for(i in 1:nrow(iso_admin)){
   iso <- iso_admin[[i, "iso"]]
   admin <- iso_admin[[i, "admin"]]
   cali_task_ids[[paste0(iso, "_", admin)]] <- hipercow::task_create_expr(
@@ -218,8 +218,8 @@ for(i in 43:nrow(iso_admin)){
 
 x <- sapply(cali_task_ids, hipercow::task_status)
 table(x)
-hipercow::task_log_show(cali_task_ids$COD_1)
-hipercow::task_status(cali_task_ids$CMR_1)
+hipercow::task_log_show(cali_task_ids$CIV_1)
+hipercow::task_status(cali_task_ids$COD_1)
 hipercow::task_log_show(cali_task_ids$CMR_1)
 
 # Calibration diagnostic report

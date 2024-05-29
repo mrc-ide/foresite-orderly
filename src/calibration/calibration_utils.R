@@ -125,7 +125,9 @@ calibrate_site <- function(
         -c("eir")
       )
     )
+  
   x$eir <- calibration
+  
   return(
     list(
       eir_fit = x,

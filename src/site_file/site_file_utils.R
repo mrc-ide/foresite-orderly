@@ -28,3 +28,36 @@ net_loss_match_objective <- function(mean_retention, half_life, years = 3){
   sum((ex - map)^2)
 }
 # ------------------------------------------------------------------------------
+
+# Checks -----------------------------------------------------------------------
+check_params <- function(site){
+  eirs <- split(site$eir, 1:nrow(site$eir))
+  for(i in 1:length(eirs)){
+    x <- eirs[[i]]
+    sub_site <- site::subset_site(site, x)
+    species <- x$sp
+    calibration_burnin <- 5
+    tryCatch(
+      {
+        p <- site::site_parameters(
+          interventions = sub_site$interventions,
+          demography = sub_site$demography,
+          vectors = sub_site$vectors$vector_species,
+          seasonality = sub_site$seasonality$seasonality_parameters,
+          overrides = list(
+            human_population = 1000
+          ),
+          species  = species,
+          burnin = calibration_burnin
+        )
+      },
+      error = function(e) {
+        # Handle the error here
+        message("Site: ", paste(x[-length(x)], collapse = " "), " cannot produce valid parameter list")
+        message("An error occurred: ", e)
+        stop("Parameter fail")
+      }
+    )
+  }
+}
+# ------------------------------------------------------------------------------

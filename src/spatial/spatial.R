@@ -54,11 +54,6 @@ orderly2::orderly_dependency(
   query = "latest(parameter:version == this:version)",
   files = c("data/vectors" = paste0("vectors/", iso3c, "/"))
 )
-orderly2::orderly_dependency(
-  name = "data_vectors",
-  query = "latest(parameter:version == this:version)",
-  files = c("data/vectors/vector_bionomics.csv" = "vectors/vector_bionomics.csv")
-)
 
 orderly2::orderly_dependency(
   name = "data_boundaries",
