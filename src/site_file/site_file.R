@@ -449,9 +449,6 @@ if(use_relative){
 bionomics <- read.csv("vectors/vector_bionomics.csv")
 
 vectors <- spatial |>
-  dplyr::filter(
-    year == vector_year
-  ) |>
   dplyr::select(
     dplyr::all_of(
       c(grouping, "par", vector_columns)
@@ -476,7 +473,7 @@ vectors <- spatial |>
   dplyr::filter(rank <= 3) |>
   dplyr::select(-rank) |>
   # Missing values get assigned equal probability of occurence
-  dplyr::mutate(prop = ifelse(is.na(prop) | sum(prop) == 0, 1/3, prop)) |>
+  dplyr::mutate(prop = ifelse(is.na(prop) | sum(prop) == 0, 1/dplyr::n(), prop)) |>
   dplyr::mutate(prop = prop / sum(prop)) |>
   dplyr::ungroup() |>
   dplyr::mutate(species = stringr::str_replace(species, "occurrence_", "")) |>
