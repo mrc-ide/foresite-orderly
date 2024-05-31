@@ -7,3 +7,4 @@ boundaries/
 who/
 vectors/
 wmr_cases_deaths.csv
+utils.R

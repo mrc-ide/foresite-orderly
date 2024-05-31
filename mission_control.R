@@ -212,7 +212,7 @@ for(i in 1:nrow(iso_admin)){
       echo = FALSE
     ),
     parallel = hipercow::hipercow_parallel("parallel"),
-    resources = hipercow::hipercow_resources(cores = min(32, iso_admin[[i, "n_units"]]))
+    resources = hipercow::hipercow_resources(cores = max(2, min(32, iso_admin[[i, "n_units"]])))
   )
 }
 
