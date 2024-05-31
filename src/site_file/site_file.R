@@ -503,21 +503,17 @@ accessibility <- spatial |>
 
 # EIR --------------------------------------------------------------------------
 prevalence_summary <- prevalence |>
-  dplyr::summarise(
-    pfpr = sum(pfpr, na.rm = TRUE),
-    pvpr = sum(pvpr, na.rm = TRUE),
-    .by = dplyr::all_of(grouping)
-  )
+  dplyr::filter(year == 2000)
 
 pf_eir <- prevalence_summary |>
-  dplyr::filter(pfpr > 0) |>
+  dplyr::filter(pfpr > 0.005) |>
   dplyr::select(dplyr::all_of(grouping)) |>
   dplyr::mutate(
     sp = "pf",
     eir = NA
   )
 pv_eir <- prevalence_summary |>
-  dplyr::filter(pvpr > 0) |>
+  dplyr::filter(pvpr > 0.005) |>
   dplyr::select(dplyr::all_of(grouping)) |>
   dplyr::mutate(
     sp = "pv",

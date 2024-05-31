@@ -29,7 +29,7 @@ summary_function_pv <- function(x){
     ) |>
     dplyr::filter(year %in% 2014:2018) |>
     dplyr::pull(prevalence_1_100)
-  return(pvpr_subset)
+  return(prev)
 }
 # ------------------------------------------------------------------------------
 
