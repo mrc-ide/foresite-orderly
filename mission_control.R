@@ -218,7 +218,7 @@ for(i in 1:nrow(iso_admin)){
 
 x <- sapply(cali_task_ids, hipercow::task_status)
 table(x)
-hipercow::task_log_show(cali_task_ids$PRK_1)
+hipercow::task_log_show(cali_task_ids$UGA_1)
 hipercow::task_status(cali_task_ids$COD_1)
 hipercow::task_log_show(cali_task_ids$CMR_1)
 

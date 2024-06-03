@@ -77,11 +77,11 @@ calibrate_site <- function(
           parameters = p,
           target = target,
           summary_function = summary_function,
-          eq_prevalence = max(prevalence),
+          eq_prevalence = min(max(prevalence), 0.85),
           eq_ft = sub_site$interventions$tx_cov[1],
           human_population = human_population,
           max_attempts = max_attempts,
-          eir_limits = c(0.00001, 1000)
+          eir_limits = c(0.00001, 1500)
         )
       },
       error = function(e) {
