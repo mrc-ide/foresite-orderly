@@ -57,7 +57,7 @@ source("calibration_utils.R")
 parallel <- TRUE
 human_population <- c(5000, 10000, 100000)
 diagnostic_burnin <- 20 
-max_attempts <- 10
+max_attempts <- 30
 
 # Split out individual jobs
 eirs <- site$eir
