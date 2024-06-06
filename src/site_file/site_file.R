@@ -368,6 +368,38 @@ prevalence <- spatial |>
     pvpr = weighted.mean2(pvpr, par_pv),
     .by = dplyr::all_of(c(grouping, "year"))
   )
+
+if(urban_rural){
+  # Some areas (usually urban) may come into (or drop out of) existence after 2000
+  # for these areas we assume prevalence for model inputs maps to
+  # the matching admin unit (urban -> rural or rural -> urban)
+  not_full <- prevalence |>
+    dplyr::mutate(
+      n = dplyr::n(),
+      .by = dplyr::all_of(grouping)
+    ) |>
+    dplyr::filter(
+      n != max(n)
+    ) |>
+    dplyr::select(dplyr::all_of(c(grouping, "year")))
+  
+  if(nrow(not_full) > 0){
+    replaced <- not_full |>
+      dplyr::mutate(
+        urban_rural = ifelse(urban_rural == "urban", "rural", "urban")
+      ) |>
+      tidyr::complete(year = min(prevalence$year):max(prevalence$year), tidyr::nesting(!!!rlang::syms(grouping))) |>
+      dplyr::left_join(prevalence, by = c(grouping, "year")) |>
+      dplyr::mutate(
+        urban_rural = ifelse(urban_rural == "urban", "rural", "urban")
+      ) |>
+      dplyr::anti_join(not_full, by = c(grouping, "year"))
+    
+    prevalence <- prevalence |>
+      dplyr::bind_rows(replaced) |>
+      dplyr::arrange(dplyr::across(dplyr::all_of(c(grouping, "year"))))
+  }
+}
 # ------------------------------------------------------------------------------
 
 # Cases and Deaths from WMR ----------------------------------------------------
