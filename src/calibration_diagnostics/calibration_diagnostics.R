@@ -210,7 +210,7 @@ national_epi <- diagnostic_epi |>
     .by = "year"
   )
 
-case_deaths_years <- tail(unique(sort(site$cases_deaths$year)), 3)
+case_deaths_years <- 2014:2018
 scaler <- national_epi |>
   dplyr::filter(year %in% case_deaths_years) |>
   dplyr::left_join(site$cases_deaths, by = "year") |>
@@ -226,7 +226,7 @@ site$scaler <- scaler
 saveRDS(site, "calibrated_scaled_site.rds")
 
 national_rescaled_epi <- national_epi |>
-  mutate(
+  dplyr::mutate(
     rescaled_cases = cases * scaler$case_scaler,
     rescaled_clinical = clinical * scaler$case_scaler,
     rescaled_deaths = deaths * scaler$death_scaler,
