@@ -191,7 +191,7 @@ interventions <- spatial |>
     # shouldn't be interpreted as 0, so are dropped 
     tx_cov = weighted.mean2(tx_cov, par, na.rm = TRUE),
     itn_use = weighted.mean2(itn_use, par, na.rm = TRUE),
-    irs_cov = weighted.mean2(irs_cov, par), na.rm = TRUE,
+    irs_cov = weighted.mean2(irs_cov, par, na.rm = TRUE),
     rtss_cov = weighted.mean2(rtss_cov, par, na.rm = TRUE),
     r21_cov = weighted.mean2(r21_cov, par, na.rm = TRUE),
     lsm_cov = weighted.mean2(lsm_cov, par, na.rm = TRUE),
@@ -493,7 +493,7 @@ vectors <- spatial |>
   ) |>
   dplyr::summarise(
     dplyr::across(
-      dplyr::all_of(vector_columns), \(x) weighted.mean2(x, par, na.rm =)
+      dplyr::all_of(vector_columns), \(x) weighted.mean2(x, par, na.rm = TRUE)
     ),
     .by = dplyr::all_of(grouping)
   ) |>

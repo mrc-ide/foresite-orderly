@@ -1,4 +1,4 @@
-`# Mission control --------------------------------------------------------------
+# Mission control --------------------------------------------------------------
 
 # Run options ------------------------------------------------------------------
 # A version identifier that must correspond to a boundaries folder in 
@@ -218,7 +218,7 @@ for(i in 1:nrow(iso_admin)){
 
 x <- sapply(cali_task_ids, hipercow::task_status)
 table(x)
-hipercow::task_log_show(cali_task_ids$UGA_1)
+hipercow::task_log_show(cali_task_ids$ECU_1)
 hipercow::task_status(cali_task_ids$COD_1)
 hipercow::task_log_show(cali_task_ids$CMR_1)
 
