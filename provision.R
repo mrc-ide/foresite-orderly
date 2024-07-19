@@ -1,4 +1,4 @@
-remotes::install_github("mrc-ide/malariasimulation@dev")
+remotes::install_github("mrc-ide/malariasimulation@e51c6bcc66be768b4e80985768f8c404538f0b84")
 remotes::install_github("mrc-ide/site@site2")
 remotes::install_github("mrc-ide/cali@cali2")
 remotes::install_github("mrc-ide/postie@postie2")

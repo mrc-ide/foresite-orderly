@@ -212,25 +212,26 @@ national_epi <- diagnostic_epi |>
 
 case_deaths_years <- 2014:2018
 scaler <- national_epi |>
-  dplyr::filter(year %in% case_deaths_years) |>
+  # dplyr::filter(year %in% case_deaths_years) |>
   dplyr::left_join(site$cases_deaths, by = "year") |>
   dplyr::mutate(
     case_scaler = wmr_cases / cases,
     death_scaler = wmr_deaths / deaths
     ) |>
-  dplyr::summarise(
-    case_scaler = mean(case_scaler),
-    death_scaler = mean(death_scaler)
+  dplyr::select(
+    year, case_scaler, death_scaler
   )
 site$scaler <- scaler
 saveRDS(site, "calibrated_scaled_site.rds")
 
+cs <- mean(scaler$case_scaler[scaler$year %in% 2010:2018])
+ds <- mean(scaler$death_scaler[scaler$year %in% 2010:2018])
 national_rescaled_epi <- national_epi |>
   dplyr::mutate(
-    rescaled_cases = cases * scaler$case_scaler,
-    rescaled_clinical = clinical * scaler$case_scaler,
-    rescaled_deaths = deaths * scaler$death_scaler,
-    rescaled_mortality = mortality * scaler$death_scaler
+    rescaled_cases = cases * cs,
+    rescaled_clinical = clinical * cs,
+    rescaled_deaths = deaths * ds,
+    rescaled_mortality = mortality * ds
   )
 
 national_inc_plot <- ggplot2::ggplot() +

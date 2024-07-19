@@ -156,7 +156,7 @@ for(i in 1:nrow(iso_admin)){
 }
 
 # Diagnostics
-iso_admin_diagnostics <- dplyr::filter(iso_admin, admin == 1)
+iso_admin_diagnostics <- iso_admin # dplyr::filter(iso_admin, admin == 1)
 for(i in 1:nrow(iso_admin_diagnostics)){
   iso <- iso_admin_diagnostics[[i, "iso"]]
   admin <- iso_admin_diagnostics[[i, "admin"]]
