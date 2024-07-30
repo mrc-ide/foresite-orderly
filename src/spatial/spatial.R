@@ -154,7 +154,7 @@ names(urban_rural_raster) <- paste0("urban_rural_", years)
 
 pop_at_risk_raster <- purrr::map2(
   .x = terra::as.list(population_raster),
-  .y = pfpr_limits,
+  .y = pfpr_or_pvpr_limits,
   .f = `*`
 ) |>
   terra::rast()
@@ -162,7 +162,7 @@ names(pop_at_risk_raster) <- paste0("pop_at_risk_", years)
 
 pop_at_risk_pf_raster <- purrr::map2(
   .x = terra::as.list(population_raster),
-  .y = pfpr_or_pvpr_limits,
+  .y = pfpr_limits,
   .f = `*`
 ) |>
   terra::rast()

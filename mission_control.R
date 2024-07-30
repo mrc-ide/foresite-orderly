@@ -156,10 +156,10 @@ for(i in 1:nrow(iso_admin)){
 }
 
 # Diagnostics
-iso_admin_diagnostics <- iso_admin # dplyr::filter(iso_admin, admin == 1)
-for(i in 1:nrow(iso_admin_diagnostics)){
-  iso <- iso_admin_diagnostics[[i, "iso"]]
-  admin <- iso_admin_diagnostics[[i, "admin"]]
+#iso_admin_diagnostics <- iso_admin # dplyr::filter(iso_admin, admin == 1)
+for(i in 1:nrow(iso_admin)){
+  iso <- iso_admin[[i, "iso"]]
+  admin <- iso_admin[[i, "admin"]]
   orderly2::orderly_run(
     name = "diagnostics",
     parameters = list(
