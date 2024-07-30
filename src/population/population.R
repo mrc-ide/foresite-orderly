@@ -139,12 +139,12 @@ population_age <- spatial |>
     par_pf_prop = par_pf_prop * adjustment,
     par_pv_prop = par_pv_prop * adjustment,
   )  |>
-  # Make sure sum to 1
+  # Make sure sum to 1 (relative to pop)
   dplyr::mutate(
+    par_prop = par_prop / sum(pop_prop),
+    par_pf_prop = par_pf_prop / sum(pop_prop),
+    par_pv_prop = par_pv_prop / sum(pop_prop),
     pop_prop = pop_prop / sum(pop_prop),
-    par_prop = par_prop / sum(par_prop),
-    par_pf_prop = par_pf_prop / sum(par_pf_prop),
-    par_pv_prop = par_pv_prop / sum(par_pv_prop),
     .by = c("year")
   ) |>
   # Link to UN projections
