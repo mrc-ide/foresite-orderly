@@ -146,6 +146,21 @@ plots$country_prop_urban
 
 :::
 
+### Subnational population at risk
+```{r,echo=FALSE}
+n_facets <- length(unique(plots$area_par$data$name))
+ncols <- plots$area_par$facet$params$ncol
+nrows <- ceiling(n_facets / ncols)
+fheight_area_par <- (facet_plot_width / ncols) * nrows
+```
+
+```{r plot-par-subnational, fig.height=fheight_area_par, fig.width=facet_plot_width}
+#| class: output
+#| echo: false
+plots$area_par
+```
+
+
 ### Urban/Rural subnational population
 ```{r,echo=FALSE}
 n_facets <- length(unique(plots$area_urban_rural$data$name))

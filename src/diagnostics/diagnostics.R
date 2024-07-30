@@ -121,6 +121,47 @@ country_population_at_risk_plot <- ggplot2::ggplot(
   ggplot2::theme(legend.title = ggplot2::element_blank()) +
   ggplot2::ggtitle(paste0(iso3c, ": Country Populations at risk"))
 
+# Comparison of Pop and Par at Admin 1
+
+
+area_name_cols <- site$admin_level[!site$admin_level %in% c("country", "urban_rural")]
+area_par_pd <- p 
+area_par_pd$name <- apply(area_par_pd[,area_name_cols], 1, paste, collapse = " | ")
+area_par_pd <- area_par_pd |>
+  dplyr::summarise(
+    pop = sum(pop),
+    par = sum(par),
+    par_pf = sum(par_pf),
+    par_pv = sum(par_pv),
+    .by = dplyr::all_of(c("iso3c", "year", "name"))
+  ) |>
+  tidyr::pivot_longer(-c(iso3c, year, name), names_to = "type", values_to = "y") |>
+  dplyr::mutate(
+    type = dplyr::case_when(
+      type == "pop" ~ "Population",
+      type == "par" ~ "Population at risk",
+      type == "par_pf" ~ "Population at risk: Pf",
+      type == "par_pv" ~ "Population at risk: Pv"
+    )
+  )
+
+area_population_at_risk_plot <- ggplot2::ggplot(
+  data = area_par_pd,
+  ggplot2::aes(x = year, y = y / 1e6, col = type, lty = type)
+) +
+  ggplot2::geom_line(linewidth = 1) +
+  ggplot2::ylab("Population (millions)") +
+  ggplot2::xlab("Year") +
+  ggplot2::theme_bw() + 
+  ggplot2::theme(legend.title = ggplot2::element_blank()) +
+  ggplot2::ggtitle(paste0(iso3c, ": Sub-national Populations at risk")) +
+  ggplot2::facet_wrap(~ name, ncol = 4, scales = "free_x")  +
+  ggplot2::theme(
+    legend.title = ggplot2::element_blank(), 
+    strip.background = ggplot2::element_rect(fill = "white"),
+    aspect.ratio = 1
+  ) 
+
 country_urban_rural_pd <- p |>
   dplyr::summarise(
     pop = sum(pop),
@@ -623,6 +664,7 @@ diagnostic_plots <- list(
   # Population
   country_population = country_population_plot,
   country_par = country_population_at_risk_plot,
+  area_par = area_population_at_risk_plot,
   country_urban_rural = country_population_urban_rural_plot,
   country_prop_urban = country_prop_urban_plot,
   area_urban_rural = area_urban_rural_population_plot,
