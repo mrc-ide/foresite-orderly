@@ -569,7 +569,17 @@ site_file$cases_deaths = cases_deaths
 
 site_file$prevalence = prevalence
 
+if(sum(is.na(interventions)) > 0){
+  stop("NAs in interventions")
+}
 site_file$interventions = interventions
+
+if(any(population$par > population$pop)){
+  stop("PAR > pop in population_total")
+}
+if(any(population_age$par > population_age$pop)){
+  stop("PAR > pop in population_age")
+}
 
 site_file$population = list(
   population_total = population,
