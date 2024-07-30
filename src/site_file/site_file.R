@@ -267,6 +267,12 @@ interventions <- interventions |>
     smc_min_age = 91,
     smc_max_age = 1825,
     smc_drug = "sp_aq"
+  ) |>
+  tidyr::replace_na(
+    list(
+      smc_cov = 0,
+      smc_n_rounds = 0
+    )
   )
 
 # Add in IRS assumptions
