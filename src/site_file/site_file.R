@@ -301,11 +301,7 @@ interventions <- interventions |>
 ## ITN half-life to mean retention conversion
 ## Match our exponential mean retention as closely as possible to the MAP 
 ## function with given half life (min sum of squared differences over first 3 years):
-if(iso3c %in% netz::halflife$iso3c){
-  hl <- netz::get_halflife(iso3c)
-} else {
-  hl <- netz::get_halflife()
-}
+hl <- netz::get_halflife(iso3c)
 
 mean_retention <- optimise(
   net_loss_match_objective, lower = 1, upper = 365 * 10, half_life = hl

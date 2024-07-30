@@ -493,14 +493,9 @@ rank <- df |>
 # on nets delivered to the country from WMR
 if(!approximate_itn){
   # Assume median half life and usage rate
-  hl <- netz::get_halflife()
-  if(iso3c %in% netz::halflife$iso3c){
-    hl <- netz::get_halflife(iso3c)
-  }
-  ur <- netz::get_usage_rate()
-  if(iso3c %in% netz::usage_rate$iso3c){
-    ur <- netz::get_usage_rate(iso3c)
-  }
+  hl <- netz::get_halflife(iso3c)
+  ur <- netz::get_usage_rate(iso3c)
+
   
   wmr_use <- read.csv("data/who/llins_delivered.csv") |>
     dplyr::filter(iso3c == {{iso3c}}) |>
@@ -579,8 +574,8 @@ if(!approximate_irs){
 if(approximate_itn){
   
   # Assume median half life and usage rate
-  hl <- netz::get_halflife()
-  ur <- netz::get_usage_rate()
+  hl <- netz::get_halflife(iso3c)
+  ur <- netz::get_usage_rate(iso3c)
   
   # Estimate the total people using nets each year | WHO net delivery/distribution
   nets_distributed <- read.csv("data/who/llins_delivered.csv") |>
