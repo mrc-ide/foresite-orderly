@@ -252,10 +252,16 @@ smc_overwrite$smc <- ifelse(rowSums(interventions[,paste0("smc_", 1:12)]) > 0, 1
 smc_overwrite$smc_n_rounds <- rowSums(interventions[,paste0("smc_", 1:12)] > 0.5) 
 smc_overwrite <- smc_overwrite |>
   dplyr::summarise(
-    smc_cov = ifelse(mean(smc) > 0.5, 0.9, 0),
+    smc_cov = as.numeric(ifelse(mean(smc) > 0.5, 0.9, 0)),
     smc_n_rounds = round(mean(smc_n_rounds, na.rm = TRUE)),
     .by = dplyr::all_of(c(grouping[1:3], "year"))
-  )
+  ) |>
+  tidyr::replace_na(
+    list(
+      smc_cov = 0,
+      smc_n_rounds = 0
+    )
+  ) 
 interventions <- interventions |>
   dplyr::select(-dplyr::contains("smc")) |>
   dplyr::left_join(
@@ -267,12 +273,6 @@ interventions <- interventions |>
     smc_min_age = 91,
     smc_max_age = 1825,
     smc_drug = "sp_aq"
-  ) |>
-  tidyr::replace_na(
-    list(
-      smc_cov = 0,
-      smc_n_rounds = 0
-    )
   )
 
 # Add in IRS assumptions
@@ -581,6 +581,12 @@ if(any(population$par > population$pop)){
 }
 if(any(population_age$par > population_age$pop)){
   stop("PAR > pop in population_age")
+}
+if(any(population_age$par_pf > population_age$par)){
+  stop("PAR_pf > par in population_age")
+}
+if(any(population_age$par_pv > population_age$par)){
+  stop("PAR_pv > par in population_age")
 }
 
 site_file$population = list(

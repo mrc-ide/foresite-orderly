@@ -215,12 +215,12 @@ for(i in 1:nrow(iso_admin)){
     resources = hipercow::hipercow_resources(cores = max(2, min(32, iso_admin[[i, "n_units"]])))
   )
 }
+x <- hipercow::hipercow_bundle_create(ids = unlist(cali_task_ids), name = "2024_07_31")
 
-x <- sapply(cali_task_ids, hipercow::task_status)
-table(x)
-hipercow::task_log_show(cali_task_ids$ECU_1)
-hipercow::task_status(cali_task_ids$COD_1)
-hipercow::task_log_show(cali_task_ids$CMR_1)
+table(hipercow::hipercow_bundle_status(x))
+#hipercow::task_log_show(cali_task_ids$ECU_1)
+#hipercow::task_status(cali_task_ids$COD_1)
+#hipercow::task_log_show(cali_task_ids$CMR_1)
 
 # Calibration diagnostic report
 for(i in 1:nrow(iso_admin)){
