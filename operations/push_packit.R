@@ -53,3 +53,29 @@ orderly2::orderly_location_push(
   locate = TRUE
 )
 # ------------------------------------------------------------------------------
+
+# Finding the largest file in the src tree -------------------------------------
+# A helper to search for the largest file in the src directory and subdirs,
+# could be helpful if debugging push.
+find_largest_file <- function(directory) {
+  # List all files in the directory and subdirectories
+  files <- list.files(directory, recursive = TRUE, full.names = TRUE)
+  
+  # Filter out directories, we only want files
+  files <- files[file.info(files)$isdir == FALSE]
+  
+  # Get file sizes
+  file_sizes <- file.info(files)$size
+  
+  # Find the index of the largest file
+  largest_file_index <- which.max(file_sizes)
+  
+  # Return the largest file and its size
+  largest_file <- files[largest_file_index]
+  largest_size <- file_sizes[largest_file_index]
+  
+  return(list(file = largest_file, size = largest_size))
+}
+
+# flf <- find_largest_file("src/")
+# ------------------------------------------------------------------------------
