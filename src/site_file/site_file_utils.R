@@ -31,7 +31,7 @@ net_loss_match_objective <- function(mean_retention, half_life, years = 3){
 
 # Checks -----------------------------------------------------------------------
 check_params <- function(site){
-  eirs <- split(site$eir, 1:nrow(site$eir))
+  eirs <- base::split(site$eir, 1:nrow(site$eir))
   for(i in 1:length(eirs)){
     x <- eirs[[i]]
     sub_site <- site::subset_site(site, x)

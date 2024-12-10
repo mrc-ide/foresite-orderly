@@ -10,6 +10,7 @@ orderly_envir.yml
 data/
 hipercow/
 operations/extracted/
+operations/custom_requests/
 
 # ---VVV--- added by orderly ---VVV----------------
 # Don't manually edit content between these markers

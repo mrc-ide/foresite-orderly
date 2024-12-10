@@ -1,5 +1,14 @@
 # Mission control --------------------------------------------------------------
 
+# TODOs ------------------------------------------------------------------------
+# TODO: Internal and external metadata and versioning
+# TODO: Update checks for orderly2, malariasimulation and malariverse packages
+# TODO: Update following 2024 WMR release
+# TODO: Remove random ITN distribution days (and re-calibrate)
+# TODO: Add in an PMC input, with implementation in Sierra Leone
+# TODO: SMC fix
+# ------------------------------------------------------------------------------
+
 # Run options ------------------------------------------------------------------
 # A version identifier that must correspond to a boundaries folder in 
 # data_boundaries/boundaries
