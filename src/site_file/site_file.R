@@ -333,11 +333,10 @@ interventions <- interventions |>
   ) |>
   dplyr::mutate(mean_retention = mean_retention)
 
-# Assign an itn distribution day (currently associated with admin name length)
+# Assign an itn distribution day (currently assumed January 1st)
 interventions <- interventions |>
   dplyr::mutate(
-    itn_distribution_day = round((365 / 12) * (nchar(name_1) %% 12) + 1),
-    .by = name_1
+    itn_distribution_day = 1
   )
 
 ## Link with pyrethroid resistance
