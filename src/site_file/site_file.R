@@ -5,7 +5,7 @@ orderly2::orderly_description(
 )
 
 orderly2::orderly_parameters(
-  version = NULL,
+  boundary = NULL,
   iso3c = NULL,
   admin_level = NULL,
   urban_rural = NULL
@@ -19,31 +19,31 @@ orderly2::orderly_shared_resource("utils.R")
 
 orderly2::orderly_dependency(
   name = "demography",
-  query = "latest(parameter:version == this:version && parameter:iso3c ==  this:iso3c)",
+  query = "latest(parameter:iso3c ==  this:iso3c)",
   files = c("adjusted_demography.rds")
 )
 
 orderly2::orderly_dependency(
   name = "spatial",
-  query = "latest(parameter:version == this:version && parameter:iso3c ==  this:iso3c)",
+  query = "latest(parameter:boundary == this:boundary && parameter:iso3c ==  this:iso3c)",
   files = c("spatial.rds")
 )
 
 orderly2::orderly_dependency(
   name = "population",
-  query = "latest(parameter:version == this:version && parameter:iso3c ==  this:iso3c)",
+  query = "latest(parameter:boundary == this:boundary && parameter:iso3c ==  this:iso3c)",
   files = c("population.rds", "population_age.rds")
 )
 
 orderly2::orderly_dependency(
   name = "data_boundaries",
-  query = "latest(parameter:version == this:version)",
-  files = c("boundaries" = paste0("boundaries/", version, "/", iso3c, "/"))
+  query = "latest(parameter:boundary == this:boundary)",
+  files = c("boundaries" = paste0("boundaries/", boundary, "/", iso3c, "/"))
 )
 
 orderly2::orderly_dependency(
   name = "data_vectors",
-  query = "latest(parameter:version == this:version)",
+  query = "latest(parameter:boundary == this:boundary)",
   files = c(
     "vectors/irs_insecticide_parameters.csv" = "vectors/irs_insecticide_parameters.csv",
     "vectors/net_efficacy_adjusted.csv" = "vectors/net_efficacy_adjusted.csv",
@@ -55,7 +55,7 @@ orderly2::orderly_dependency(
 
 orderly2::orderly_dependency(
   name = "data_who",
-  query = "latest(parameter:version == this:version)",
+  query = "latest()",
   files = c("wmr_cases_deaths.csv" = "data/wmr_cases_deaths.csv")
 )
 
@@ -560,7 +560,7 @@ eir <- dplyr::bind_rows(pf_eir, pv_eir)
 site_file <- list()
 
 site_file$country = unique(spatial$country)
-site_file$version = version
+site_file$boundary = boundary
 site_file$admin_level = grouping
 
 site_file$sites = sites

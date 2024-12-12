@@ -13,7 +13,7 @@ params:
   iso3c: "NULL"
   country: "NULL"
   admin_level: "NULL"
-  version: "NULL"
+  boundary: "NULL"
   n_sites: "NULL"
 ---
 
@@ -34,7 +34,7 @@ title <- paste0(
   "Calibration report. ",
   params$country, " (", params$iso3c, ").",
   " Admin level: ", params$admin_level, ".",
-  " Version: ", params$version
+  " Boundary: ", params$boundary
 )
 facet_plot_width <- 10
 ```

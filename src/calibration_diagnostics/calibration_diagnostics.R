@@ -5,7 +5,7 @@ orderly2::orderly_description(
 )
 
 orderly2::orderly_parameters(
-  version = NULL,
+  boundary = NULL,
   iso3c = NULL,
   admin_level = NULL,
   urban_rural = NULL
@@ -17,7 +17,7 @@ orderly2::orderly_resource(
 
 orderly2::orderly_dependency(
   name = "calibration",
-  query = "latest(parameter:version == this:version && parameter:iso3c == this:iso3c && parameter:admin_level == this:admin_level && parameter:urban_rural == this:urban_rural)",
+  query = "latest(parameter:boundary == this:boundary && parameter:iso3c == this:iso3c && parameter:admin_level == this:admin_level && parameter:urban_rural == this:urban_rural)",
   files = c("calibrated_site.rds", "calibration_output_raw.rds")
 )
 
@@ -363,7 +363,7 @@ quarto::quarto_render(
     iso3c = iso3c,
     country = site$country,
     admin_level = admin_level,
-    version = site$version,
+    boundary = site$boundary,
     n_sites = nrow(site$sites)
   )
 )

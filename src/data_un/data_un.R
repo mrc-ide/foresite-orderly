@@ -1,6 +1,3 @@
-orderly2::orderly_parameters(
-  version = NULL
-)
 un_datafiles <- list.files("data/", pattern = "*.csv", full.names = TRUE)
 orderly2::orderly_resource(un_datafiles)
 orderly2::orderly_artefact(

@@ -1,30 +1,16 @@
-orderly2::orderly_parameters(
-  version = NULL
-)
-
 orderly2::orderly_resource("data/")
 orderly2::orderly_resource("README.md")
 
 orderly2::orderly_shared_resource("utils.R")
 
 orderly2::orderly_dependency(
-  name = "data_boundaries",
-  query = "latest(parameter:version == this:version)",
-  files = "extents.rds"
+  name = "extents",
+  query = "latest()",
+  files = "extents.csv"
 )
 
-extents <- readRDS("extents.rds")
-isos <- names(extents)
-
-# TODO: Why does this not cleanup properly?
-country_boundary_files <- paste0("boundaries/", version, "/", isos, "/", isos, "_0.RDS")
-names(country_boundary_files) <- paste0("country_boundaries/", isos, "_0.RDS")
-orderly2::orderly_dependency(
-  name = "data_boundaries",
-  query = "latest(parameter:version == this:version)",
-  files = country_boundary_files
-)
-
+extents <- read.csv("extents.csv")
+isos <- extents$iso3c
 
 raster_stack <- function(name, years){
   raster <- terra::rast(
@@ -62,8 +48,8 @@ sickle_raster <- raster_stack("blood_disorders/201201_Global_Sickle_Haemoglobin_
 
 source("utils.R")
 
-split <- function(raster, boundary, iso, name, NAflag = NULL){
-  raster <- process_raster(raster, boundary)
+split <- function(raster, extent, iso, name, NAflag = NULL){
+  raster <- process_raster(raster, extent)
   if(!is.null(raster)){
     address <- paste0("map/", iso, "/", name, ".tif")
     orderly2::orderly_artefact(
@@ -83,20 +69,20 @@ paths <- paste0("map/", isos, "/")
 make <- sapply(paths, dir.create)
 
 for(iso in isos){
-  boundary <- readRDS(paste0("country_boundaries/", iso, "_0.RDS"))
+  extent <- terra::ext(unlist(extents[extents$iso3c == iso, 2:5]))
   
-  split(itn_raster, boundary, iso, "itn")
-  split(irs_raster, boundary, iso, "irs")
-  split(tx_raster, boundary, iso, "tx")
-  split(smc_raster, boundary, iso, "smc")
-  split(pvpr_raster, boundary, iso, "pvpr",  -1)
-  split(pfpr_raster, boundary, iso, "pfpr")
-  split(cities_raster, boundary, iso, "cities")
-  split(motor_raster, boundary, iso, "motor")
-  split(walk_raster, boundary, iso, "walk")
-  split(hbc_raster, boundary, iso, "hbc")
-  split(duffy_raster, boundary, iso, "duffy")
-  split(g6pd_raster, boundary, iso, "g6pd")
-  split(sickle_raster, boundary, iso, "sickle")
+  split(itn_raster, extent, iso, "itn")
+  split(irs_raster, extent, iso, "irs")
+  split(tx_raster, extent, iso, "tx")
+  split(smc_raster, extent, iso, "smc")
+  split(pvpr_raster, extent, iso, "pvpr",  -1)
+  split(pfpr_raster, extent, iso, "pfpr")
+  split(cities_raster, extent, iso, "cities")
+  split(motor_raster, extent, iso, "motor")
+  split(walk_raster, extent, iso, "walk")
+  split(hbc_raster, extent, iso, "hbc")
+  split(duffy_raster, extent, iso, "duffy")
+  split(g6pd_raster, extent, iso, "g6pd")
+  split(sickle_raster, extent, iso, "sickle")
 }
 

@@ -5,7 +5,7 @@ orderly2::orderly_description(
 )
 
 orderly2::orderly_parameters(
-  version = NULL,
+  boundary = NULL,
   iso3c = NULL
 )
 
@@ -15,49 +15,49 @@ orderly2::orderly_resource(
 
 orderly2::orderly_dependency(
   name = "un_wpp",
-  query = "latest(parameter:version == this:version)",
+  query = "latest()",
   files = "un_wup.rds"
 )
 
 orderly2::orderly_dependency(
   name = "data_map",
-  query = "latest(parameter:version == this:version)",
+  query = "latest(parameter:boundary == this:boundary)",
   files = c("data/map" = paste0("map/", iso3c, "/"))
 )
 
 orderly2::orderly_dependency(
   name = "data_worldpop",
-  query = "latest(parameter:version == this:version)",
+  query = "latest()",
   files = c("data/population" = paste0("population/", iso3c, "/"))
 )
 
 orderly2::orderly_dependency(
   name = "data_chirps",
-  query = "latest(parameter:version == this:version)",
+  query = "latest(parameter:boundary == this:boundary)",
   files = c("data/rainfall" = paste0("rainfall/", iso3c, "/"))
 )
 
 orderly2::orderly_dependency(
   name = "data_dhs",
-  query = "latest(parameter:version == this:version)",
+  query = "latest()",
   files = "data/dhs/"
 )
 
 orderly2::orderly_dependency(
   name = "data_who",
-  query = "latest(parameter:version == this:version)",
+  query = "latest()",
   files = c("data/who/" = "data/")
 )
 
 orderly2::orderly_dependency(
   name = "data_vectors",
-  query = "latest(parameter:version == this:version)",
+  query = "latest(parameter:boundary == this:boundary)",
   files = c("data/vectors" = paste0("vectors/", iso3c, "/"))
 )
 
 orderly2::orderly_dependency(
   name = "data_boundaries",
-  query = "latest(parameter:version == this:version)",
+  query = "latest(parameter:boundary == this:boundary)",
   files = c("data/boundaries" = paste0("boundaries/", version, "/", iso3c, "/"))
 )
 

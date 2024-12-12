@@ -5,7 +5,7 @@ orderly2::orderly_description(
 )
 
 orderly2::orderly_parameters(
-  version = NULL,
+  boundary = NULL,
   iso3c = NULL,
   admin_level = NULL,
   urban_rural = NULL
@@ -17,7 +17,7 @@ orderly2::orderly_resource(
 
 orderly2::orderly_dependency(
   name = "site_file",
-  query = "latest(parameter:version == this:version && parameter:iso3c == this:iso3c && parameter:admin_level == this:admin_level && parameter:urban_rural == this:urban_rural)",
+  query = "latest(parameter:boundary == this:boundary && parameter:iso3c == this:iso3c && parameter:admin_level == this:admin_level && parameter:urban_rural == this:urban_rural)",
   files = c("site.rds")
 )
 

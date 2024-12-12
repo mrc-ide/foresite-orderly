@@ -6,7 +6,6 @@ orderly2::orderly_description(
 )
 
 orderly2::orderly_parameters(
-  version = NULL,
   iso3c = NULL
 )
 
@@ -14,7 +13,7 @@ orderly2::orderly_resource("adjust_rates.R")
 
 orderly2::orderly_dependency(
   name = "un_wpp",
-  query = "latest(parameter:version == this:version)",
+  query = "latest()",
   files = c("un_wpp.rds")
 )
 
