@@ -106,14 +106,17 @@ version <- paste("2025/01", " boundary: ", boundary, " admin:", admin, " urban_r
 # ------------------------------------------------------------------------------
 
 # Check ISOs have appropriate admin level defined.
-have_admin <- file.exists(paste0("src/data_boundaries/boundaries/", boundary, "/", isos, "/", isos, "_", admin, ".RDS"))
-if(!all((have_admin))){
-  warning("ISOs: ", paste0(isos[!have_admin], collapse = ", "), " do not have requested admin level, dropping")
-  isos <- isos[have_admin]
+boundary_files <- paste0("src/data_boundaries/boundaries/", boundary, "/", isos, "/", isos, "_", admin, ".RDS")
+admin_level_available <- file.exists(boundary_files)
+if(!all((admin_level_available))){
+  missing_isos <- paste0(isos[!admin_level_available], collapse = ", ")
+  warning(missing_isos, " do not have requested admin level, dropping")
+  isos <- isos[admin_level_available]
+  boundary_files <- boundary_files[admin_level_available]
 }
 # Check number of sites (for parallelism resource requirement)
-n_sites <- sapply(isos, function(iso, admin, urban_rural){
-  sites <- nrow(readRDS(paste0("src/data_boundaries/boundaries/", boundary, "/", iso, "/", iso, "_", admin, ".RDS")))
+n_sites <- sapply(boundary_files, function(x, admin, urban_rural){
+  sites <- nrow(readRDS(x))
   if(urban_rural) sites <- sites * 2
   return(sites)
 }, admin = admin, urban_rural = urban_rural)
@@ -197,7 +200,10 @@ for(iso in isos){
     resources = hipercow::hipercow_resources(cores = max(2, min(32, n_sites[iso])))
   )
 }
-x <- hipercow::hipercow_bundle_create(ids = unlist(cali_task_ids), name = paste0("Calibration_", format(Sys.time(), "%Y-%m-%d_%H-%M-%S")))
+x <- hipercow::hipercow_bundle_create(
+  ids = unlist(cali_task_ids),
+  name = paste0("Calibration_", format(Sys.time(), "%Y-%m-%d_%H-%M-%S"))
+)
 table(hipercow::hipercow_bundle_status(x))
 
 # Calibration diagnostic report
