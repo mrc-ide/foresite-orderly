@@ -21,8 +21,14 @@ orderly2::orderly_dependency(
 
 orderly2::orderly_dependency(
   name = "data_map",
-  query = "latest(parameter:boundary == this:boundary)",
+  query = "latest()",
   files = c("data/map" = paste0("map/", iso3c, "/"))
+)
+
+orderly2::orderly_dependency(
+  name = "data_interventions_manual",
+  query = "latest()",
+  files = c("data/manual" = paste0("manual/", iso3c, "/"))
 )
 
 orderly2::orderly_dependency(
@@ -33,7 +39,7 @@ orderly2::orderly_dependency(
 
 orderly2::orderly_dependency(
   name = "data_chirps",
-  query = "latest(parameter:boundary == this:boundary)",
+  query = "latest()",
   files = c("data/rainfall" = paste0("rainfall/", iso3c, "/"))
 )
 
@@ -51,14 +57,14 @@ orderly2::orderly_dependency(
 
 orderly2::orderly_dependency(
   name = "data_vectors",
-  query = "latest(parameter:boundary == this:boundary)",
+  query = "latest()",
   files = c("data/vectors" = paste0("vectors/", iso3c, "/"))
 )
 
 orderly2::orderly_dependency(
   name = "data_boundaries",
   query = "latest(parameter:boundary == this:boundary)",
-  files = c("data/boundaries" = paste0("boundaries/", version, "/", iso3c, "/"))
+  files = c("data/boundaries" = paste0("boundaries/", boundary, "/", iso3c, "/"))
 )
 
 orderly2::orderly_artefact(
@@ -68,7 +74,7 @@ orderly2::orderly_artefact(
 # ------------------------------------------------------------------------------
 
 # Fixed inputs -----------------------------------------------------------------
-years <- 2000:as.integer(format(Sys.Date(), "%Y"))
+years <- 2000:2024
 source("spatial_utils.R")
 # ------------------------------------------------------------------------------
 
@@ -213,19 +219,52 @@ if(file.exists("data/map/tx.tif")){
 # ------------------------------------------------------------------------------
 
 # SMC --------------------------------------------------------------------------
-if(file.exists("data/map/smc.tif")){
-  smc_raster <- terra::rast("data/map/smc.tif") |>
-    monthify()
-  smc_raster <- lapply(smc_raster, pad_raster, all_years = years)
-  smc_raster <- lapply(smc_raster, function(x){
-    names(x) <- paste0("smc_cov_", years)
-    return(x)
-  })
-} else {
-  smc_raster <- lapply(1:12, function(x){
-    NA
-  })
-  names(smc_raster) <- 1:12
+smc_raster <- NA
+if(file.exists("data/manual/smc.tif")){
+  smc_raster <- terra::rast("data/manual/smc.tif") |>
+    pad_raster(years)
+  names(smc_raster) <- paste0("smc_cov_", years)
+}
+
+## MAP embargoed inputs, not used at present
+# if(file.exists("data/map/smc.tif")){
+#   smc_raster <- terra::rast("data/map/smc.tif") |>
+#     monthify()
+#   smc_raster <- lapply(smc_raster, pad_raster, all_years = years)
+#   smc_raster <- lapply(smc_raster, function(x){
+#     names(x) <- paste0("smc_cov_", years)
+#     return(x)
+#   })
+# } else {
+#   smc_raster <- lapply(1:12, function(x){
+#     NA
+#   })
+#   names(smc_raster) <- 1:12
+# }
+# ------------------------------------------------------------------------------
+
+# PMC --------------------------------------------------------------------------
+pmc_raster <- NA
+if(file.exists("data/manual/pmc.tif")){
+  pmc_raster <- terra::rast("data/manual/pmc.tif") |>
+    pad_raster(years)
+  names(pmc_raster) <- paste0("pmc_cov_", years)
+}
+# ------------------------------------------------------------------------------
+
+# Vaccines ---------------------------------------------------------------------
+rtss_raster <- NA
+if(file.exists("data/manual/rtss.tif")){
+  rtss_raster <- terra::rast("data/manual/rtss.tif") |>
+    pad_raster(years)
+  names(rtss_raster) <- paste0("rtss_cov_", years)
+}
+
+r21_raster <- NA
+if(file.exists("data/manual/r21.tif")){
+  r21_raster <- terra::rast("data/manual/r21.tif") |>
+    pad_raster(years)
+  names(r21_raster) <- paste0("r21_cov_", years)
 }
 # ------------------------------------------------------------------------------
 
@@ -351,18 +390,23 @@ df <- data.frame(
   itn_use = raster_values(itn_raster),
   irs_cov = raster_values(irs_raster, na_replace = 0),
   tx_cov = raster_values(tx_raster),
-  smc_1 = raster_values(smc_raster[[1]], na_replace = 0),
-  smc_2 = raster_values(smc_raster[[2]], na_replace = 0),
-  smc_3 = raster_values(smc_raster[[3]], na_replace = 0),
-  smc_4 = raster_values(smc_raster[[4]], na_replace = 0),
-  smc_5 = raster_values(smc_raster[[5]], na_replace = 0),
-  smc_6 = raster_values(smc_raster[[6]], na_replace = 0),
-  smc_7 = raster_values(smc_raster[[7]], na_replace = 0),
-  smc_8 = raster_values(smc_raster[[8]], na_replace = 0),
-  smc_9 = raster_values(smc_raster[[9]], na_replace = 0),
-  smc_10 = raster_values(smc_raster[[10]], na_replace = 0),
-  smc_11 = raster_values(smc_raster[[11]], na_replace = 0),
-  smc_12 = raster_values(smc_raster[[12]], na_replace = 0),
+  smc_cov = raster_values(smc_raster, na_replace = 0),
+  ## MAP embargoed inputs, not used at present
+  # smc_1 = raster_values(smc_raster[[1]], na_replace = 0),
+  # smc_2 = raster_values(smc_raster[[2]], na_replace = 0),
+  # smc_3 = raster_values(smc_raster[[3]], na_replace = 0),
+  # smc_4 = raster_values(smc_raster[[4]], na_replace = 0),
+  # smc_5 = raster_values(smc_raster[[5]], na_replace = 0),
+  # smc_6 = raster_values(smc_raster[[6]], na_replace = 0),
+  # smc_7 = raster_values(smc_raster[[7]], na_replace = 0),
+  # smc_8 = raster_values(smc_raster[[8]], na_replace = 0),
+  # smc_9 = raster_values(smc_raster[[9]], na_replace = 0),
+  # smc_10 = raster_values(smc_raster[[10]], na_replace = 0),
+  # smc_11 = raster_values(smc_raster[[11]], na_replace = 0),
+  # smc_12 = raster_values(smc_raster[[12]], na_replace = 0),
+  pmc_cov = raster_values(pmc_raster, na_replace = 0),
+  rtss_cov = raster_values(rtss_raster, na_replace = 0),
+  r21_cov = raster_values(r21_raster, na_replace = 0),
   rainfall_1 = raster_values(rainfall_raster[[1]]),
   rainfall_2 = raster_values(rainfall_raster[[2]]),
   rainfall_3 = raster_values(rainfall_raster[[3]]),
@@ -405,31 +449,31 @@ format(object.size(df), "Mb")
 # Fill interventions without spatial-raster inputs -----------------------------
 
 ## Vaccine
-rtss_cov_data <- read.csv("data/who/rtss_coverage.csv") |>
-  dplyr::group_by(iso3c, name_1) |>
-  tidyr::complete(year = min(year):as.integer(format(Sys.Date(), "%Y"))) |>
-  tidyr::fill(rtss_cov) |>
-  dplyr::ungroup()
-if(iso3c %in% rtss_cov_data$iso3c){
-  df <- df |>
-    dplyr::left_join(
-      rtss_cov_data,
-      by = c("iso3c", "name_1", "year")
-    ) |>
-    tidyr::replace_na(
-      replace = list(
-        rtss_cov = 0
-      )
-    )
-} else {
-  df$rtss_cov = 0
-}
-df$r21_cov <- 0
+# rtss_cov_data <- read.csv("data/who/rtss_coverage.csv") |>
+#   dplyr::group_by(iso3c, name_1) |>
+#   tidyr::complete(year = min(year):as.integer(format(Sys.Date(), "%Y"))) |>
+#   tidyr::fill(rtss_cov) |>
+#   dplyr::ungroup()
+# if(iso3c %in% rtss_cov_data$iso3c){
+#   df <- df |>
+#     dplyr::left_join(
+#       rtss_cov_data,
+#       by = c("iso3c", "name_1", "year")
+#     ) |>
+#     tidyr::replace_na(
+#       replace = list(
+#         rtss_cov = 0
+#       )
+#     )
+# } else {
+#   df$rtss_cov = 0
+# }
+# df$r21_cov <- 0
 
 # Historical larval source management
 df$lsm_cov <- 0
 # Historical PMC (formerly IPTi)
-df$pmc_cov <- 0
+# df$pmc_cov <- 0
 
 # Proportion of treatment that is act
 prop_act <- read.csv("data/dhs/proportion_act.csv")

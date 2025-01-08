@@ -43,7 +43,7 @@ orderly2::orderly_dependency(
 
 orderly2::orderly_dependency(
   name = "data_vectors",
-  query = "latest(parameter:boundary == this:boundary)",
+  query = "latest()",
   files = c(
     "vectors/irs_insecticide_parameters.csv" = "vectors/irs_insecticide_parameters.csv",
     "vectors/net_efficacy_adjusted.csv" = "vectors/net_efficacy_adjusted.csv",
@@ -195,10 +195,11 @@ interventions <- spatial |>
     rtss_cov = weighted.mean2(rtss_cov, par, na.rm = TRUE),
     r21_cov = weighted.mean2(r21_cov, par, na.rm = TRUE),
     lsm_cov = weighted.mean2(lsm_cov, par, na.rm = TRUE),
+    smc_cov = weighted.mean2(smc_cov, par, na.rm = TRUE),
     pmc_cov = weighted.mean2(pmc_cov, par, na.rm = TRUE),
     prop_act = weighted.mean2(prop_act, par, na.rm = TRUE),
     prop_public = weighted.mean2(prop_public, par, na.rm = TRUE),
-    dplyr::across(dplyr::contains("smc"), \(x) weighted.mean2(x, par, na.rm = TRUE)),
+    #dplyr::across(dplyr::contains("smc"), \(x) weighted.mean2(x, par, na.rm = TRUE)),
     .by = dplyr::all_of(c(grouping, "year"))
   ) |>
   dplyr::arrange(dplyr::across(dplyr::all_of(c(grouping, "year"))))
@@ -247,32 +248,37 @@ interventions <- interventions |>
   )
 
 ## Overwrite SMC, as we cannot currently use the new MAP estimates widely
-smc_overwrite <- interventions
-smc_overwrite$smc <- ifelse(rowSums(interventions[,paste0("smc_", 1:12)]) > 0, 1, 0)
-smc_overwrite$smc_n_rounds <- rowSums(interventions[,paste0("smc_", 1:12)] > 0.5) 
-smc_overwrite <- smc_overwrite |>
-  dplyr::summarise(
-    smc_cov = as.numeric(ifelse(mean(smc) > 0.5, 0.9, 0)),
-    smc_n_rounds = round(mean(smc_n_rounds, na.rm = TRUE)),
-    .by = dplyr::all_of(c(grouping[1:3], "year"))
-  ) |>
-  tidyr::replace_na(
-    list(
-      smc_cov = 0,
-      smc_n_rounds = 0
-    )
-  ) 
-interventions <- interventions |>
-  dplyr::select(-dplyr::contains("smc")) |>
-  dplyr::left_join(
-    smc_overwrite,
-    by = c(grouping[1:3], "year")
-  )
+# smc_overwrite <- interventions
+# smc_overwrite$smc <- ifelse(rowSums(interventions[,paste0("smc_", 1:12)]) > 0, 1, 0)
+# smc_overwrite$smc_n_rounds <- rowSums(interventions[,paste0("smc_", 1:12)] > 0.5) 
+# smc_overwrite <- smc_overwrite |>
+#   dplyr::summarise(
+#     smc_cov = as.numeric(ifelse(mean(smc) > 0.5, 0.9, 0)),
+#     smc_n_rounds = round(mean(smc_n_rounds, na.rm = TRUE)),
+#     .by = dplyr::all_of(c(grouping[1:3], "year"))
+#   ) |>
+#   tidyr::replace_na(
+#     list(
+#       smc_cov = 0,
+#       smc_n_rounds = 0
+#     )
+#   ) 
+# interventions <- interventions |>
+#   dplyr::select(-dplyr::contains("smc")) |>
+#   dplyr::left_join(
+#     smc_overwrite,
+#     by = c(grouping[1:3], "year")
+#   )
+
+## Additional SMC.PMC information
 interventions <- interventions |>
   dplyr::mutate(
+    # TODO: this be more custom?
+    smc_n_rounds = 3,
     smc_min_age = 91,
     smc_max_age = 1825,
-    smc_drug = "sp_aq"
+    smc_drug = "sp_aq",
+    pmc_drug = "sp"
   )
 
 # Add in IRS assumptions

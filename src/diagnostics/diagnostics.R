@@ -376,8 +376,8 @@ interventions_country_plot <- scene::plot_interventions(
   interventions = interventions,
   population = pop,
   group_var = "iso3c",
-  include = c("itn_use", "itn_input_dist", "predicted_use", "tx_cov", "irs_cov", "rtss_cov", "smc_cov"),
-  labels = c("ITN usage", "ITN model input", "ITN model usage", "Treatment", "IRS", "RTSS", "SMC")
+  include = c("itn_use", "itn_input_dist", "predicted_use", "tx_cov", "irs_cov", "rtss_cov", "smc_cov", "pmc_cov", "r21_cov"),
+  labels = c("ITN usage", "ITN model input", "ITN model usage", "Treatment", "IRS", "RTSS", "SMC", "PMC", "R21")
 ) +
   ggplot2::ggtitle(paste0(iso3c, ": Intervention coverage"))
 
@@ -385,8 +385,8 @@ interventions_area_plot <- scene::plot_interventions(
   interventions = interventions,
   population = pop,
   group_var = "name",
-  include = c("itn_use", "itn_input_dist", "predicted_use", "tx_cov", "irs_cov", "rtss_cov", "smc_cov"),
-  labels = c("ITN usage", "ITN model input", "ITN model usage", "Treatment", "IRS", "RTSS", "SMC"),
+  include = c("itn_use", "itn_input_dist", "predicted_use", "tx_cov", "irs_cov", "rtss_cov", "smc_cov", "pmc_cov", "r21_cov"),
+  labels = c("ITN usage", "ITN model input", "ITN model usage", "Treatment", "IRS", "RTSS", "SMC", "PMC", "R21"),
   facet_rows = ceiling(length(unique(interventions$name)) / 4)
 ) +
   ggplot2::ggtitle(paste0(iso3c, ": Intervention coverage by area"))

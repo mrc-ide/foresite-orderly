@@ -4,11 +4,7 @@
 # TODO: Internal and external metadata and versioning
 # TODO: Update checks for orderly2, malariasimulation and malariverse packages
 # TODO: Update following 2024 WMR release
-# TODO: Non-raster intervention input data:
-## TODO: Add in an PMC input, with implementation in Sierra Leone
-## TODO: SMC fix
-## TODO: Vaccine data worth adding in presumptively now
-## TODO: "Fill interventions without spatial-raster inputs" in spatial is boundary dependent.
+# TODO: SMC number of rounds inputs - currently hard-coded in site file
 # ------------------------------------------------------------------------------
 
 # ISOs -------------------------------------------------------------------------

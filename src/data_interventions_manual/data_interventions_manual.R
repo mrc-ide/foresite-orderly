@@ -16,25 +16,13 @@ orderly2::orderly_resource(
   files = "pfpr_template_raster.tif"
 )
 
-orderly2::orderly_artefact(
-  description = "SMC coverage raster stack",
-  files = "smc_cov.tif"
+orderly2::orderly_dependency(
+  name = "extents",
+  query = "latest()",
+  files = "extents.csv"
 )
 
-orderly2::orderly_artefact(
-  description = "PMC coverage raster stack",
-  files = "pmc_cov.tif"
-)
-
-orderly2::orderly_artefact(
-  description = "RTSS coverage raster stack",
-  files = "rtss_cov.tif"
-)
-
-orderly2::orderly_artefact(
-  description = "r21 coverage raster stack",
-  files = "r21_cov.tif"
-)
+orderly2::orderly_shared_resource("utils.R")
 # ------------------------------------------------------------------------------
 
 # Inputs -----------------------------------------------------------------------
@@ -52,6 +40,8 @@ sf_df <- boundary |>
   dplyr::left_join(manual_coverage, by = c("iso3c", "name_1"))
 
 template <- terra::rast("pfpr_template_raster.tif") 
+
+extents <- read.csv("extents.csv")
 # ------------------------------------------------------------------------------
 
 # Create raster stacks ---------------------------------------------------------
@@ -78,8 +68,34 @@ pmc_cov <- make_stack("pmc_cov", sf_df, template)
 rtss_cov <- make_stack("rtss_cov", sf_df, template)
 r21_cov <- make_stack("r21_cov", sf_df, template)
 
-terra::writeRaster(smc_cov, "smc_cov.tif")
-terra::writeRaster(pmc_cov, "pmc_cov.tif")
-terra::writeRaster(rtss_cov, "rtss_cov.tif")
-terra::writeRaster(r21_cov, "r21_cov.tif")
+source("utils.R")
+split <- function(raster, extent, iso, name, NAflag = NULL){
+  raster <- process_raster(raster, extent)
+  if(!is.null(raster)){
+    address <- paste0("manual/", iso, "/", name, ".tif")
+    orderly2::orderly_artefact(
+      description = paste("manual", name, "raster"),
+      files = address
+    )
+    if(is.null(NAflag)){
+      terra::writeRaster(raster, address)
+    } else {
+      terra::writeRaster(raster, address, NAflag = NAflag)
+    }
+  }
+}
+
+isos <- unique(sf_df$iso3c)
+dir.create("manual/")
+paths <- paste0("manual/", isos, "/")
+make <- sapply(paths, dir.create)
+
+for(iso in isos){
+  extent <- terra::ext(unlist(extents[extents$iso3c == iso, 2:5]))
+  
+  split(smc_cov, extent, iso, "smc")
+  split(pmc_cov, extent, iso, "pmc")
+  split(rtss_cov, extent, iso, "rtss")
+  split(r21_cov, extent, iso, "r21")
+}
 # ------------------------------------------------------------------------------
