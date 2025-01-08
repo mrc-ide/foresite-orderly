@@ -4,9 +4,11 @@
 # TODO: Internal and external metadata and versioning
 # TODO: Update checks for orderly2, malariasimulation and malariverse packages
 # TODO: Update following 2024 WMR release
-### TODO: Non-raster intervention input data
-# TODO: Add in an PMC input, with implementation in Sierra Leone
-# TODO: SMC fix
+# TODO: Non-raster intervention input data:
+## TODO: Add in an PMC input, with implementation in Sierra Leone
+## TODO: SMC fix
+## TODO: Vaccine data worth adding in presumptively now
+## TODO: "Fill interventions without spatial-raster inputs" in spatial is boundary dependent.
 # ------------------------------------------------------------------------------
 
 # ISOs -------------------------------------------------------------------------
@@ -79,6 +81,10 @@ for(iso in malaria_endemic_isos){
 
 orderly2::orderly_run(
   name = "data_map",
+  echo = FALSE
+)
+orderly2::orderly_run(
+  name = "data_interventions_manual",
   echo = FALSE
 )
 orderly2::orderly_run(
