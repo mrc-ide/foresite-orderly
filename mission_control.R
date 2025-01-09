@@ -4,6 +4,9 @@
 # TODO: Internal and external metadata and versioning
 # TODO: Update checks for orderly2, malariasimulation and malariverse packages
 # TODO: SMC number of rounds inputs - currently hard-coded in site file
+# TODO: Update UN inputs?
+# TODO: Update worldpop inputs
+# TODO: Update DHS inputs
 # ------------------------------------------------------------------------------
 
 # ISOs -------------------------------------------------------------------------

@@ -13,7 +13,6 @@ orderly2::orderly_dependency(
 extents <- read.csv("extents.csv")
 isos <- extents$iso3c
 
-
 rainfall_datafiles <- list.files("data/", pattern = "*.tif", full.names = TRUE)
 rainfall_stack <- terra::rast(rainfall_datafiles)
 
@@ -33,4 +32,3 @@ for(iso in isos){
     terra::writeRaster(raster, address, NAflag = -9999)
   }
 }
-
