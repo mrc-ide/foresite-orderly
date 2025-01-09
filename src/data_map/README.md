@@ -3,6 +3,19 @@
 `access/`
 `blood_disorders/`
 `irs/`
+
+**Source**
+
+<https://data.malariaatlas.org/maps>
+
+**Download date**
+
+2023/08/18
+
+---
+
+**Files**
+
 `itn/`
 `pfpr/`
 `pvpr/`
@@ -14,7 +27,7 @@
 
 **Download date**
 
-2023/08/18
+2024/01/09
 
 ---
 
