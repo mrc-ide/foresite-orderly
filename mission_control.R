@@ -3,7 +3,6 @@
 # TODOs ------------------------------------------------------------------------
 # TODO: Internal and external metadata and versioning
 # TODO: Update checks for orderly2, malariasimulation and malariverse packages
-# TODO: Update following 2024 WMR release
 # TODO: SMC number of rounds inputs - currently hard-coded in site file
 # ------------------------------------------------------------------------------
 
