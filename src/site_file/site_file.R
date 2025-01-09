@@ -274,7 +274,7 @@ interventions <- interventions |>
 interventions <- interventions |>
   dplyr::mutate(
     # TODO: this be more custom?
-    smc_n_rounds = 3,
+    smc_n_rounds = 4,
     smc_min_age = 91,
     smc_max_age = 1825,
     smc_drug = "sp_aq",

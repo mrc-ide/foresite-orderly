@@ -8,7 +8,7 @@ extents_overlap <- function(raster, extent){
   return(overlap)
 }
 
-process_raster <- function(raster, extent){
+process_raster <- function(raster, extent, force_out = FALSE){
   has_info <- FALSE
   overlaps <- extents_overlap(raster, extent)
   if(overlaps){
@@ -16,7 +16,7 @@ process_raster <- function(raster, extent){
     raster <- terra::crop(raster, extent, extend = TRUE)
     has_info <- any(!is.na(terra::values(raster)))
   }
-  if(has_info){
+  if(has_info | force_out){
     return(raster)
   }
   NULL

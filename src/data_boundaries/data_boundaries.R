@@ -22,10 +22,10 @@ orderly2::orderly_artefact(
 )
 
 # Get spatial extent for each country
-isos <- list.files(paste0("boundaries/", boundary, "/"))
+boundary_isos <- list.files(paste0("boundaries/", boundary, "/"))
 
 extents <- list()
-for(iso in isos){
+for(iso in boundary_isos){
   admin0 <- readRDS(paste0("boundaries/", boundary, "/", iso, "/", iso, "_0.RDS"))
   extents[[iso]] <- as.vector(terra::ext(admin0))
 }

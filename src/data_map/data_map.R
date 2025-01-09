@@ -49,8 +49,8 @@ sickle_raster <- raster_stack("blood_disorders/201201_Global_Sickle_Haemoglobin_
 
 source("utils.R")
 
-split <- function(raster, extent, iso, name, NAflag = NULL){
-  raster <- process_raster(raster, extent)
+split <- function(raster, extent, iso, name, NAflag = NULL, force_out = FALSE){
+  raster <- process_raster(raster, extent, force_out)
   if(!is.null(raster)){
     address <- paste0("map/", iso, "/", name, ".tif")
     orderly2::orderly_artefact(
@@ -76,7 +76,7 @@ for(iso in isos){
   split(irs_raster, extent, iso, "irs")
   split(tx_raster, extent, iso, "tx")
   split(smc_raster, extent, iso, "smc")
-  split(pvpr_raster, extent, iso, "pvpr",  -1)
+  split(pvpr_raster, extent, iso, "pvpr",  -1, TRUE)
   split(pfpr_raster, extent, iso, "pfpr")
   split(cities_raster, extent, iso, "cities")
   split(motor_raster, extent, iso, "motor")
