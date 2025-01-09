@@ -1,5 +1,6 @@
 orderly2::orderly_resource("data/")
 orderly2::orderly_resource("README.md")
+orderly2::orderly_resource("download_map.R")
 
 orderly2::orderly_shared_resource("utils.R")
 
