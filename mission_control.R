@@ -3,12 +3,10 @@
 # TODOs ------------------------------------------------------------------------
 # TODO: Internal and external metadata and versioning
 # TODO: Update checks for orderly2, malariasimulation and malariverse packages
-# TODO: SMC number of rounds inputs - currently hard-coded in site file
-# TODO: Vaccine introductions in data_interventions_manual
-## Future TODO
 ### TODO: Update UN inputs?
 ### TODO: Update worldpop inputs
 ### TODO: Update DHS inputs
+### TODO: Add MAP SMC into workflow when embargo lifted
 # ------------------------------------------------------------------------------
 
 # ISOs -------------------------------------------------------------------------

@@ -5,7 +5,20 @@ orderly2::orderly_description(
 )
 
 orderly2::orderly_resource(
-  files = "manual_coverage.csv"
+  files = "README.md"
+)
+
+
+orderly2::orderly_resource(
+  files = "data/chemoprevention_coverage.csv"
+)
+
+orderly2::orderly_resource(
+  files = "data/rtss_trial.csv"
+)
+
+orderly2::orderly_resource(
+  files = "data/vaccine_doses.csv"
 )
 
 orderly2::orderly_resource(
@@ -22,26 +35,68 @@ orderly2::orderly_dependency(
   files = "extents.csv"
 )
 
+orderly2::orderly_dependency(
+  name = "un_wpp",
+  query = "latest()",
+  files = "un_wpp.rds"
+)
+
 orderly2::orderly_shared_resource("utils.R")
 # ------------------------------------------------------------------------------
 
 # Inputs -----------------------------------------------------------------------
-manual_coverage <- read.csv("manual_coverage.csv")
-
-# Vaccine resources:
-# R21
-## Cote d'ivoire and South Sudan 250,000 doses each (no targeting info):
-## https://www.malariaconsortium.org/news-centre/r21-malaria-vaccine-rollouts-mark-new-era-in-global-fight-against-malaria-cote-divoire-and-south-sudan-lead-the-way.htm
+chemoprevention_coverage <- read.csv("data/chemoprevention_coverage.csv")
+rtss_trial <- read.csv("data/rtss_trial.csv")
+vaccine_doses <- read.csv("data/vaccine_doses.csv")
+un_wpp <- readRDS("un_wpp.rds") |>
+  dplyr::filter(
+    year > 2000,
+    age_lower == 0
+  ) |>
+  dplyr::select(iso3c, year, population)
 
 library(sf)
 boundary <- readRDS("admin1_boundary_combined.RDS")
 
-sf_df <- boundary |>
-  dplyr::left_join(manual_coverage, by = c("iso3c", "name_1"))
+#sf_df <- boundary |>
+#  dplyr::left_join(manual_coverage, by = c("iso3c", "name_1"))
 
 template <- terra::rast("pfpr_template_raster.tif") 
 
 extents <- read.csv("extents.csv")
+# ------------------------------------------------------------------------------
+
+# Process vaccine data ---------------------------------------------------------
+## Note that currently due to lack of sub national targeting data we are just
+## applying doses across the country
+vaccine_coverage <- vaccine_doses |>
+  dplyr::mutate(
+    iso3c = countrycode::countrycode(country, "country.name", "iso3c"),
+    rtss_fvc = round(rtss_doses  / 3.8),
+    r21_fvc = round(r21_doses  / 3.8)
+    ) |>
+  dplyr::left_join(un_wpp, by = c("iso3c", "year")) |>
+  dplyr::mutate(
+    rtss_cov = round(rtss_fvc / population, 2),
+    r21_cov = round(r21_fvc / population, 2),
+  ) |>
+  dplyr::select(iso3c, year, rtss_cov, r21_cov)
+  
+sf_df <- boundary |>
+  dplyr::cross_join(data.frame(year = 2000:2024)) |>
+  dplyr::left_join(vaccine_coverage, by = c("iso3c", "year")) |>
+  dplyr::left_join(rtss_trial, by = c("iso3c", "name_1", "year")) |>
+  tidyr::replace_na(list(rtss_trial_cov = 0)) |>
+  dplyr::mutate(rtss_cov = ifelse(rtss_trial_cov == 0.5, 0.5, rtss_cov)) |>
+  dplyr::select(iso3c, name_1, year, rtss_cov, r21_cov) |>
+  tidyr::replace_na(list(rtss_cov = 0, r21_cov = 0))
+# ------------------------------------------------------------------------------
+
+# Process chemoprevention data -------------------------------------------------
+sf_df <- sf_df |>
+  dplyr::left_join(chemoprevention_coverage, by = c("iso3c", "name_1", "year")) |>
+  dplyr::select(iso3c, name_1, year, rtss_cov, r21_cov, smc_cov, pmc_cov) |>
+  tidyr::replace_na(list(smc_cov = 0, pmc_cov = 0))
 # ------------------------------------------------------------------------------
 
 # Create raster stacks ---------------------------------------------------------
