@@ -2,9 +2,7 @@
 
 # TODOs ------------------------------------------------------------------------
 # TODO: Internal and external metadata and versioning
-# TODO: Update checks for orderly2, malariasimulation and malariverse packages
 ### TODO: Update UN inputs?
-### TODO: Update worldpop inputs
 ### TODO: Update DHS inputs
 ### TODO: Add MAP SMC into workflow when embargo lifted
 # ------------------------------------------------------------------------------
@@ -103,10 +101,12 @@ orderly2::orderly_run(
 
 # Run options ------------------------------------------------------------------
 boundary <- "GADM_4.1.0" 
-isos <- list.files(paste0("src/data_boundaries/boundaries/", boundary))
+isos <- c("BFA") #list.files(paste0("src/data_boundaries/boundaries/", boundary))
 admin <- 1
 urban_rural <- TRUE
-version <- paste("2025/01", " boundary: ", boundary, " admin:", admin, " urban_rural:", urban_rural, sep = "")
+name <- "test"
+formatted_date <- format(Sys.Date(), "%m_%Y")
+version <- paste(name, formatted_date, sep = "_")
 # ------------------------------------------------------------------------------
 
 # Check ISOs have appropriate admin level defined.
@@ -115,7 +115,7 @@ admin_level_available <- file.exists(boundary_files)
 if(!all((admin_level_available))){
   missing_isos <- paste0(isos[!admin_level_available], collapse = ", ")
   warning(missing_isos, " do not have requested admin level, dropping")
-  isos <- isos[admin_level_available]
+  `isos` <- isos[admin_level_available]
   boundary_files <- boundary_files[admin_level_available]
 }
 # Check number of sites (for parallelism resource requirement)
@@ -124,6 +124,7 @@ n_sites <- sapply(boundary_files, function(x, admin, urban_rural){
   if(urban_rural) sites <- sites * 2
   return(sites)
 }, admin = admin, urban_rural = urban_rural)
+names(n_sites) <- isos
 
 # Boundaries
 orderly2::orderly_run(
@@ -166,7 +167,8 @@ for(iso in isos){
       boundary = boundary,
       iso3c = iso,
       admin_level = admin,
-      urban_rural = urban_rural
+      urban_rural = urban_rural,
+      version = version
     ),
     echo = FALSE
   )
@@ -180,7 +182,8 @@ for(iso in isos){
       boundary = boundary,
       iso3c = iso,
       admin_level = admin,
-      urban_rural = urban_rural
+      urban_rural = urban_rural,
+      version = version
     ),
     echo = FALSE
   )
@@ -196,7 +199,8 @@ for(iso in isos){
         boundary = boundary,
         iso3c = iso,
         admin_level = admin,
-        urban_rural = urban_rural
+        urban_rural = urban_rural,
+        version = version
       ),
       echo = FALSE
     ),
@@ -215,10 +219,11 @@ for(iso in isos){
   orderly2::orderly_run(
     name = "calibration_diagnostics",
     parameters = list(
-      version = version,
+      boundary = boundary,
       iso3c = iso,
       admin_level = admin,
-      urban_rural = urban_rural
+      urban_rural = urban_rural,
+      version = version
     ),
     echo = FALSE
   )

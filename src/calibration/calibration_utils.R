@@ -3,7 +3,7 @@
 summary_function_pf <- function(x){
   prev <- x |>
     postie::drop_burnin(
-      burnin = 5 * 365 # TODO: Burnins must allign!
+      burnin = 5 * 365 # TODO: Check burnin must align with calibration burnin!
     ) |>
     postie::get_prevalence(
     ) |>
@@ -19,7 +19,7 @@ summary_function_pf <- function(x){
 summary_function_pv <- function(x){
   prev <- x |>
     postie::drop_burnin(
-      burnin = 5 * 365 # TODO: Burnins must allign!
+      burnin = 5 * 365 # TODO: Check burnin must align with calibration burnin!
     ) |>
     postie::get_prevalence(
     ) |>

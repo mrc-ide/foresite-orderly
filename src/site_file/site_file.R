@@ -8,7 +8,8 @@ orderly2::orderly_parameters(
   boundary = NULL,
   iso3c = NULL,
   admin_level = NULL,
-  urban_rural = NULL
+  urban_rural = NULL,
+  version = NULL
 )
 
 orderly2::orderly_resource(
@@ -567,6 +568,14 @@ site_file <- list()
 site_file$country = unique(spatial$country)
 site_file$boundary = boundary
 site_file$admin_level = grouping
+
+site_file$metadata <- list(
+  country = unique(spatial$country),
+  iso3c = iso3c,
+  boundary = boundary,
+  admin_level = grouping,
+  version = version
+)
 
 site_file$sites = sites
 

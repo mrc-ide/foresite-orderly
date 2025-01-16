@@ -8,7 +8,8 @@ orderly2::orderly_parameters(
   boundary = NULL,
   iso3c = NULL,
   admin_level = NULL,
-  urban_rural = NULL
+  urban_rural = NULL,
+  version = NULL
 )
 
 orderly2::orderly_resource(
@@ -19,7 +20,7 @@ orderly2::orderly_shared_resource("utils.R")
 
 orderly2::orderly_dependency(
   name = "site_file",
-  query = "latest(parameter:boundary == this:boundary && parameter:iso3c == this:iso3c && parameter:admin_level == this:admin_level && parameter:urban_rural == this:urban_rural)",
+  query = "latest(parameter:boundary == this:boundary && parameter:iso3c == this:iso3c && parameter:admin_level == this:admin_level && parameter:urban_rural == this:urban_rural && parameter:version == this:version))",
   files = c("site.rds")
 )
 
@@ -124,7 +125,7 @@ country_population_at_risk_plot <- ggplot2::ggplot(
 # Comparison of Pop and Par at Admin 1
 
 
-area_name_cols <- site$admin_level[!site$admin_level %in% c("country", "urban_rural")]
+area_name_cols <- site$metadata$admin_level[!site$metadata$admin_level %in% c("country", "urban_rural")]
 area_par_pd <- p 
 area_par_pd$name <- apply(area_par_pd[,area_name_cols], 1, paste, collapse = " | ")
 area_par_pd <- area_par_pd |>
@@ -214,11 +215,11 @@ country_prop_urban_plot <- ggplot2::ggplot(
   ggplot2::ggtitle(paste0(iso3c, ": Country proportion of population that is urban"))
 
 
-area_name_cols <- site$admin_level[!site$admin_level %in% c("country", "urban_rural")]
+area_name_cols <- site$metadata$admin_level[!site$metadata$admin_level %in% c("country", "urban_rural")]
 area_urban_rural_pd <- p |>
   dplyr::summarise(
     pop = sum(pop),
-    .by = dplyr::all_of(c(site$admin_level, "year"))
+    .by = dplyr::all_of(c(site$metadata$admin_level, "year"))
   )
 
 area_urban_rural_pd$name <- apply(area_urban_rural_pd[,area_name_cols], 1, paste, collapse = " | ")
@@ -277,7 +278,7 @@ age_dist_plot <- ggplot2::ggplot(data = age_dist_pd,
 # Geographic areas -------------------------------------------------------------
 levels <- length(site$shape)
 
-geo_name_cols <- site$admin_level[!site$admin_level %in% c("country", "iso3c", "urban_rural")]
+geo_name_cols <- site$metadata$admin_level[!site$metadata$admin_level %in% c("country", "iso3c", "urban_rural")]
 site$shape[[1]]$name <- apply(sf::st_drop_geometry(site$shape[[1]])[,geo_name_cols], 1, paste, collapse = " | ")
 
 geom_graphic_areas_plot <-  geom_graphic_areas_plot <- ggplot2::ggplot() +
@@ -301,7 +302,7 @@ geom_graphic_areas_plot <- geom_graphic_areas_plot +
 
 # Vector species ---------------------------------------------------------------
 vector_pd <- site$vectors$vector_species
-vector_name_cols <- site$admin_level[!site$admin_level %in% c("country", "iso3c")]
+vector_name_cols <- site$metadata$admin_level[!site$metadata$admin_level %in% c("country", "iso3c")]
 vector_pd$name <- apply(vector_pd[,vector_name_cols], 1, paste, collapse = " | ")
 
 vector_species_plot <- ggplot2::ggplot(data = vector_pd, ggplot2::aes(x = name, y = prop, fill = species)) +
@@ -326,7 +327,7 @@ resistance_plot <- ggplot2::ggplot(data = resistance_pd, ggplot2::aes(x = year, 
 # Seasonality ------------------------------------------------------------------
 rainfall_pd <- site$seasonality$monthly_rainfall |>
   dplyr::mutate(time = year + (t / 365))
-rainfall_name_cols <- site$admin_level[!site$admin_level %in% c("country", "iso3c")]
+rainfall_name_cols <- site$metadata$admin_level[!site$metadata$admin_level %in% c("country", "iso3c")]
 rainfall_pd$name <- apply(rainfall_pd[,rainfall_name_cols], 1, paste, collapse = " | ")
 
 rainfall_plot <- ggplot2::ggplot(data = rainfall_pd, ggplot2::aes(x = time, y = rainfall, colour = name)) +
@@ -367,7 +368,7 @@ seasonality_plot <- ggplot2::ggplot() +
 
 # Interventions ----------------------------------------------------------------
 interventions <- site$interventions
-interventions_name_cols <- site$admin_level[!site$admin_level %in% c("country", "iso3c")]
+interventions_name_cols <- site$metadata$admin_level[!site$metadata$admin_level %in% c("country", "iso3c")]
 interventions$name <- apply(interventions[,interventions_name_cols], 1, paste, collapse = " | ")
 pop <- site$population$population_total
 pop$name <- apply(pop[,interventions_name_cols], 1, paste, collapse = " | ")
@@ -396,13 +397,13 @@ interventions_area_plot <- scene::plot_interventions(
 access_pd <- site$accessibility |>
   dplyr::left_join(
     site$population$population_total,
-    by = c(site$admin_level)
+    by = c(site$metadata$admin_level)
   ) |>
   dplyr::summarise(
     motor_travel_time_healthcare = weighted.mean2(motor_travel_time_healthcare, pop),
     walking_travel_time_healthcare = weighted.mean2(walking_travel_time_healthcare, pop),
     city_travel_time = weighted.mean2(city_travel_time, pop),
-    .by = c(site$admin_level[!site$admin_level == "urban_rural"])
+    .by = c(site$metadata$admin_level[!site$metadata$admin_level == "urban_rural"])
   ) |>
   dplyr::left_join(
     site$shape[[1]]
@@ -461,14 +462,14 @@ city_plot <- ggplot2::ggplot(
 blood_pd <- site$blood_disorders  |>
   dplyr::left_join(
   site$population$population_total,
-  by = c(site$admin_level)
+  by = c(site$metadata$admin_level)
 ) |>
   dplyr::summarise(
     sicklecell = weighted.mean2(sicklecell, par),
     gdp6 = weighted.mean2(gdp6, par),
     hpc = weighted.mean2(hpc, par),
     duffy_negativity = weighted.mean2(duffy_negativity, par),
-    .by = c(site$admin_level[!site$admin_level == "urban_rural"])
+    .by = c(site$metadata$admin_level[!site$metadata$admin_level == "urban_rural"])
   ) |>
   dplyr::left_join(
     site$shape[[1]]
@@ -544,12 +545,12 @@ duffy_plot <- ggplot2::ggplot(
 prevalence_area_pd <- site$prevalence |>
   dplyr::left_join(
     site$population$population_total,
-    by = c(site$admin_level, "year")
+    by = c(site$metadata$admin_level, "year")
   ) |>
   dplyr::summarise(
     pfpr = weighted.mean2(pfpr, par_pf),
     pvpr = weighted.mean2(pvpr, par_pv),
-    .by = c(site$admin_level[!site$admin_level == "urban_rural"], "year")
+    .by = c(site$metadata$admin_level[!site$metadata$admin_level == "urban_rural"], "year")
   ) |>
   dplyr::left_join(
     site$shape[[1]]
@@ -582,7 +583,7 @@ pvpr_map_plot <- ggplot2::ggplot(data = prevalence_area_pd, ggplot2::aes(geometr
 country_prevalence_pd <- site$prevalence |>
   dplyr::left_join(
     site$population$population_total,
-    by = c(site$admin_level, "year")
+    by = c(site$metadata$admin_level, "year")
   ) |>
   dplyr::summarise(
     pfpr = weighted.mean2(pfpr, par_pf),
@@ -697,9 +698,10 @@ quarto::quarto_render(
   input = "diagnostic_report.qmd",
   execute_params = list(
     iso3c = iso3c,
-    country = site$country,
+    country = site$metadata$country,
     admin_level = admin_level,
-    boundary = site$boundary
+    boundary = site$metadata$boundary,
+    version = site$metadata$version
   )
 )
 # ------------------------------------------------------------------------------

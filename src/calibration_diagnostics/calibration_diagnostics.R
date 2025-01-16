@@ -8,7 +8,8 @@ orderly2::orderly_parameters(
   boundary = NULL,
   iso3c = NULL,
   admin_level = NULL,
-  urban_rural = NULL
+  urban_rural = NULL,
+  version = NULL
 )
 
 orderly2::orderly_resource(
@@ -17,15 +18,9 @@ orderly2::orderly_resource(
 
 orderly2::orderly_dependency(
   name = "calibration",
-  query = "latest(parameter:boundary == this:boundary && parameter:iso3c == this:iso3c && parameter:admin_level == this:admin_level && parameter:urban_rural == this:urban_rural)",
-  files = c("calibrated_site.rds", "calibration_output_raw.rds")
+  query = "latest(parameter:boundary == this:boundary && parameter:iso3c == this:iso3c && parameter:admin_level == this:admin_level && parameter:urban_rural == this:urban_rural && parameter:version == this:version)",
+  files = c("calibrated_scaled_site.rds", "diagnostic_epi.rds", "diagnostic_prev.rds", "national_epi.rds")
 )
-
-orderly2::orderly_artefact(
-  description = "Calibrated site with case and death scaler",
-  files = "calibrated_scaled_site.rds"
-)
-
 
 orderly2::orderly_artefact(
   description = "Calibration plots",
@@ -39,63 +34,10 @@ orderly2::orderly_artefact(
 # ------------------------------------------------------------------------------
 
 # Load inputs ------------------------------------------------------------------
-site <- readRDS("calibrated_site.rds")
-calibration_output <- readRDS("calibration_output_raw.rds")
-# ------------------------------------------------------------------------------
-
-# Format raw output ------------------------------------------------------------
-# Collate diagnostic epi outputs
-group_names <- site$admin_level[!site$admin_level %in% c("country", "iso3c", "year")]
-breaks <- c(-Inf, 4, 14, Inf)
-labels <- c("0-5", "5-15", "15+")
-
-# TODO: Save diagnostic data as output
-
-pop <- site$population$population_by_age |>
-  dplyr::mutate(
-    age_group = cut(age_lower, breaks = breaks, labels = labels, right = TRUE)
-  ) |>
-  dplyr::summarise(
-    par = sum(par),
-    par_pf = sum(par_pf),
-    par_pv = sum(par_pv),
-    .by = c(site$admin_level, "age_group", "year")
-  )
-
-diagnostic_epi <-  lapply(calibration_output, "[[", 2) |>
-  dplyr::bind_rows() |>
-  dplyr::mutate(
-    age_group = cut(age_lower, breaks = breaks, labels = labels, right = TRUE)
-  ) |>
-  dplyr::left_join(pop, by = c(site$admin_level, "age_group", "year")) |>
-  dplyr::mutate(
-    severe = ifelse(is.na(severe), 0, severe),
-    mortality = ifelse(is.na(mortality), 0, mortality)   
-  ) |>
-  dplyr::mutate(
-    par = ifelse(sp == "pf", par_pf, par_pv)
-  ) |>
-  dplyr::mutate(
-    cases = clinical * par,
-    deaths = mortality * par
-  ) 
-
-diagnostic_epi$name <- apply(diagnostic_epi[,group_names], 1, paste, collapse = " | ")
-
-# Collate diagnostic prevalence outputs
-prev_pop <- site$population$population_by_age |>
-  dplyr::summarise(
-    par_2_10 = sum(par[age_lower >= 2 & age_lower < 10]),
-    par_1_100 = sum(par[age_lower >= 1 & age_lower < 100]),
-    .by = c(site$admin_level, "year")
-  )
-
-diagnostic_prev <-  lapply(calibration_output, "[[", 3) |>
-  dplyr::bind_rows() |>
-  dplyr::left_join(prev_pop, by = c(site$admin_level, "year"))
-
-
-diagnostic_prev$name <- apply(diagnostic_prev[,group_names], 1, paste, collapse = " | ")
+site <- readRDS("calibrated_scaled_site.rds")
+diagnostic_epi <- readRDS("diagnostic_epi.rds")
+diagnostic_prev <- readRDS("diagnostic_prev.rds")
+national_epi <- readRDS("national_epi.rds")
 # ------------------------------------------------------------------------------
 
 # Prevalence diagnostic plots --------------------------------------------------
@@ -194,38 +136,9 @@ national_prev_pv_plot <- ggplot2::ggplot() +
 # ------------------------------------------------------------------------------
 
 # Epi diagnostic plots ---------------------------------------------------------
-national_epi <- diagnostic_epi |>
-  dplyr::summarise(
-    cases = sum(cases),
-    deaths = sum(deaths),
-    par = mean(par),
-    .by = dplyr::all_of(c(group_names, "age_group", "year", "time"))
-  ) |>
-  dplyr::summarise(
-    clinical = weighted.mean(cases / par, par) * 365,
-    mortality = weighted.mean(deaths / par, par) * 365,
-    cases = sum(cases),
-    deaths = sum(deaths),
-    par = sum(par) / 365,
-    .by = "year"
-  )
-
-case_deaths_years <- 2014:2018
-scaler <- national_epi |>
-  # dplyr::filter(year %in% case_deaths_years) |>
-  dplyr::left_join(site$cases_deaths, by = "year") |>
-  dplyr::mutate(
-    case_scaler = wmr_cases / cases,
-    death_scaler = wmr_deaths / deaths
-    ) |>
-  dplyr::select(
-    year, case_scaler, death_scaler
-  )
-site$scaler <- scaler
-saveRDS(site, "calibrated_scaled_site.rds")
-
-cs <- mean(scaler$case_scaler[scaler$year %in% 2010:2018])
-ds <- mean(scaler$death_scaler[scaler$year %in% 2010:2018])
+scaler <- site$bias_correction
+cs <- mean(scaler$case_bias_correction[scaler$year %in% 2010:2018])
+ds <- mean(scaler$death_bias_correction[scaler$year %in% 2010:2018])
 national_rescaled_epi <- national_epi |>
   dplyr::mutate(
     rescaled_cases = cases * cs,
@@ -361,10 +274,11 @@ quarto::quarto_render(
   input = "calibration_report.qmd",
   execute_params = list(
     iso3c = iso3c,
-    country = site$country,
+    country = site$metadata$country,
     admin_level = admin_level,
-    boundary = site$boundary,
-    n_sites = nrow(site$sites)
+    boundary = site$metadata$boundary,
+    n_sites = nrow(site$sites),
+    version = site$metadata$version
   )
 )
 # ------------------------------------------------------------------------------

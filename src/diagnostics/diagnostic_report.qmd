@@ -14,6 +14,7 @@ params:
   country: "NULL"
   admin_level: "NULL"
   boundary: "NULL"
+  version: "NULL"
 ---
 
 ```{css, echo = FALSE}
@@ -32,7 +33,8 @@ library(patchwork)
 title <- paste0(
   params$country, " (", params$iso3c, ").",
   " Admin level: ", params$admin_level, ".",
-  " Boundary: ", params$boundary
+  " Boundary: ", params$boundary, ".",
+  " Version: ", params$version
 )
 facet_plot_width <- 10
 ```
