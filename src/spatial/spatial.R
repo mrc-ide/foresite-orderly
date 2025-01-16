@@ -517,8 +517,6 @@ df <- df |>
   )
 # ------------------------------------------------------------------------------
 
-
-
 # Additional nets and IRS interpolation ----------------------------------------
 par <- df |>
   dplyr::summarise(
@@ -533,6 +531,10 @@ rank <- df |>
   dplyr::mutate(rank = 1:dplyr::n()) |>
   dplyr::select(pixel, rank)
 
+# For edge cases where there is a raster but all country entries are NA:
+if(all(is.na(df$itn_use))){
+  approximate_itn <- TRUE
+}
 # Update itn use for years post last itn use raster, where we have information
 # on nets delivered to the country from WMR
 if(!approximate_itn){

@@ -101,10 +101,10 @@ orderly2::orderly_run(
 
 # Run options ------------------------------------------------------------------
 boundary <- "GADM_4.1.0" 
-isos <- c("BFA") #list.files(paste0("src/data_boundaries/boundaries/", boundary))
+isos <- list.files(paste0("src/data_boundaries/boundaries/", boundary))
 admin <- 1
 urban_rural <- TRUE
-name <- "test"
+name <- "malariaverse"
 formatted_date <- format(Sys.Date(), "%m_%Y")
 version <- paste(name, formatted_date, sep = "_")
 # ------------------------------------------------------------------------------
