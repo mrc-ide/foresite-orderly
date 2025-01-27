@@ -38,9 +38,17 @@ site <- readRDS("calibrated_scaled_site.rds")
 diagnostic_epi <- readRDS("diagnostic_epi.rds")
 diagnostic_prev <- readRDS("diagnostic_prev.rds")
 national_epi <- readRDS("national_epi.rds")
+group_names <- site$metadata$admin_level[!site$metadata$admin_level %in% c("country", "iso3c", "year")]
 # ------------------------------------------------------------------------------
 
 # Prevalence diagnostic plots --------------------------------------------------
+
+prev_pop <- site$population$population_by_age |>
+  dplyr::summarise(
+    par_2_10 = sum(par[age_lower >= 2 & age_lower < 10]),
+    par_1_100 = sum(par[age_lower >= 1 & age_lower < 100]),
+    .by = c(site$admin_level, "year")
+  )
 
 ## MAP prevalence estimates
 map_prev <- site$prevalence |>

@@ -20,7 +20,7 @@ orderly2::orderly_shared_resource("utils.R")
 
 orderly2::orderly_dependency(
   name = "site_file",
-  query = "latest(parameter:boundary == this:boundary && parameter:iso3c == this:iso3c && parameter:admin_level == this:admin_level && parameter:urban_rural == this:urban_rural && parameter:version == this:version))",
+  query = "latest(parameter:boundary == this:boundary && parameter:iso3c == this:iso3c && parameter:admin_level == this:admin_level && parameter:urban_rural == this:urban_rural && parameter:version == this:version)",
   files = c("site.rds")
 )
 
