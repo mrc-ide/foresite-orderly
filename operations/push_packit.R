@@ -21,11 +21,12 @@ if(add_new_location){
 
 # Pushing ----------------------------------------------------------------------
 # Define the parameters to search for
-parameters <- list(
-  version = "GADM_4.1.0",
-  iso3c = "NGA",
+parameters = list(
+  boundary = "GADM_4.1.0",
+  iso3c = "BEN",
   admin_level = 1,
-  urban_rural = TRUE
+  urban_rural = TRUE,
+  version = "malariaverse_01_2025"
 )
 
 condition_string <- paste0(
@@ -40,17 +41,17 @@ condition_string <- paste0(
 packet_id <- orderly2::orderly_search(
   condition_string,
   parameters = parameters,
-  name = "calibration_diagnostics"
+  name = "calibration"
 )
 
 # Push the packet the orderly location.
 # This will push the packet and everything in the dependency tree. In this case
 # that is a lot of large (raster) files.
 orderly2::orderly_location_push(
-  packet_id = packet_id,
+  expr = packet_id,
   location = "packit.dide",
   root = NULL,
-  locate = TRUE
+  dry_run = FALSE
 )
 # ------------------------------------------------------------------------------
 
