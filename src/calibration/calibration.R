@@ -170,7 +170,7 @@ diagnostic_prev <-  lapply(calibration_output, "[[", 3) |>
   dplyr::left_join(prev_pop, by = c(site$metadata$admin_level, "year"))
 
 
-diagnostic_prev$name <- apply(diagnostic_prev[,group_names], 1, paste, collapse = " | ")
+diagnostic_prev$name <- apply(diagnostic_prev[,group_names, drop = FALSE], 1, paste, collapse = " | ")
 saveRDS(diagnostic_prev, "diagnostic_prev.rds")
 
 national_epi <- diagnostic_epi |>

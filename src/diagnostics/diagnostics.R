@@ -163,10 +163,15 @@ area_population_at_risk_plot <- ggplot2::ggplot(
     aspect.ratio = 1
   ) 
 
+
+country_population_urban_rural_plot <- NULL
+country_prop_urban_plot <- NULL
+area_urban_rural_population_plot  <- NULL
+if(urban_rural){
 country_urban_rural_pd <- p |>
   dplyr::summarise(
     pop = sum(pop),
-    .by = dplyr::all_of(c("iso3c", "urban_rural", "year"))
+    .by = dplyr::any_of(c("iso3c", "urban_rural", "year"))
   )
 
 country_population_urban_rural_plot <- ggplot2::ggplot(
@@ -239,6 +244,7 @@ area_urban_rural_population_plot <- ggplot2::ggplot(
     aspect.ratio = 1
   ) +
   ggplot2::ggtitle(paste0(iso3c, ": Area Populations urban and rural"))
+}
 
 age_dist_site <- pa |>
   dplyr::summarise(pop = sum(pop), .by = c("iso3c", "year", "age_lower", "age_upper")) |>
