@@ -53,7 +53,7 @@ prev_pop <- site$population$population_by_age |>
 ## MAP prevalence estimates
 map_prev <- site$prevalence |>
   dplyr::left_join(prev_pop) 
-map_prev$name <- apply(map_prev[,group_names], 1, paste, collapse = " | ")
+map_prev$name <- apply(map_prev[,group_names, drop = FALSE], 1, paste, collapse = " | ")
 
 ## Subnational prevalence - Pf
 calibration_fit_pf <- ggplot2::ggplot() +

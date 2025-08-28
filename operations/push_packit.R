@@ -8,13 +8,9 @@
 # 3. Add a new line with (e.g.) GITHUB_PAT = 'asj382058235u0sdij0486jj205270d'
 add_new_location <- FALSE
 if(add_new_location){
-  orderly2::orderly_location_add(
+  orderly2::orderly_location_add_packit(
     "packit.dide",
-    type = "packit", 
-    args = list(
-      url = "https://packit.dide.ic.ac.uk/malariaverse-sitefiles",
-      token = Sys.getenv("GITHUB_PAT")
-    )
+    url = "https://packit.dide.ic.ac.uk/malariaverse-sitefiles"
   )
 }
 # ------------------------------------------------------------------------------
@@ -23,10 +19,10 @@ if(add_new_location){
 # Define the parameters to search for
 parameters = list(
   boundary = "GADM_4.1.0",
-  iso3c = "BEN",
-  admin_level = 1,
-  urban_rural = TRUE,
-  version = "malariaverse_01_2025"
+  iso3c = "ETH",
+  admin_level = 3,
+  urban_rural = FALSE,
+  version = "ETH_admin_3_request_08_2025"
 )
 
 condition_string <- paste0(

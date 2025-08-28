@@ -25,7 +25,7 @@ malaria_endemic_isos <- c(
 # ------------------------------------------------------------------------------
 
 # Set up cluster ---------------------------------------------------------------
-hipercow::hipercow_init(driver = 'windows')
+hipercow::hipercow_init(driver = 'dide-windows')
 # hipercow::hipercow_provision()
 # hipercow::hipercow_configuration()
 # ------------------------------------------------------------------------------
@@ -102,9 +102,9 @@ orderly2::orderly_run(
 # Run options ------------------------------------------------------------------
 boundary <- "GADM_4.1.0" 
 isos <- list.files(paste0("src/data_boundaries/boundaries/", boundary))
-admin <- 1
-urban_rural <- TRUE
-name <- "malariaverse"
+admin <- 3
+urban_rural <- FALSE
+name <- "ETH_admin_3_request"
 formatted_date <- format(Sys.Date(), "%m_%Y")
 version <- paste(name, formatted_date, sep = "_")
 # ------------------------------------------------------------------------------
@@ -208,6 +208,8 @@ for(iso in isos){
     resources = hipercow::hipercow_resources(cores = max(2, min(32, n_sites[iso])))
   )
 }
+#hipercow::task_status(cali_task_ids[[1]])
+#hipercow::task_log_show(cali_task_ids[[1]])
 x <- hipercow::hipercow_bundle_create(
   ids = unlist(cali_task_ids),
   name = paste0("Calibration_", format(Sys.time(), "%Y-%m-%d_%H-%M-%S"))
