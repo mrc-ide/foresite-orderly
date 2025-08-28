@@ -1,9 +1,9 @@
 orderly2::orderly_parameters(
-  version = NULL
+  boundary = NULL
 )
 
 boundary_files <- list.files(
-  paste0("boundaries/", version, "/"),
+  paste0("boundaries/", boundary, "/"),
   pattern = "*.RDS",
   full.names = TRUE,
   recursive = TRUE
@@ -22,11 +22,11 @@ orderly2::orderly_artefact(
 )
 
 # Get spatial extent for each country
-isos <- list.files(paste0("boundaries/", version, "/"))
+boundary_isos <- list.files(paste0("boundaries/", boundary, "/"))
 
 extents <- list()
-for(iso in isos){
-  admin0 <- readRDS(paste0("boundaries/", version, "/", iso, "/", iso, "_0.RDS"))
+for(iso in boundary_isos){
+  admin0 <- readRDS(paste0("boundaries/", boundary, "/", iso, "/", iso, "_0.RDS"))
   extents[[iso]] <- as.vector(terra::ext(admin0))
 }
 saveRDS(extents, "extents.rds")

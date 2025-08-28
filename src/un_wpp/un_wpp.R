@@ -5,13 +5,9 @@ orderly2::orderly_description(
   single year age group death rates, population and population proportions"
 )
 
-orderly2::orderly_parameters(
-  version = NULL
-)
-
 orderly2::orderly_dependency(
   name = "data_un",
-  query = "latest(parameter:version == this:version)",
+  query = "latest()",
   files = c(
     life_table_past.csv = "data/WPP2022_Life_Table_Complete_Medium_Both_1950-2021.csv",
     life_table_future.csv = "data/WPP2022_Life_Table_Complete_Medium_Both_2022-2100.csv",

@@ -1,11 +1,11 @@
 **Files**
 
-`who/itn_delivered.csv`
+`data/itn_delivered.csv`
 
 **Source**
 
 ITNs delivered as reported in the WMR (annex4D)
-<https://www.who.int/teams/global-malaria-programme/reports/world-malaria-report-2023>
+<https://cdn.who.int/media/docs/default-source/malaria/world-malaria-reports/wmr2024_annex_4d.xlsx?sfvrsn=f2529a46_3>
 
 **Download date**
 
@@ -15,7 +15,7 @@ ITNs delivered as reported in the WMR (annex4D)
 
 **Files**
 
-`who/irs_people_protected.csv`
+`data/irs_people_protected.csv`
 
 **Source**
 
@@ -30,27 +30,12 @@ People protected by IRS as reported in the WMR (annex4D)
 
 **Files**
 
-`who/rtss_coverage.csv`
+`data/wmr_cases_deaths.csv`
 
 **Source**
 
-People protected by IRS as reported from the MVIP
-<https://files.givewell.org/files/DWDA%202009/PATH/WHO_WHO_Malaria_Vaccine_Implementation_Program_Briefing_2021.pdf>
-
-**Download date**
-
-2021/11/01
-
----
-
-**Files**
-
-`who/wmr_cases_deaths.csv`
-
-**Source**
-
-Country estimates of malaria cases and deaths (annex4D)
-<https://www.who.int/teams/global-malaria-programme/reports/world-malaria-report-2023>
+Country estimates of malaria cases and deaths (annex4F)
+<https://cdn.who.int/media/docs/default-source/malaria/world-malaria-reports/wmr2024_annex_4f.xlsx?sfvrsn=1a59a8ac_4>
 
 **Download date**
 

@@ -13,6 +13,7 @@ params:
   iso3c: "NULL"
   country: "NULL"
   admin_level: "NULL"
+  boundary: "NULL"
   version: "NULL"
 ---
 
@@ -32,6 +33,7 @@ library(patchwork)
 title <- paste0(
   params$country, " (", params$iso3c, ").",
   " Admin level: ", params$admin_level, ".",
+  " Boundary: ", params$boundary, ".",
   " Version: ", params$version
 )
 facet_plot_width <- 10
@@ -134,14 +136,18 @@ plots$country_par
 
 ```{r plot-urban-rural-population}
 #| echo: false
-plots$country_urban_rural
+if(!is.null(plots$country_urban_rural)){
+  plots$country_urban_rural
+}
 ```
 
 ## Proportion Urban
 
 ```{r plot-proportion-urban}
 #| echo: false
-plots$country_prop_urban
+if(!is.null(plots$country_prop_urban)){
+  plots$country_prop_urban
+}
 ```
 
 :::
@@ -163,16 +169,21 @@ plots$area_par
 
 ### Urban/Rural subnational population
 ```{r,echo=FALSE}
-n_facets <- length(unique(plots$area_urban_rural$data$name))
-ncols <- plots$area_urban_rural$facet$params$ncol
-nrows <- ceiling(n_facets / ncols)
-fheight_urban <- (facet_plot_width / ncols) * nrows
+fheight_urban <- 1
+if(!is.null(plots$area_urban_rural)){
+  n_facets <- length(unique(plots$area_urban_rural$data$name))
+  ncols <- plots$area_urban_rural$facet$params$ncol
+  nrows <- ceiling(n_facets / ncols)
+  fheight_urban <- (facet_plot_width / ncols) * nrows
+}
 ```
 
 ```{r plot-urban-rural-subnational, fig.height=fheight_urban, fig.width=facet_plot_width}
 #| class: output
 #| echo: false
-plots$area_urban_rural
+if(!is.null(plots$area_urban_rural)){
+  plots$area_urban_rural
+}
 ```
 
 ### Age-distribution

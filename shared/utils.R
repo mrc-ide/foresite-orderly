@@ -1,21 +1,22 @@
-extents_overlap <- function(raster, boundary){
-  boundary <- terra::ext(boundary)
+extents_overlap <- function(raster, extent){
+  #boundary <- terra::ext(boundary)
   overlap <- TRUE
-  intersection <- terra::intersect(raster, boundary)
+  intersection <- terra::intersect(raster, extent)
   if(is.null(intersection)){
     overlap <- FALSE
   }
   return(overlap)
 }
 
-process_raster <- function(raster, boundary){
+process_raster <- function(raster, extent, force_out = FALSE){
   has_info <- FALSE
-  overlaps <- extents_overlap(raster, boundary)
+  overlaps <- extents_overlap(raster, extent)
   if(overlaps){
-    raster <- terra::crop(raster, boundary, mask = TRUE, extend = TRUE)
+    # TODO: Note to self - masking has been removed here as now using extent, not boundary
+    raster <- terra::crop(raster, extent, extend = TRUE)
     has_info <- any(!is.na(terra::values(raster)))
   }
-  if(has_info){
+  if(has_info | force_out){
     return(raster)
   }
   NULL

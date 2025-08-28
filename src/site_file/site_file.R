@@ -5,10 +5,11 @@ orderly2::orderly_description(
 )
 
 orderly2::orderly_parameters(
-  version = NULL,
+  boundary = NULL,
   iso3c = NULL,
   admin_level = NULL,
-  urban_rural = NULL
+  urban_rural = NULL,
+  version = NULL
 )
 
 orderly2::orderly_resource(
@@ -19,31 +20,31 @@ orderly2::orderly_shared_resource("utils.R")
 
 orderly2::orderly_dependency(
   name = "demography",
-  query = "latest(parameter:version == this:version && parameter:iso3c ==  this:iso3c)",
+  query = "latest(parameter:iso3c ==  this:iso3c)",
   files = c("adjusted_demography.rds")
 )
 
 orderly2::orderly_dependency(
   name = "spatial",
-  query = "latest(parameter:version == this:version && parameter:iso3c ==  this:iso3c)",
+  query = "latest(parameter:boundary == this:boundary && parameter:iso3c ==  this:iso3c)",
   files = c("spatial.rds")
 )
 
 orderly2::orderly_dependency(
   name = "population",
-  query = "latest(parameter:version == this:version && parameter:iso3c ==  this:iso3c)",
+  query = "latest(parameter:boundary == this:boundary && parameter:iso3c ==  this:iso3c)",
   files = c("population.rds", "population_age.rds")
 )
 
 orderly2::orderly_dependency(
   name = "data_boundaries",
-  query = "latest(parameter:version == this:version)",
-  files = c("boundaries" = paste0("boundaries/", version, "/", iso3c, "/"))
+  query = "latest(parameter:boundary == this:boundary)",
+  files = c("boundaries" = paste0("boundaries/", boundary, "/", iso3c, "/"))
 )
 
 orderly2::orderly_dependency(
   name = "data_vectors",
-  query = "latest(parameter:version == this:version)",
+  query = "latest()",
   files = c(
     "vectors/irs_insecticide_parameters.csv" = "vectors/irs_insecticide_parameters.csv",
     "vectors/net_efficacy_adjusted.csv" = "vectors/net_efficacy_adjusted.csv",
@@ -55,7 +56,7 @@ orderly2::orderly_dependency(
 
 orderly2::orderly_dependency(
   name = "data_who",
-  query = "latest(parameter:version == this:version)",
+  query = "latest()",
   files = c("wmr_cases_deaths.csv" = "data/wmr_cases_deaths.csv")
 )
 
@@ -195,10 +196,11 @@ interventions <- spatial |>
     rtss_cov = weighted.mean2(rtss_cov, par, na.rm = TRUE),
     r21_cov = weighted.mean2(r21_cov, par, na.rm = TRUE),
     lsm_cov = weighted.mean2(lsm_cov, par, na.rm = TRUE),
+    smc_cov = weighted.mean2(smc_cov, par, na.rm = TRUE),
     pmc_cov = weighted.mean2(pmc_cov, par, na.rm = TRUE),
     prop_act = weighted.mean2(prop_act, par, na.rm = TRUE),
     prop_public = weighted.mean2(prop_public, par, na.rm = TRUE),
-    dplyr::across(dplyr::contains("smc"), \(x) weighted.mean2(x, par, na.rm = TRUE)),
+    #dplyr::across(dplyr::contains("smc"), \(x) weighted.mean2(x, par, na.rm = TRUE)),
     .by = dplyr::all_of(c(grouping, "year"))
   ) |>
   dplyr::arrange(dplyr::across(dplyr::all_of(c(grouping, "year"))))
@@ -247,32 +249,37 @@ interventions <- interventions |>
   )
 
 ## Overwrite SMC, as we cannot currently use the new MAP estimates widely
-smc_overwrite <- interventions
-smc_overwrite$smc <- ifelse(rowSums(interventions[,paste0("smc_", 1:12)]) > 0, 1, 0)
-smc_overwrite$smc_n_rounds <- rowSums(interventions[,paste0("smc_", 1:12)] > 0.5) 
-smc_overwrite <- smc_overwrite |>
-  dplyr::summarise(
-    smc_cov = as.numeric(ifelse(mean(smc) > 0.5, 0.9, 0)),
-    smc_n_rounds = round(mean(smc_n_rounds, na.rm = TRUE)),
-    .by = dplyr::all_of(c(grouping[1:3], "year"))
-  ) |>
-  tidyr::replace_na(
-    list(
-      smc_cov = 0,
-      smc_n_rounds = 0
-    )
-  ) 
-interventions <- interventions |>
-  dplyr::select(-dplyr::contains("smc")) |>
-  dplyr::left_join(
-    smc_overwrite,
-    by = c(grouping[1:3], "year")
-  )
+# smc_overwrite <- interventions
+# smc_overwrite$smc <- ifelse(rowSums(interventions[,paste0("smc_", 1:12)]) > 0, 1, 0)
+# smc_overwrite$smc_n_rounds <- rowSums(interventions[,paste0("smc_", 1:12)] > 0.5) 
+# smc_overwrite <- smc_overwrite |>
+#   dplyr::summarise(
+#     smc_cov = as.numeric(ifelse(mean(smc) > 0.5, 0.9, 0)),
+#     smc_n_rounds = round(mean(smc_n_rounds, na.rm = TRUE)),
+#     .by = dplyr::all_of(c(grouping[1:3], "year"))
+#   ) |>
+#   tidyr::replace_na(
+#     list(
+#       smc_cov = 0,
+#       smc_n_rounds = 0
+#     )
+#   ) 
+# interventions <- interventions |>
+#   dplyr::select(-dplyr::contains("smc")) |>
+#   dplyr::left_join(
+#     smc_overwrite,
+#     by = c(grouping[1:3], "year")
+#   )
+
+## Additional SMC.PMC information
 interventions <- interventions |>
   dplyr::mutate(
+    # TODO: this be more custom?
+    smc_n_rounds = 4,
     smc_min_age = 91,
     smc_max_age = 1825,
-    smc_drug = "sp_aq"
+    smc_drug = "sp_aq",
+    pmc_drug = "sp"
   )
 
 # Add in IRS assumptions
@@ -333,11 +340,10 @@ interventions <- interventions |>
   ) |>
   dplyr::mutate(mean_retention = mean_retention)
 
-# Assign an itn distribution day (currently associated with admin name length)
+# Assign an itn distribution day (currently assumed January 1st)
 interventions <- interventions |>
   dplyr::mutate(
-    itn_distribution_day = round((365 / 12) * (nchar(name_1) %% 12) + 1),
-    .by = name_1
+    itn_distribution_day = 1
   )
 
 ## Link with pyrethroid resistance
@@ -560,8 +566,16 @@ eir <- dplyr::bind_rows(pf_eir, pv_eir)
 site_file <- list()
 
 site_file$country = unique(spatial$country)
-site_file$version = version
+site_file$boundary = boundary
 site_file$admin_level = grouping
+
+site_file$metadata <- list(
+  country = unique(spatial$country),
+  iso3c = iso3c,
+  boundary = boundary,
+  admin_level = grouping,
+  version = version
+)
 
 site_file$sites = sites
 

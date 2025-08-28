@@ -1,8 +1,8 @@
-remotes::install_github("mrc-ide/malariasimulation@e51c6bcc66be768b4e80985768f8c404538f0b84")
-remotes::install_github("mrc-ide/site@site2")
-remotes::install_github("mrc-ide/cali@cali2")
-remotes::install_github("mrc-ide/postie@postie2")
-remotes::install_github("mrc-ide/scene@scene2")
+remotes::install_github("mrc-ide/malariasimulation")
+remotes::install_github("mrc-ide/site")
+remotes::install_github("mrc-ide/cali")
+remotes::install_github("mrc-ide/postie")
+remotes::install_github("mrc-ide/scene")
 remotes::install_github("mrc-ide/peeps")
 install.packages(
   "orderly2",
