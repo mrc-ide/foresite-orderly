@@ -1,10 +1,10 @@
 # Orderly set-up ---------------------------------------------------------------
-orderly2::orderly_description(
+orderly::orderly_description(
   display = "Calibration diagnostics",
   long = "Report to assess calibration performance"
 )
 
-orderly2::orderly_parameters(
+orderly::orderly_parameters(
   boundary = NULL,
   iso3c = NULL,
   admin_level = NULL,
@@ -12,22 +12,22 @@ orderly2::orderly_parameters(
   version = NULL
 )
 
-orderly2::orderly_resource(
+orderly::orderly_resource(
   files = "calibration_report.qmd"
 )
 
-orderly2::orderly_dependency(
+orderly::orderly_dependency(
   name = "calibration",
   query = "latest(parameter:boundary == this:boundary && parameter:iso3c == this:iso3c && parameter:admin_level == this:admin_level && parameter:urban_rural == this:urban_rural && parameter:version == this:version)",
   files = c("calibrated_scaled_site.rds", "diagnostic_epi.rds", "diagnostic_prev.rds", "national_epi.rds")
 )
 
-orderly2::orderly_artefact(
+orderly::orderly_artefact(
   description = "Calibration plots",
   files = "calibration_plots.rds"
 )
 
-orderly2::orderly_artefact(
+orderly::orderly_artefact(
   description = "HTML calibration report",
   files = "calibration_report.html"
 )

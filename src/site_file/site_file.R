@@ -1,10 +1,10 @@
 # Orderly set-up ---------------------------------------------------------------
-orderly2::orderly_description(
+orderly::orderly_description(
   display = "Site file",
   long = "Processes and formats data into the site file configuration"
 )
 
-orderly2::orderly_parameters(
+orderly::orderly_parameters(
   boundary = NULL,
   iso3c = NULL,
   admin_level = NULL,
@@ -12,37 +12,37 @@ orderly2::orderly_parameters(
   version = NULL
 )
 
-orderly2::orderly_resource(
+orderly::orderly_resource(
   files = "site_file_utils.R"
 )
 
-orderly2::orderly_shared_resource("utils.R")
+orderly::orderly_shared_resource("utils.R")
 
-orderly2::orderly_dependency(
+orderly::orderly_dependency(
   name = "demography",
   query = "latest(parameter:iso3c ==  this:iso3c)",
   files = c("adjusted_demography.rds")
 )
 
-orderly2::orderly_dependency(
+orderly::orderly_dependency(
   name = "spatial",
   query = "latest(parameter:boundary == this:boundary && parameter:iso3c ==  this:iso3c)",
   files = c("spatial.rds")
 )
 
-orderly2::orderly_dependency(
+orderly::orderly_dependency(
   name = "population",
   query = "latest(parameter:boundary == this:boundary && parameter:iso3c ==  this:iso3c)",
   files = c("population.rds", "population_age.rds")
 )
 
-orderly2::orderly_dependency(
+orderly::orderly_dependency(
   name = "data_boundaries",
   query = "latest(parameter:boundary == this:boundary)",
   files = c("boundaries" = paste0("boundaries/", boundary, "/", iso3c, "/"))
 )
 
-orderly2::orderly_dependency(
+orderly::orderly_dependency(
   name = "data_vectors",
   query = "latest()",
   files = c(
@@ -54,13 +54,13 @@ orderly2::orderly_dependency(
   )
 )
 
-orderly2::orderly_dependency(
+orderly::orderly_dependency(
   name = "data_who",
   query = "latest()",
   files = c("wmr_cases_deaths.csv" = "data/wmr_cases_deaths.csv")
 )
 
-orderly2::orderly_artefact(
+orderly::orderly_artefact(
   description = "Site file",
   files = "site.rds"
 )

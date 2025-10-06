@@ -1,10 +1,10 @@
 # Orderly set-up ---------------------------------------------------------------
-orderly2::orderly_description(
+orderly::orderly_description(
   display = "Calibration",
   long = "Calibrates baseline EIR to match prevalence"
 )
 
-orderly2::orderly_parameters(
+orderly::orderly_parameters(
   boundary = NULL,
   iso3c = NULL,
   admin_level = NULL,
@@ -12,42 +12,42 @@ orderly2::orderly_parameters(
   version = NULL
 )
 
-orderly2::orderly_resource(
+orderly::orderly_resource(
   files = "calibration_utils.R"
 )
 
-orderly2::orderly_dependency(
+orderly::orderly_dependency(
   name = "site_file",
   query = "latest(parameter:boundary == this:boundary && parameter:iso3c == this:iso3c && parameter:admin_level == this:admin_level && parameter:urban_rural == this:urban_rural && parameter:version == this:version)",
   files = c("site.rds")
 )
 
-orderly2::orderly_artefact(
+orderly::orderly_artefact(
   description = "Raw list calibration output",
   files = "calibration_output_raw.rds"
 )
 
-orderly2::orderly_artefact(
+orderly::orderly_artefact(
   description = "Raw list calibration output",
   files = "calibration_output_raw.rds"
 )
 
-orderly2::orderly_artefact(
+orderly::orderly_artefact(
   description = "Diagnostics rates",
   files = "diagnostic_epi.rds"
 )
 
-orderly2::orderly_artefact(
+orderly::orderly_artefact(
   description = "Diagnostics prevalence",
   files = "diagnostic_prev.rds"
 )
 
-orderly2::orderly_artefact(
+orderly::orderly_artefact(
   description = "Diagnostics rates aggregated",
   files = "national_epi.rds"
 )
 
-orderly2::orderly_artefact(
+orderly::orderly_artefact(
   description = "Calibrated site",
   files = "calibrated_scaled_site.rds"
 )

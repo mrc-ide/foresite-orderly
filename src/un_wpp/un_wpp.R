@@ -1,11 +1,11 @@
 # Orderly set-up ----------------------------------------------------------------
-orderly2::orderly_description(
+orderly::orderly_description(
   display = "Pre-processing UNWPP inputs",
   long = "Pre-processes very large UN WPP population and demography files to obtain
   single year age group death rates, population and population proportions"
 )
 
-orderly2::orderly_dependency(
+orderly::orderly_dependency(
   name = "data_un",
   query = "latest()",
   files = c(
@@ -18,17 +18,17 @@ orderly2::orderly_dependency(
   )
 )
 
-orderly2::orderly_artefact(
+orderly::orderly_artefact(
   description = "UN WPP population and demography data", 
   files = "un_wpp.rds"
 )
 
-orderly2::orderly_artefact(
+orderly::orderly_artefact(
   description = "UNICEF neonatal mortality rates", 
   files = "unicef_neonatal_mortality.rds"
 )
 
-orderly2::orderly_artefact(
+orderly::orderly_artefact(
   description = "UN WUP population urbanisation", 
   files = "un_wup.rds"
 )

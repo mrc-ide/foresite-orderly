@@ -1,47 +1,47 @@
 # Orderly set-up ---------------------------------------------------------------
-orderly2::orderly_description(
+orderly::orderly_description(
   display = "Process non-ratser intervention inputsd",
   long = "Take manually curated interventi0on coverage and create rasters"
 )
 
-orderly2::orderly_resource(
+orderly::orderly_resource(
   files = "README.md"
 )
 
 
-orderly2::orderly_resource(
+orderly::orderly_resource(
   files = "data/chemoprevention_coverage.csv"
 )
 
-orderly2::orderly_resource(
+orderly::orderly_resource(
   files = "data/rtss_trial.csv"
 )
 
-orderly2::orderly_resource(
+orderly::orderly_resource(
   files = "data/vaccine_doses.csv"
 )
 
-orderly2::orderly_resource(
+orderly::orderly_resource(
   files = "admin1_boundary_combined.RDS"
 )
 
-orderly2::orderly_resource(
+orderly::orderly_resource(
   files = "pfpr_template_raster.tif"
 )
 
-orderly2::orderly_dependency(
+orderly::orderly_dependency(
   name = "extents",
   query = "latest()",
   files = "extents.csv"
 )
 
-orderly2::orderly_dependency(
+orderly::orderly_dependency(
   name = "un_wpp",
   query = "latest()",
   files = "un_wpp.rds"
 )
 
-orderly2::orderly_shared_resource("utils.R")
+orderly::orderly_shared_resource("utils.R")
 # ------------------------------------------------------------------------------
 
 # Inputs -----------------------------------------------------------------------
@@ -128,7 +128,7 @@ split <- function(raster, extent, iso, name, NAflag = NULL){
   raster <- process_raster(raster, extent)
   if(!is.null(raster)){
     address <- paste0("manual/", iso, "/", name, ".tif")
-    orderly2::orderly_artefact(
+    orderly::orderly_artefact(
       description = paste("manual", name, "raster"),
       files = address
     )

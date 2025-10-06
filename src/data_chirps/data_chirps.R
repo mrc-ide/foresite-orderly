@@ -1,10 +1,10 @@
-orderly2::orderly_resource("data/")
-orderly2::orderly_resource("README.md")
-orderly2::orderly_resource("download_chirps.R")
+orderly::orderly_resource("data/")
+orderly::orderly_resource("README.md")
+orderly::orderly_resource("download_chirps.R")
 
-orderly2::orderly_shared_resource("utils.R")
+orderly::orderly_shared_resource("utils.R")
 
-orderly2::orderly_dependency(
+orderly::orderly_dependency(
   name = "extents",
   query = "latest()",
   files = "extents.csv"
@@ -25,7 +25,7 @@ for(iso in isos){
   raster <- process_raster(rainfall_stack, extent)
   if(!is.null(raster)){
     address <- paste0("rainfall/", iso, "/rainfall.tif")
-    orderly2::orderly_artefact(
+    orderly::orderly_artefact(
       description = "CHIRPS rainfall raster",
       files = address
     )

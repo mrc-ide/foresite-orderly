@@ -1,10 +1,10 @@
 # Orderly set-up ---------------------------------------------------------------
-orderly2::orderly_description(
+orderly::orderly_description(
   display = "Site file diagnostics",
   long = "Take a daw site file and prepares a diagnostic report"
 )
 
-orderly2::orderly_parameters(
+orderly::orderly_parameters(
   boundary = NULL,
   iso3c = NULL,
   admin_level = NULL,
@@ -12,30 +12,30 @@ orderly2::orderly_parameters(
   version = NULL
 )
 
-orderly2::orderly_resource(
+orderly::orderly_resource(
   files = c("diagnostic_report.qmd")
 )
 
-orderly2::orderly_shared_resource("utils.R")
+orderly::orderly_shared_resource("utils.R")
 
-orderly2::orderly_dependency(
+orderly::orderly_dependency(
   name = "site_file",
   query = "latest(parameter:boundary == this:boundary && parameter:iso3c == this:iso3c && parameter:admin_level == this:admin_level && parameter:urban_rural == this:urban_rural && parameter:version == this:version)",
   files = c("site.rds")
 )
 
-orderly2::orderly_dependency(
+orderly::orderly_dependency(
   name = "un_wpp",
   query = "latest()",
   files = c("un_wup.rds", "un_wpp.rds")
 )
 
-orderly2::orderly_artefact(
+orderly::orderly_artefact(
   description = "Raw list of diagnostic plots",
   files = "diagnostic_plots.rds"
 )
 
-orderly2::orderly_artefact(
+orderly::orderly_artefact(
   description = "HTML diagnostic report",
   files = "diagnostic_report.html"
 )
