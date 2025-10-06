@@ -1,2 +1,2 @@
-orderly2::orderly_resource("data/")
-orderly2::orderly_resource("README.md")
+orderly::orderly_resource("data/")
+orderly::orderly_resource("README.md")

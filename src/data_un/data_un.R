@@ -1,1 +1,1 @@
-orderly2::orderly_resource("data/")
+orderly::orderly_resource("data/")

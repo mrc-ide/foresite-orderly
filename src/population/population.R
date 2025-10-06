@@ -1,5 +1,5 @@
 # Orderly set-up ---------------------------------------------------------------
-orderly2::orderly_description(
+orderly::orderly_description(
   display = "Population projections",
   long = "Creates population and age-disaggregated population projections at
   the requested level of spatial aggregration. Population urbanisation is 
@@ -10,33 +10,33 @@ orderly2::orderly_description(
   at these two methodological change points."
 )
 
-orderly2::orderly_parameters(
+orderly::orderly_parameters(
   boundary = NULL,
   iso3c = NULL
 )
 
-orderly2::orderly_resource(
+orderly::orderly_resource(
   files = "population_utils.R"
 )
 
-orderly2::orderly_dependency(
+orderly::orderly_dependency(
   name = "un_wpp",
   query = "latest()",
   files = c("un_wup.rds", "un_wpp.rds")
 )
 
-orderly2::orderly_dependency(
+orderly::orderly_dependency(
   name = "spatial",
   query = "latest(parameter:boundary == this:boundary && parameter:iso3c ==  this:iso3c)",
   files = c("spatial.rds")
 )
 
-orderly2::orderly_artefact(
+orderly::orderly_artefact(
   description = "Population",
   files = "population.rds"
 )
 
-orderly2::orderly_artefact(
+orderly::orderly_artefact(
   description = "Age-disaggregated population",
   files = "population_age.rds"
 )

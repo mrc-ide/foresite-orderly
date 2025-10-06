@@ -1,4 +1,4 @@
-orderly2::orderly_parameters(
+orderly::orderly_parameters(
   boundary = NULL
 )
 
@@ -9,14 +9,14 @@ boundary_files <- list.files(
   recursive = TRUE
 )
 
-orderly2::orderly_resource(boundary_files)
+orderly::orderly_resource(boundary_files)
 
-orderly2::orderly_artefact(
+orderly::orderly_artefact(
   description = "Boundary files",
   files = boundary_files
 )
 
-orderly2::orderly_artefact(
+orderly::orderly_artefact(
   description = "Spatial extents",
   files = "extents.rds"
 )

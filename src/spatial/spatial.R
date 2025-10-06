@@ -1,73 +1,73 @@
 # Orderly set-up ---------------------------------------------------------------
-orderly2::orderly_description(
+orderly::orderly_description(
   display = "Process spatial data",
   long = "Extracts pixel-level information from all available rasters"
 )
 
-orderly2::orderly_parameters(
+orderly::orderly_parameters(
   boundary = NULL,
   iso3c = NULL
 )
 
-orderly2::orderly_resource(
+orderly::orderly_resource(
   files = "spatial_utils.R"
 )
 
-orderly2::orderly_dependency(
+orderly::orderly_dependency(
   name = "un_wpp",
   query = "latest()",
   files = "un_wup.rds"
 )
 
-orderly2::orderly_dependency(
+orderly::orderly_dependency(
   name = "data_map",
   query = "latest()",
   files = c("data/map" = paste0("map/", iso3c, "/"))
 )
 
-orderly2::orderly_dependency(
+orderly::orderly_dependency(
   name = "data_interventions_manual",
   query = "latest()",
   files = c("data/manual" = paste0("manual/", iso3c, "/"))
 )
 
-orderly2::orderly_dependency(
+orderly::orderly_dependency(
   name = "data_worldpop",
   query = "latest()",
   files = c("data/population" = paste0("population/", iso3c, "/"))
 )
 
-orderly2::orderly_dependency(
+orderly::orderly_dependency(
   name = "data_chirps",
   query = "latest()",
   files = c("data/rainfall" = paste0("rainfall/", iso3c, "/"))
 )
 
-orderly2::orderly_dependency(
+orderly::orderly_dependency(
   name = "data_dhs",
   query = "latest()",
   files = "data/dhs/"
 )
 
-orderly2::orderly_dependency(
+orderly::orderly_dependency(
   name = "data_who",
   query = "latest()",
   files = c("data/who/" = "data/")
 )
 
-orderly2::orderly_dependency(
+orderly::orderly_dependency(
   name = "data_vectors",
   query = "latest()",
   files = c("data/vectors" = paste0("vectors/", iso3c, "/"))
 )
 
-orderly2::orderly_dependency(
+orderly::orderly_dependency(
   name = "data_boundaries",
   query = "latest(parameter:boundary == this:boundary)",
   files = c("data/boundaries" = paste0("boundaries/", boundary, "/", iso3c, "/"))
 )
 
-orderly2::orderly_artefact(
+orderly::orderly_artefact(
   description = "Spatial data",
   files = "spatial.rds"
 )

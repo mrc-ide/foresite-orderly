@@ -1,23 +1,23 @@
 # Orderly set-up ---------------------------------------------------------------
-orderly2::orderly_description(
+orderly::orderly_description(
   display = "Mortality rate adjustments",
   long = "Adjusts UN mortality rates such that a model run with a fixed simulation
   population size would return the observed age distribution (at equilibrium)."
 )
 
-orderly2::orderly_parameters(
+orderly::orderly_parameters(
   iso3c = NULL
 )
 
-orderly2::orderly_resource("adjust_rates.R")
+orderly::orderly_resource("adjust_rates.R")
 
-orderly2::orderly_dependency(
+orderly::orderly_dependency(
   name = "un_wpp",
   query = "latest()",
   files = c("un_wpp.rds")
 )
 
-orderly2::orderly_artefact(
+orderly::orderly_artefact(
   description = "Adjusted mortality rates",
   files = "adjusted_demography.rds"
 )

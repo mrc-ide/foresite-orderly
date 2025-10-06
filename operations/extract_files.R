@@ -16,7 +16,7 @@ get_file <- function(parameters, report, file){
     ")"
   )
   
-  path <- orderly2::orderly_search(
+  path <- orderly::orderly_search(
     condition_string,
     parameters = parameters,
     name = report
@@ -24,7 +24,7 @@ get_file <- function(parameters, report, file){
   
   if(!is.na(path)){
     names(file) <- paste0(parameters$iso3c, "_", file)
-    orderly2::orderly_copy_files(path, files = file, dest = dest)
+    orderly::orderly_copy_files(path, files = file, dest = dest)
   }
 }
 # ------------------------------------------------------------------------------

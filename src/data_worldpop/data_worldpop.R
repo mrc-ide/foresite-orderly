@@ -1,5 +1,5 @@
-orderly2::orderly_resource("data/")
-orderly2::orderly_resource("README.md")
+orderly::orderly_resource("data/")
+orderly::orderly_resource("README.md")
 
 isos <- list.files("data/")
 
@@ -8,7 +8,7 @@ dir.create("population/")
 for(iso in isos){
   dir.create(paste0("population/", iso, "/"))
   address <- paste0("population/", iso, "/population.tif")
-  orderly2::orderly_artefact(
+  orderly::orderly_artefact(
     description = "WorldPop raster",
     files = address
   )

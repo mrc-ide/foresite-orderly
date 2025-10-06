@@ -35,28 +35,28 @@ hipercow::hipercow_init(driver = 'dide-windows')
 # ------------------------------------------------------------------------------
 
 # Data inputs
-orderly2::orderly_run(
+orderly::orderly_run(
   name = "extents",
   echo = FALSE
 )
-orderly2::orderly_run(
+orderly::orderly_run(
   name = "data_un",
   echo = FALSE
 )
-orderly2::orderly_run(
+orderly::orderly_run(
   name = "data_worldpop",
   echo = FALSE
 )
-orderly2::orderly_run(
+orderly::orderly_run(
   name = "data_dhs",
   echo = FALSE
 )
-orderly2::orderly_run(
+orderly::orderly_run(
   name = "data_who",
   echo = FALSE
 )
 # UN population and demography
-orderly2::orderly_run(
+orderly::orderly_run(
   name = "un_wpp",
   echo = FALSE
 )
@@ -64,7 +64,7 @@ orderly2::orderly_run(
 demog_task_ids <- list()
 for(iso in malaria_endemic_isos){
   demog_task_ids[[iso]] <- hipercow::task_create_expr(
-    orderly2::orderly_run(
+    orderly::orderly_run(
       name = "demography",
       parameters = list(
         iso3c = iso
@@ -75,19 +75,19 @@ for(iso in malaria_endemic_isos){
   )
 }
 
-orderly2::orderly_run(
+orderly::orderly_run(
   name = "data_map",
   echo = FALSE
 )
-orderly2::orderly_run(
+orderly::orderly_run(
   name = "data_interventions_manual",
   echo = FALSE
 )
-orderly2::orderly_run(
+orderly::orderly_run(
   name = "data_chirps",
   echo = FALSE
 )
-orderly2::orderly_run(
+orderly::orderly_run(
   name = "data_vectors",
   echo = FALSE
 )
@@ -127,7 +127,7 @@ n_sites <- sapply(boundary_files, function(x, admin, urban_rural){
 names(n_sites) <- isos
 
 # Boundaries
-orderly2::orderly_run(
+orderly::orderly_run(
   name = "data_boundaries",
   parameters = list(
     boundary = boundary
@@ -137,7 +137,7 @@ orderly2::orderly_run(
 
 # Spatial processing
 for(iso in isos){
-  orderly2::orderly_run(
+  orderly::orderly_run(
     name = "spatial",
     parameters = list(
       boundary = boundary,
@@ -149,7 +149,7 @@ for(iso in isos){
 
 # Population projections
 for(iso in isos){
-  orderly2::orderly_run(
+  orderly::orderly_run(
     name = "population",
     parameters = list(
       boundary = boundary,
@@ -161,7 +161,7 @@ for(iso in isos){
 
 # Site file creation
 for(iso in isos){
-  orderly2::orderly_run(
+  orderly::orderly_run(
     name = "site_file",
     parameters = list(
       boundary = boundary,
@@ -176,7 +176,7 @@ for(iso in isos){
 
 # Diagnostics
 for(iso in isos){
-  orderly2::orderly_run(
+  orderly::orderly_run(
     name = "diagnostics",
     parameters = list(
       boundary = boundary,
@@ -193,7 +193,7 @@ for(iso in isos){
 cali_task_ids <- list()
 for(iso in isos){
   cali_task_ids[[paste0(iso, "_", admin)]] <- hipercow::task_create_expr(
-    orderly2::orderly_run(
+    orderly::orderly_run(
       name = "calibration",
       parameters = list(
         boundary = boundary,
@@ -218,7 +218,7 @@ table(hipercow::hipercow_bundle_status(x))
 
 # Calibration diagnostic report
 for(iso in isos){
-  orderly2::orderly_run(
+  orderly::orderly_run(
     name = "calibration_diagnostics",
     parameters = list(
       boundary = boundary,
