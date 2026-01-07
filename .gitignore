@@ -11,6 +11,7 @@ data/
 hipercow/
 operations/extracted/
 operations/custom_requests/
+backup/
 
 # ---VVV--- added by orderly ---VVV----------------
 # Don't manually edit content between these markers
