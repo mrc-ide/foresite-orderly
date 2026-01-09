@@ -9,7 +9,7 @@ UNICEF dashboard
 
 **Extraction date**
 
-10/01/2025
+09/01/2026
 
 ---
 
