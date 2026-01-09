@@ -1,12 +1,5 @@
 # Mission control --------------------------------------------------------------
 
-# TODOs ------------------------------------------------------------------------
-# TODO: Internal and external metadata and versioning
-### TODO: Update UN inputs?
-### TODO: Update DHS inputs
-### TODO: Add MAP SMC into workflow when embargo lifted
-# ------------------------------------------------------------------------------
-
 # ISOs -------------------------------------------------------------------------
 malaria_endemic_isos <- c(
   "DZA", "AGO", "BEN", "BWA", "BFA", "BDI", "CPV", "CMR", "CAF", 

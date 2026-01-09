@@ -1,8 +1,4 @@
-orderly::orderly_resource("data")
-orderly::orderly_resource("data_site-2601/wmr_annex_4g.csv")
-orderly::orderly_resource("data_site-2601/wmr_annex_4h.csv")
-orderly::orderly_resource("data_site-2601/itns_delivered_archival.csv")
-orderly::orderly_resource("data_site-2601/irs_people_protected_archival.csv")
+orderly::orderly_resource("data/")
 orderly::orderly_resource("README.md")
 
 
@@ -28,7 +24,7 @@ orderly::orderly_artefact(
 )
 
 # Cases and deaths -------------------------------------------------------------
-wmr_cases_deaths <- read.csv("data_site-2601/wmr_annex_4h.csv") |>
+wmr_cases_deaths <- read.csv("data/wmr_annex_4h.csv") |>
   tidyr::pivot_wider(
     id_cols = c("region", "iso", "country", "year"),
     names_from = "indicator",
@@ -46,7 +42,7 @@ wmr_cases_deaths <- read.csv("data_site-2601/wmr_annex_4h.csv") |>
 write.csv(wmr_cases_deaths, "wmr_cases_deaths.csv", row.names = FALSE)
 # ------------------------------------------------------------------------------
 
-wmr_int <- read.csv("data_site-2601/wmr_annex_4g.csv")  |>
+wmr_int <- read.csv("data/wmr_annex_4g.csv")  |>
   dplyr::rename("iso3c" = "iso") |>
   dplyr::mutate(value = as.numeric(value))
 
@@ -55,7 +51,7 @@ irs_people_protected_wmr <- wmr_int |>
   dplyr::filter(indicator == "Number of people protected by IRS") |>
   dplyr::select("iso3c", "year", "value")
 
-irs_people_protected <- read.csv("data_site-2601/irs_people_protected_archival.csv") |>
+irs_people_protected <- read.csv("data/irs_people_protected_archival.csv") |>
   dplyr::full_join(irs_people_protected_wmr, by = c("iso3c", "year")) |>
   dplyr::mutate(
     irs_people_protected = ifelse(!is.na(value), value, irs_people_protected),
@@ -85,7 +81,7 @@ itns_distributed_wm <- wmr_int |>
   dplyr::filter(indicator == "Number of ITNs distributed") |>
   dplyr::select("iso3c", "year", "value")
 
-itns_distributed <- read.csv("data_site-2601/itns_delivered_archival.csv") |>
+itns_distributed <- read.csv("data/itns_delivered_archival.csv") |>
   dplyr::full_join(itns_distributed_wmr, by = c("iso3c", "year")) |>
   dplyr::mutate(
     itns_distributed = ifelse(!is.na(value), value, itns_distributed),

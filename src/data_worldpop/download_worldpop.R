@@ -1,8 +1,8 @@
 
-country_year_worldpop <- function(iso3c, year){
+country_year_worldpop <- function(iso3c, year, url = "https://www.worldpop.org/rest/data/pop/G2_CN_POP_R25A_1km?iso3="){
   
   raster_meta <- jsonlite::fromJSON(paste0(
-    "https://www.worldpop.org/rest/data/pop/G2_CN_POP_R25A_1km?iso3=",
+    url,
     iso3c
   ))
   
@@ -23,23 +23,21 @@ country_year_worldpop <- function(iso3c, year){
   pop <- terra::rast(raster_address)
   names(pop) <- "pop"
   
-  dir <- paste0("src/data_worldpop/data_site-2601/", iso3c)
+  dir <- paste0("src/data_worldpop/data/", iso3c)
   if(!dir.exists(dir)){
     dir.create(dir)
   }
   file <- paste0(dir, "/population_", iso3c, "_", year, ".tif")
-  terra::writeRaster(pop, filename = file)
+  terra::writeRaster(pop, filename = file, overwrite = TRUE)
 }
 
 for(iso in malaria_endemic_isos){
-  for(y in 2015:2030){
-    print(iso)
-    country_year_worldpop(iso, y)
-  }
+  print(iso)
   for(y in 2000:2014){
-    file.copy(
-      from = paste0("src/data_worldpop/data/", iso, "/population_", iso, "_", y, ".tif"),
-      to = paste0("src/data_worldpop/data_site-2601/", iso, "/population_", iso, "_", y, ".tif")
-    )
+    country_year_worldpop(iso, y,
+                          url = "https://www.worldpop.org/rest/data/pop/wpicuadj1km?iso3=")
+  }
+  for(y in 2015:2030){
+    country_year_worldpop(iso, y)
   }
 }
