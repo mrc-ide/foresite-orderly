@@ -15,6 +15,7 @@ malaria_endemic_isos <- c(
   "PRK", "IND", "IDN", "MMR", "NPL", "LKA", "THA", "TLS", "KHM", 
   "CHN", "LAO", "MYS", "PNG", "PHL", "KOR", "SLB", "VUT", "VNM"
 )
+malaria_endemic_isos <- c("UGA", "BGD")
 # ------------------------------------------------------------------------------
 
 # Set up cluster ---------------------------------------------------------------
@@ -95,9 +96,10 @@ orderly::orderly_run(
 # Run options ------------------------------------------------------------------
 boundary <- "GADM_4.1.0" 
 isos <- list.files(paste0("src/data_boundaries/boundaries/", boundary))
-admin <- 3
-urban_rural <- FALSE
-name <- "ETH_admin_3_request"
+isos <- c("UGA", "BGD")
+admin <- 1
+urban_rural <- TRUE
+name <- "site-2601_testing"
 formatted_date <- format(Sys.Date(), "%m_%Y")
 version <- paste(name, formatted_date, sep = "_")
 # ------------------------------------------------------------------------------

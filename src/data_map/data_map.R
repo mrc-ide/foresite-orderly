@@ -23,7 +23,7 @@ raster_stack <- function(name, years){
 
 # Interventions
 itn_raster <- raster_stack("itn/202508_Africa_Insecticide_Treated_Net_Use_", 2000:2024)
-irs_raster <- raster_stack("irs/202508_Africa_Indoor_Residual_Spraying_Coverage_", 2000:2024)
+irs_raster <- raster_stack("irs/202508_Africa_IRS_Coverage_", 2000:2024)
 tx_raster <- raster_stack("tx/202508_Global_Antimalarial_Effective_Treatment_", 2000:2024) 
 smc_times <- paste0(
   rep(2012:2020, each = 12),

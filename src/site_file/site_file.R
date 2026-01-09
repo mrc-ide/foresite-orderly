@@ -57,7 +57,11 @@ orderly::orderly_dependency(
 orderly::orderly_dependency(
   name = "data_who",
   query = "latest()",
-  files = c("wmr_cases_deaths.csv" = "data/wmr_cases_deaths.csv")
+  files = c(
+    "wmr_cases_deaths.csv" = "wmr_cases_deaths.csv",
+    "wmr_itns_distributed.csv" = "wmr_itns_distributed.csv",
+    "wmr_irs_people_protected.csv" = "wmr_irs_people_protected.csv"
+  )
 )
 
 orderly::orderly_artefact(
@@ -70,7 +74,6 @@ orderly::orderly_artefact(
 source("utils.R")
 source("site_file_utils.R")
 spatial <- readRDS("spatial.rds")
-#external_data_address <- "C:/Users/pwinskil/OneDrive - Imperial College London/malaria_sites_data/2023/"
 # ------------------------------------------------------------------------------
 
 # Grouping variable ------------------------------------------------------------

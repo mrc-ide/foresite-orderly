@@ -9,12 +9,12 @@ ym <- tidyr::expand_grid(
 
 urls <- paste0("https://data.chc.ucsb.edu/products/CHIRPS/v3.0/monthly/global/tifs/chirps-v3.0.", ym$years, ".", ym$months, ".tif")
 destination_files <- paste0(
-  "src/data_chirps/data_site-2601/",
+  "src/data_chirps/data/",
   ym$years, "_", ym$months, ".tif"
 )
 
 for(i in 1:length(urls)){
   print(i / length(urls))
-  download.file(urls[i], destination_files[i])
+  download.file(urls[i], destination_files[i], mode = "wb", quiet = TRUE)
 }
 

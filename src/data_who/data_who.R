@@ -31,6 +31,7 @@ wmr_cases_deaths <- read.csv("data/wmr_annex_4h.csv") |>
     values_from = "value"
     ) |>
   dplyr::rename(
+    iso3c = "iso",
     wmr_par = "Population at risk",
     wmr_cases_l = "Cases Lower",
     wmr_cases = "Cases Point",
@@ -62,7 +63,8 @@ irs_people_protected <- read.csv("data/irs_people_protected_archival.csv") |>
   tidyr::complete(year) |>
   dplyr::arrange(year) |>
   tidyr::fill(irs_interpolated, .direction = "down") |>
-  dplyr::ungroup()
+  dplyr::ungroup() |>
+  dplyr::arrange(iso3c, year)
 
 irs_people_protected_plot <- ggplot2::ggplot(irs_people_protected) +
   ggplot2::geom_line(ggplot2::aes(x = year, y = irs_interpolated / 1e6)) +
@@ -73,11 +75,11 @@ irs_people_protected_plot <- ggplot2::ggplot(irs_people_protected) +
   ggplot2::theme_bw()
 
 write.csv(irs_people_protected, "wmr_irs_people_protected.csv", row.names = FALSE)
-ggsave("wmr_irs_people_protected.png", irs_people_protected_plot, height = 15, width = 20)
+ggplot2::ggsave("wmr_irs_people_protected.png", irs_people_protected_plot, height = 15, width = 20)
 # ------------------------------------------------------------------------------
 
 # ITNs distributed -------------------------------------------------------------
-itns_distributed_wm <- wmr_int |>
+itns_distributed_wmr <- wmr_int |>
   dplyr::filter(indicator == "Number of ITNs distributed") |>
   dplyr::select("iso3c", "year", "value")
 
@@ -92,7 +94,8 @@ itns_distributed <- read.csv("data/itns_delivered_archival.csv") |>
   tidyr::complete(year) |>
   dplyr::arrange(year) |>
   tidyr::fill(itns_interpolated, .direction = "down") |>
-  dplyr::ungroup()
+  dplyr::ungroup() |>
+  dplyr::arrange(iso3c, year)
 
 itns_distributed_plot <- ggplot2::ggplot(itns_distributed) +
   ggplot2::geom_line(ggplot2::aes(x = year, y = itns_interpolated / 1e6)) +
@@ -103,5 +106,5 @@ itns_distributed_plot <- ggplot2::ggplot(itns_distributed) +
   ggplot2::theme_bw()
 
 write.csv(itns_distributed, "wmr_itns_distributed.csv", row.names = FALSE)
-ggsave("wmr_itns_distributed.png", itns_distributed_plot, height = 15, width = 20)
+ggplot2::ggsave("wmr_itns_distributed.png", itns_distributed_plot, height = 15, width = 20)
 # ------------------------------------------------------------------------------
