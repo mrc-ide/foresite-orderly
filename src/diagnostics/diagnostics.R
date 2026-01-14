@@ -353,9 +353,13 @@ rainfall_plot <- ggplot2::ggplot(data = rainfall_pd, ggplot2::aes(x = time, y = 
 seasonal_curve_pd <- site$seasonality$fourier_prediction
 seasonal_curve_pd$name <- apply(seasonal_curve_pd[,rainfall_name_cols], 1, paste, collapse = " | ")
 
+peak_season_pd <- site$seasonality$peak_season
+peak_season_pd$name <- apply(peak_season_pd[,rainfall_name_cols], 1, paste, collapse = " | ")
+
 labs <- unique(rainfall_pd[,c("t", "month_name")])
 
 seasonality_plot <- ggplot2::ggplot() +
+  ggplot2::geom_vline(data = peak_season_pd, ggplot2::aes(xintercept = peak_season), linetype = 2, col = "grey30") +
   ggplot2::geom_jitter(data = rainfall_pd, ggplot2::aes(x = t, y = rainfall, colour = name), alpha = 0.2) +
   ggplot2::geom_line(data = seasonal_curve_pd, ggplot2::aes(x = t, y = profile, colour = name)) +
   ggplot2::facet_wrap(~ name, ncol = 1, scales = "free_x") +

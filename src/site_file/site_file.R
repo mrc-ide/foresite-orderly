@@ -476,6 +476,11 @@ seasonal_curve <- seasonal_parameters |>
     .by = dplyr::all_of(grouping)
   ) |>
   tidyr::unnest("predict")
+
+peak_season <- seasonal_curve |>
+  dplyr::slice_max(profile, n = 1, by = dplyr::all_of(grouping)) |>
+  dplyr::rename("peak_season" = "t") |>
+  dplyr::select(dplyr::all_of(c(grouping, "peak_season")))
 # ------------------------------------------------------------------------------
 
 # Vectors ----------------------------------------------------------------------
@@ -621,7 +626,8 @@ site_file$vectors = list(
 site_file$seasonality = list(
   seasonality_parameters = seasonal_parameters,
   monthly_rainfall = rainfall,
-  fourier_prediction = seasonal_curve
+  fourier_prediction = seasonal_curve,
+  peak_season = peak_season
 )
 
 site_file$blood_disorders = blood_disorders
