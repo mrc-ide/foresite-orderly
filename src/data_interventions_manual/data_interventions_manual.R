@@ -78,7 +78,7 @@ vaccine_coverage <- vaccine_doses |>
     ) |>
   dplyr::left_join(un_wpp, by = c("iso3c", "year")) |>
   dplyr::mutate(
-    vx_cov = round(fvc / population, 2)
+    vx_cov = pmin(0.8, round(fvc / population, 2))
   ) |>
   dplyr::select(iso3c, year, vaccine, vx_cov) |>
   tidyr::pivot_wider(id_cols = c("iso3c", "year"), names_from = "vaccine", values_from = "vx_cov") |>
