@@ -483,6 +483,122 @@ peak_season <- seasonal_curve |>
   dplyr::select(dplyr::all_of(c(grouping, "peak_season")))
 # ------------------------------------------------------------------------------
 
+# Intervention implementation --------------------------------------------------
+itn_hl <- netz::get_halflife(iso3c)
+
+itn_use <- interventions |>
+  dplyr::select(dplyr::all_of(c(grouping, "year", "itn_use"))) |>
+  dplyr::mutate(usage_timestep = (year - 2000) * 365 + 1)
+
+new_net_introductions <- read.csv("vectors/new_net_introductions.csv") 
+itn_implementation <- interventions |>
+  dplyr::select(dplyr::all_of(c(grouping, "year"))) |>
+  dplyr::mutate(
+    net_type = ifelse(year == 2000, "pyrethroid_only", NA)
+  ) |>
+  dplyr::left_join(new_net_introductions, by = c("iso3c", "name_1", "year")) |>
+  dplyr::mutate(net_type = ifelse(is.na(type), net_type, type)) |>
+  dplyr::select(-type) |>
+  dplyr::group_by(dplyr::across(dplyr::all_of(grouping))) |>
+  tidyr::fill(net_type) |>
+  dplyr::ungroup() |>
+  tidyr::expand_grid(
+    data.frame(
+      distribution_type = c("mass", rep("routine", 4)),
+      day = c(1, 2, 90, 180, 270),
+      lower = 0
+    )
+  ) |>
+  dplyr::mutate(
+    upper = dplyr::case_when(
+      distribution_type == "mass" ~ 1,
+      distribution_type == "routine" ~ 0.01
+    ),
+    distribution_timestep = (year - min(year)) * 365 + day
+  )  |>
+  dplyr::arrange(dplyr::across(dplyr::all_of(c(grouping, "year"))))
+
+if(FALSE){
+  # TODO: remove, The following gets done by site:
+  # TODO: site should check that there isn't more than one distribution per day in the
+  ## Flow:
+  ### Parameters given to site
+  ### Checks for columns itn_input_dist and itn_predicted_use
+  ### If missing prompts the user to add them before running the site parameters
+  ### inputs
+  t1 <- dplyr::filter(itn_implementation, name_1 == "Mukono", urban_rural == "rural")
+  t2 <- dplyr::filter(itn_use, name_1 == "Mukono", urban_rural == "rural")
+  
+  itn_input_dist <- netz::usage_to_model_distribution(
+    usage = t2$itn_use,
+    usage_timesteps = t2$usage_timestep,
+    distribution_timesteps = t1$distribution_timestep,
+    distribution_upper = t1$upper,
+    distribution_lower = t1$lower,
+    net_loss_function = netz::net_loss_map,
+    half_life = itn_hl
+  )
+  
+  itn_predicted_use <- netz::model_distribution_to_usage(
+    usage_timesteps = t2$usage_timestep,
+    distribution = itn_input_dist,
+    distribution_timesteps = t1$distribution_timestep,
+    net_loss_function = netz::net_loss_map,
+    half_life = itn_hl
+  )
+  y <- 2000 + (t2$usage_timestep - 1) / 365
+  plot(itn_predicted_use ~ y, t = "l", ylim =c(0, 1))
+  points(2000:2026, t2$itn_use, pch = 19)  
+  points(2000 + (t1$distribution_timestep - 1) / 365, itn_input_dist, col = "orange")
+}
+
+irs_implementation <- interventions |>
+  dplyr::select(dplyr::all_of(c(grouping, "year", "irs_cov"))) |>
+  dplyr::left_join(peak_season, by = grouping) |>
+  dplyr::mutate(
+    # Switch to Actellic-like insecticide
+    insecticide = ifelse(year < actellic_switch_year, "ddt", "actellic"),
+    # Assume single round per year
+    round = 1,
+    peak_day = (year - min(year)) * 365 + peak_season,
+    spray_day = dplyr::case_when(
+      # First round assumed 3 months prior to peak
+      round == 1 ~ peak_day - (3 * 30),
+      # Second round (if implemented) assumed 3 months post peak
+      round == 2 ~ peak_day + (3 * 30)
+    )
+  ) |>
+  dplyr::filter(spray_day > 0) |>
+  dplyr::select(-"peak_day")
+
+smc_implementation <- interventions |>
+  dplyr::select(dplyr::all_of(c(grouping, "year", "smc_cov"))) |>
+  dplyr::left_join(peak_season, by = grouping) |>
+  dplyr::mutate(
+    smc_min_age = 91,
+    smc_max_age = 1825,
+    smc_drug = "sp_aq"
+  ) |>
+  tidyr::expand_grid(
+    data.frame(
+      round = 1:4
+    )
+  ) |>
+  dplyr::mutate(
+    peak_day = (year - min(year)) * 365 + peak_season,
+    # Assumed 1 month apart, centered on seasonal peak
+    round_day = dplyr::case_when(
+      round == 1 ~ peak_day - 45,
+      round == 2 ~ peak_day - 15,
+      round == 3 ~ peak_day + 15,
+      round == 4 ~ peak_day + 45
+    )
+  ) |>
+  dplyr::filter(round_day > 0) |>
+  dplyr::select(-"peak_day")
+
+# ------------------------------------------------------------------------------
+
 # Vectors ----------------------------------------------------------------------
 use_relative <- !all(is.na(spatial[,c("gambiae", "arabiensis", "funestus")]))
 
