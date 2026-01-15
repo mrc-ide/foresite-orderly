@@ -502,23 +502,6 @@ df <- df |>
     prop_act,
     by = "year"
   )
-
-# Proportion of treatment in the public sector
-prop_public <- read.csv("data/dhs/proportion_public.csv")
-if(iso3c %in% prop_public$iso3c){
-  prop_public <-
-    prop_public |>
-    dplyr::filter(iso3c == {{iso3c}}) |>
-    dplyr::pull(prop_public)
-} else{
-  prop_public <- median(prop_public$prop_public)
-}
-prop_public <- data.frame(year = years, prop_public = prop_public)
-df <- df |>
-  dplyr::left_join(
-    prop_public,
-    by = "year"
-  )
 # ------------------------------------------------------------------------------
 
 # Additional nets and IRS interpolation ----------------------------------------

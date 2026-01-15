@@ -42,12 +42,20 @@ orderly::orderly_dependency(
 )
 
 orderly::orderly_shared_resource("utils.R")
+orderly::orderly_artefact(
+  description = "vaccine_delivery",
+  files = "vaccine_delivery.csv"
+)
 # ------------------------------------------------------------------------------
 
 # Inputs -----------------------------------------------------------------------
 chemoprevention_coverage <- read.csv("data/chemoprevention_coverage.csv")
 rtss_trial <- read.csv("data/rtss_trial.csv")
-vaccine_doses <- read.csv("data/vaccine_doses.csv")
+vaccine_doses <- read.csv("data/vaccine_doses.csv") |>
+  dplyr::mutate(
+    iso3c = countrycode::countrycode(country, "country.name", "iso3c")
+  )
+write.csv(vaccine_doses, "vaccine_delivery.csv", row.names = FALSE)
 un_wpp <- readRDS("un_wpp.rds") |>
   dplyr::filter(
     year > 2000,
@@ -71,11 +79,10 @@ extents <- read.csv("extents.csv")
 ## applying doses across the country
 vaccine_coverage <- vaccine_doses |>
   dplyr::summarise(doses_delivered = sum(doses_delivered),
-            .by = c("country", "year", "vaccine")) |>
+                   .by = c("iso3c", "year", "vaccine")) |>
   dplyr::mutate(
-    iso3c = countrycode::countrycode(country, "country.name", "iso3c"),
     fvc = round(doses_delivered   / 3.8)
-    ) |>
+  ) |>
   dplyr::left_join(un_wpp, by = c("iso3c", "year")) |>
   dplyr::mutate(
     vx_cov = pmin(0.8, round(fvc / population, 2))
@@ -83,7 +90,7 @@ vaccine_coverage <- vaccine_doses |>
   dplyr::select(iso3c, year, vaccine, vx_cov) |>
   tidyr::pivot_wider(id_cols = c("iso3c", "year"), names_from = "vaccine", values_from = "vx_cov") |>
   dplyr::rename("r21_cov" = "r21", "rtss_cov" = "rtss") 
-  
+
 sf_df <- boundary |>
   dplyr::cross_join(data.frame(year = 2000:max(vaccine_coverage$year))) |>
   dplyr::left_join(vaccine_coverage, by = c("iso3c", "year")) |>
