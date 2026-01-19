@@ -503,6 +503,10 @@ interventions <- interventions |>
     .by = "year"
   )
 
+interventions <- interventions |>
+  dplyr::arrange(dplyr::across(dplyr::all_of(c(grouping, "year"))))
+
+## Treatment
 tx_cov <- interventions |>
   dplyr::select(dplyr::all_of(c(grouping, "year", "tx_cov", "prop_act")))
 
@@ -517,7 +521,7 @@ if(iso3c %in% tx_prop_public$iso3c){
   tx_prop_public <- median(tx_prop_public$prop_public)
 }
 
-
+# ITNs
 itn_hl <- netz::get_halflife(iso3c)
 
 itn_data_latest_year <- 2023 
@@ -630,8 +634,7 @@ irs_implementation <- interventions |>
     spray_day_of_year = ifelse(spray_day_of_year < 1, spray_day_of_year + 365, spray_day_of_year),
     spray_day_of_year = ifelse(spray_day_of_year > 365, spray_day_of_year - 365, spray_day_of_year),
   ) |>
-  dplyr::filter(year >= 2000) |>
-  dplyr::select(-"peak_day")
+  dplyr::filter(year >= 2000)
 
 smc_drug <- "sp_aq"
 
@@ -661,8 +664,7 @@ smc_implementation <- interventions |>
     round_day_of_year = ifelse(round_day_of_year < 1, round_day_of_year + 365, round_day_of_year),
     round_day_of_year = ifelse(round_day_of_year > 365, round_day_of_year - 365, round_day_of_year),
   ) |>
-  dplyr::filter(year >= 2000) |>
-  dplyr::select(-"peak_day")
+  dplyr::filter(year >= 2000)
 
 pmc_age <- c(2, 3, 9) * 30
 pmc_drug <- "sp"
@@ -677,14 +679,14 @@ vaccine_data <- read.csv("vaccine_delivery.csv") |>
   dplyr::slice_tail(n = 1)
 
 if(nrow(vaccine_data) == 0){
-  vaccine_delivery <- "age_based"
+  vaccine_delivery <- "age-based"
   vaccine_primary_schedule <- c(6, 7, 8) * 30
   vaccine_booster_ages <- c(8 + 12) * 30
 } else {
   vaccine_delivery <- unlist(vaccine_data$delivery)
-  vaccine_primary_schedule <- c(unlist(vaccine_data[,c("first", "second", "third", "boost1")])) * 30
+  vaccine_primary_schedule <- c(unlist(vaccine_data[,c("first", "second", "third")])) * 30
   vaccine_booster_ages <- NA
-  if(vaccine_delivery == "age_based"){
+  if(vaccine_delivery == "age-based"){
     vaccine_booster_ages = unlist(vaccine_data[,"boost1"]) * 30
   }
 }
@@ -699,19 +701,19 @@ vaccine_coverage <- interventions |>
   dplyr::mutate(
     r21_booster1_cov = r21_primary_cov,
     rtss_booster1_cov = rtss_primary_cov,
-    hybrid_day_of_delivery = NA
+    hybrid_booster_day_of_year = NA
   )
 
 if(vaccine_delivery == "hybrid"){
   # Assume seasonal boosters are 3 months prior to peak (base on Mali implementation)
   vaccine_coverage <- vaccine_coverage |>
     dplyr::mutate(
-      hybrid_day_of_delivery = peak_season - (3 * 30),
+      hybrid_booster_day_of_year = peak_season - (3 * 30),
       # Deal with overlap into preceding or next year
-      year = ifelse(hybrid_day_of_delivery < 1, year - 1, year),
-      year = ifelse(hybrid_day_of_delivery > 365, year + 1, year),
-      hybrid_day_of_delivery = ifelse(hybrid_day_of_delivery < 1, hybrid_day_of_delivery + 365, hybrid_day_of_delivery),
-      hybrid_day_of_delivery = ifelse(hybrid_day_of_delivery > 365, hybrid_day_of_delivery - 365, hybrid_day_of_delivery),
+      year = ifelse(hybrid_booster_day_of_year < 1, year - 1, year),
+      year = ifelse(hybrid_booster_day_of_year > 365, year + 1, year),
+      hybrid_booster_day_of_year = ifelse(hybrid_booster_day_of_year < 1, hybrid_booster_day_of_year + 365, hybrid_booster_day_of_year),
+      hybrid_booster_day_of_year = ifelse(hybrid_booster_day_of_year > 365, hybrid_booster_day_of_year - 365, hybrid_booster_day_of_year),
     ) |>
     dplyr::filter(year >= 2000)
 }
@@ -742,8 +744,9 @@ interventions_list <- list(
     implementation = pmc_coverage
   ),
   vaccine = list(
-    schedule = vaccine_schedule,
     delivery = vaccine_delivery,
+    primary_schedule = vaccine_primary_schedule,
+    booster_ages = vaccine_booster_ages,
     implementation = vaccine_coverage
   ),
   lsm = list(
