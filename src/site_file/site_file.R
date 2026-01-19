@@ -436,6 +436,11 @@ peak_season <- seasonal_curve |>
 # ------------------------------------------------------------------------------
 
 # Interventions ----------------------------------------------------------------
+
+# TODO: Should all "Timesteps" or "Model day" values be relative to the year.
+## We need to deal with adding "burnin" for the sites. Absolute timesteps makes
+## this hard, and actually isn't meaningful to the site-file user?
+
 interventions <- spatial |>
   dplyr::summarise(
     # Some map has some areas with NA (usually due to a misalignment between)
@@ -518,7 +523,7 @@ itn_hl <- netz::get_halflife(iso3c)
 itn_data_latest_year <- 2023 
 itn_use <- interventions |>
   dplyr::select(dplyr::all_of(c(grouping, "year", "itn_use"))) |>
-  dplyr::mutate(usage_timestep = (year - 2000) * 365 + 1) |>
+  dplyr::mutate(usage_day_of_year = 1) |>
   # Instead of constant use extrapolation we use %% 3 years
   dplyr::mutate(
     itn_use = ifelse(
@@ -544,7 +549,7 @@ itn_implementation <- interventions |>
   tidyr::expand_grid(
     data.frame(
       distribution_type = c("mass", rep("routine", 4)),
-      day = c(1, 2, 90, 180, 270),
+      distribution_day_of_year = c(1, 2, 90, 180, 270),
       distribution_lower = 0
     )
   ) |>
@@ -552,11 +557,23 @@ itn_implementation <- interventions |>
     distribution_upper = dplyr::case_when(
       distribution_type == "mass" ~ 1,
       distribution_type == "routine" ~ 0.01
-    ),
-    distribution_timestep = (year - min(year)) * 365 + day
-  )  |>
+    )
+  ) |>
   dplyr::arrange(dplyr::across(dplyr::all_of(c(grouping, "year")))) |>
-  dplyr::select(-day)
+  dplyr::filter(
+    site:::calendar_to_timestep(
+      year = year,
+      day_of_year = distribution_day_of_year,
+      start_year = 2000
+    ) <= 
+      max(
+        site:::calendar_to_timestep(
+          year = itn_use$year,
+          day_of_year = itn_use$usage_day_of_year,
+          start_year = 2000
+        )
+      )
+  )
 
 if(FALSE){
   # TODO: remove, The following gets done by site:
@@ -601,15 +618,19 @@ irs_implementation <- interventions |>
     insecticide = ifelse(year < actellic_switch_year, "ddt", "actellic"),
     # Assume single round per year
     round = 1,
-    peak_day = (year - min(year)) * 365 + peak_season,
-    spray_day = dplyr::case_when(
+    spray_day_of_year = dplyr::case_when(
       # First round assumed 3 months prior to peak
-      round == 1 ~ peak_day - (3 * 30),
+      round == 1 ~ peak_season - (3 * 30),
       # Second round (if implemented) assumed 3 months post peak
-      round == 2 ~ peak_day + (3 * 30)
-    )
+      round == 2 ~ peak_season + (3 * 30)
+    ),
+    # Deal with overlap into preceding or next year
+    year = ifelse(spray_day_of_year < 1, year - 1, year),
+    year = ifelse(spray_day_of_year > 365, year + 1, year),
+    spray_day_of_year = ifelse(spray_day_of_year < 1, spray_day_of_year + 365, spray_day_of_year),
+    spray_day_of_year = ifelse(spray_day_of_year > 365, spray_day_of_year - 365, spray_day_of_year),
   ) |>
-  dplyr::filter(spray_day > 0) |>
+  dplyr::filter(year >= 2000) |>
   dplyr::select(-"peak_day")
 
 smc_drug <- "sp_aq"
@@ -627,16 +648,20 @@ smc_implementation <- interventions |>
     )
   ) |>
   dplyr::mutate(
-    peak_day = (year - min(year)) * 365 + peak_season,
     # Assumed 1 month apart, centered on seasonal peak
-    round_day = dplyr::case_when(
-      round == 1 ~ peak_day - 45,
-      round == 2 ~ peak_day - 15,
-      round == 3 ~ peak_day + 15,
-      round == 4 ~ peak_day + 45
-    )
+    round_day_of_year = dplyr::case_when(
+      round == 1 ~ peak_season - 45,
+      round == 2 ~ peak_season - 15,
+      round == 3 ~ peak_season + 15,
+      round == 4 ~ peak_season + 45
+    ),
+    # Deal with overlap into preceding or next year
+    year = ifelse(round_day_of_year < 1, year - 1, year),
+    year = ifelse(round_day_of_year > 365, year + 1, year),
+    round_day_of_year = ifelse(round_day_of_year < 1, round_day_of_year + 365, round_day_of_year),
+    round_day_of_year = ifelse(round_day_of_year > 365, round_day_of_year - 365, round_day_of_year),
   ) |>
-  dplyr::filter(round_day > 0) |>
+  dplyr::filter(year >= 2000) |>
   dplyr::select(-"peak_day")
 
 pmc_age <- c(2, 3, 9) * 30
@@ -652,15 +677,21 @@ vaccine_data <- read.csv("vaccine_delivery.csv") |>
   dplyr::slice_tail(n = 1)
 
 if(nrow(vaccine_data) == 0){
-  vaccine_schedule <- c(6, 7, 8, 8 + 12) * 30
   vaccine_delivery <- "age_based"
+  vaccine_primary_schedule <- c(6, 7, 8) * 30
+  vaccine_booster_ages <- c(8 + 12) * 30
 } else {
-  vaccine_schedule <- c(unlist(vaccine_data[,c("first", "second", "third", "boost1")])) * 30
   vaccine_delivery <- unlist(vaccine_data$delivery)
+  vaccine_primary_schedule <- c(unlist(vaccine_data[,c("first", "second", "third", "boost1")])) * 30
+  vaccine_booster_ages <- NA
+  if(vaccine_delivery == "age_based"){
+    vaccine_booster_ages = unlist(vaccine_data[,"boost1"]) * 30
+  }
 }
 
 vaccine_coverage <- interventions |>
   dplyr::select(dplyr::all_of(c(grouping, "year", "r21_cov", "rtss_cov"))) |>
+  dplyr::left_join(peak_season, by = grouping) |>
   dplyr::rename(
     "r21_primary_cov" = "r21_cov",
     "rtss_primary_cov" = "rtss_cov"
@@ -668,14 +699,27 @@ vaccine_coverage <- interventions |>
   dplyr::mutate(
     r21_booster1_cov = r21_primary_cov,
     rtss_booster1_cov = rtss_primary_cov,
-    r21_booster2_cov = 0,
-    rtss_booster2_cov = 0,
+    hybrid_day_of_delivery = NA
   )
+
+if(vaccine_delivery == "hybrid"){
+  # Assume seasonal boosters are 3 months prior to peak (base on Mali implementation)
+  vaccine_coverage <- vaccine_coverage |>
+    dplyr::mutate(
+      hybrid_day_of_delivery = peak_season - (3 * 30),
+      # Deal with overlap into preceding or next year
+      year = ifelse(hybrid_day_of_delivery < 1, year - 1, year),
+      year = ifelse(hybrid_day_of_delivery > 365, year + 1, year),
+      hybrid_day_of_delivery = ifelse(hybrid_day_of_delivery < 1, hybrid_day_of_delivery + 365, hybrid_day_of_delivery),
+      hybrid_day_of_delivery = ifelse(hybrid_day_of_delivery > 365, hybrid_day_of_delivery - 365, hybrid_day_of_delivery),
+    ) |>
+    dplyr::filter(year >= 2000)
+}
 
 lsm_coverage <- interventions |>
   dplyr::select(dplyr::all_of(c(grouping, "year", "lsm_cov"))) 
 
-interventions2 <- list(
+interventions_list <- list(
   treatment = list(
     implementation = tx_cov,
     prop_public = tx_prop_public
@@ -807,7 +851,9 @@ site_file$metadata <- list(
   iso3c = iso3c,
   boundary = boundary,
   admin_level = grouping,
-  version = version
+  version = version,
+  start_year = 2000,
+  end_year = 2026
 )
 
 site_file$sites = sites
@@ -821,7 +867,7 @@ site_file$prevalence = prevalence
 if(sum(is.na(interventions)) > 0){
   stop("NAs in interventions")
 }
-site_file$interventions = interventions
+site_file$interventions = interventions_list
 
 if(any(population$par > population$pop)){
   stop("PAR > pop in population_total")
@@ -865,7 +911,8 @@ format(object.size(site_file), "Mb")
 
 # Check that the resulting site file can be used to create a malariasimulation
 ## parameter list
-check_params(site_file)
+# TODO: REINSTATE this check when site package updated
+# check_params(site_file)
 
 saveRDS(site_file, "site.rds")
 # ------------------------------------------------------------------------------
