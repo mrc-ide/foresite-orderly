@@ -377,7 +377,14 @@ seasonality_plot <- ggplot2::ggplot() +
 # ------------------------------------------------------------------------------
 
 # Interventions ----------------------------------------------------------------
-interventions <- site$interventions
+interventions <- site$interventions$itn$use |>
+  dplyr::left_join(site$interventions$treatment$implementation) |>
+  dplyr::left_join(site$interventions$irs$implementation) |>
+  dplyr::left_join(site$interventions$vaccine$implementation) |>
+  dplyr::left_join(site$interventions$smc$implementation) |>
+  dplyr::left_join(site$interventions$pmc$implementation) |>
+  dplyr::left_join(site$interventions$lsm$implementation)
+
 interventions_name_cols <- site$metadata$admin_level[!site$metadata$admin_level %in% c("country", "iso3c")]
 interventions$name <- apply(interventions[,interventions_name_cols], 1, paste, collapse = " | ")
 pop <- site$population$population_total
@@ -387,8 +394,8 @@ interventions_country_plot <- scene::plot_interventions(
   interventions = interventions,
   population = pop,
   group_var = "iso3c",
-  include = c("itn_use", "itn_input_dist", "predicted_use", "tx_cov", "irs_cov", "rtss_cov", "smc_cov", "pmc_cov", "r21_cov"),
-  labels = c("ITN usage", "ITN model input", "ITN model usage", "Treatment", "IRS", "RTSS", "SMC", "PMC", "R21")
+  include = c("itn_use", "tx_cov", "irs_cov", "rtss_primary_cov", "smc_cov", "pmc_cov", "r21_primary_cov"),
+  labels = c("ITN usage", "Treatment", "IRS", "RTSS", "SMC", "PMC", "R21")
 ) +
   ggplot2::ggtitle(paste0(iso3c, ": Intervention coverage"))
 
@@ -396,8 +403,8 @@ interventions_area_plot <- scene::plot_interventions(
   interventions = interventions,
   population = pop,
   group_var = "name",
-  include = c("itn_use", "itn_input_dist", "predicted_use", "tx_cov", "irs_cov", "rtss_cov", "smc_cov", "pmc_cov", "r21_cov"),
-  labels = c("ITN usage", "ITN model input", "ITN model usage", "Treatment", "IRS", "RTSS", "SMC", "PMC", "R21"),
+  include = c("itn_use", "tx_cov", "irs_cov", "rtss_primary_cov", "smc_cov", "pmc_cov", "r21_primary_cov"),
+  labels = c("ITN usage", "Treatment", "IRS", "RTSS", "SMC", "PMC", "R21"),
   facet_rows = ceiling(length(unique(interventions$name)) / 4)
 ) +
   ggplot2::ggtitle(paste0(iso3c, ": Intervention coverage by area"))

@@ -35,20 +35,52 @@ check_params <- function(site){
   for(i in 1:length(eirs)){
     x <- eirs[[i]]
     sub_site <- site::subset_site(site, x)
-    species <- x$sp
-    calibration_burnin <- 5
+    
+    usage_timesteps <- site::calendar_to_timestep(
+      year = sub_site$interventions$itn$use$year,
+      day_of_year = sub_site$interventions$itn$use$usage_day_of_year,
+      start_year = sub_site$metadata$start_year
+    )
+    distribution_timesteps <- site::calendar_to_timestep(
+      year = sub_site$interventions$itn$implementation$year,
+      day_of_year = sub_site$interventions$itn$implementation$distribution_day_of_year,
+      start_year = sub_site$metadata$start_year
+    )
+    
+    sub_site$interventions$itn$implementation$itn_input_dist <- netz::usage_to_model_distribution(
+      usage = sub_site$interventions$itn$use$itn_use,
+      usage_timesteps = usage_timesteps,
+      distribution_timesteps = distribution_timesteps,
+      distribution_lower = sub_site$interventions$itn$implementation$distribution_lower,
+      distribution_upper = sub_site$interventions$itn$implementation$distribution_upper,
+      net_loss_function = netz::net_loss_map,
+      half_life = sub_site$interventions$itn$retention_half_life
+    )
+    
+    sub_site$interventions$itn$use$expected_use <- netz::model_distribution_to_usage(
+      distribution = sub_site$interventions$itn$implementation$itn_input_dist,
+      usage_timesteps = usage_timesteps,
+      distribution_timesteps = distribution_timesteps,
+      net_loss_function = netz::net_loss_map,
+      half_life = sub_site$interventions$itn$retention_half_life
+    )
+    
+    parasite <- ifelse(x$sp == "pf", "falciparum", "vivax")
+    start_year <- 1995
+    end_year <- 2026
     tryCatch(
       {
         p <- site::site_parameters(
           interventions = sub_site$interventions,
           demography = sub_site$demography,
-          vectors = sub_site$vectors$vector_species,
-          seasonality = sub_site$seasonality$seasonality_parameters,
+          vectors = sub_site$vectors,
+          seasonality = sub_site$seasonality,
           overrides = list(
             human_population = 1000
           ),
-          species  = species,
-          burnin = calibration_burnin
+          parasite  = parasite,
+          start_year = start_year,
+          end_year = end_year
         )
       },
       error = function(e) {

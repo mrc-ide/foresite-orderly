@@ -899,8 +899,7 @@ format(object.size(site_file), "Mb")
 
 # Check that the resulting site file can be used to create a malariasimulation
 ## parameter list
-# TODO: REINSTATE this check when site package updated
-# check_params(site_file)
+check_params(site_file)
 
 saveRDS(site_file, "site.rds")
 # ------------------------------------------------------------------------------
