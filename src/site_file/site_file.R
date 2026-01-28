@@ -680,14 +680,14 @@ vaccine_data <- read.csv("vaccine_delivery.csv") |>
 
 if(nrow(vaccine_data) == 0){
   vaccine_delivery <- "age-based"
-  vaccine_primary_schedule <- c(6, 7, 8) * 30
-  vaccine_booster_ages <- c(8 + 12) * 30
+  vaccine_primary_schedule <- round(c(6, 7, 8) * (365 / 12))
+  vaccine_booster_space <- 365
 } else {
   vaccine_delivery <- unlist(vaccine_data$delivery)
-  vaccine_primary_schedule <- c(unlist(vaccine_data[,c("first", "second", "third")])) * 30
-  vaccine_booster_ages <- NA
+  vaccine_primary_schedule <- round(c(unlist(vaccine_data[,c("first", "second", "third")])) * (365 / 12))
+  vaccine_booster_space <- NA
   if(vaccine_delivery == "age-based"){
-    vaccine_booster_ages = unlist(vaccine_data[,"boost1"]) * 30
+    vaccine_booster_space = round(unlist(vaccine_data[,"boost1"]) * (365 / 12)) - vaccine_primary_schedule[3]
   }
 }
 
@@ -700,26 +700,11 @@ vaccine_coverage <- interventions |>
   ) |>
   dplyr::mutate(
     r21_booster1_cov = r21_primary_cov,
-    rtss_booster1_cov = rtss_primary_cov,
-    hybrid_booster_day_of_year = NA
+    rtss_booster1_cov = rtss_primary_cov
   )
 
-if(vaccine_delivery == "hybrid"){
-  # Assume seasonal boosters are 3 months prior to peak (base on Mali implementation)
-  vaccine_coverage <- vaccine_coverage |>
-    dplyr::mutate(
-      hybrid_booster_day_of_year = peak_season - (3 * 30),
-      # Deal with overlap into preceding or next year
-      year = ifelse(hybrid_booster_day_of_year < 1, year - 1, year),
-      year = ifelse(hybrid_booster_day_of_year > 365, year + 1, year),
-      hybrid_booster_day_of_year = ifelse(hybrid_booster_day_of_year < 1, hybrid_booster_day_of_year + 365, hybrid_booster_day_of_year),
-      hybrid_booster_day_of_year = ifelse(hybrid_booster_day_of_year > 365, hybrid_booster_day_of_year - 365, hybrid_booster_day_of_year),
-    ) |>
-    dplyr::filter(year >= 2000)
-}
-
 lsm_coverage <- interventions |>
-  dplyr::select(dplyr::all_of(c(grouping, "year", "lsm_cov"))) 
+  dplyr::select(dplyr::all_of(c(grouping, "year", "lsm_cov")))
 
 interventions_list <- list(
   treatment = list(
@@ -746,7 +731,7 @@ interventions_list <- list(
   vaccine = list(
     delivery = vaccine_delivery,
     primary_schedule = vaccine_primary_schedule,
-    booster_ages = vaccine_booster_ages,
+    booster_spacing = vaccine_booster_space,
     implementation = vaccine_coverage
   ),
   lsm = list(

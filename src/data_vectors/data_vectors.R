@@ -68,6 +68,47 @@ orderly::orderly_artefact(
 write.csv(new_net_introductions, address, row.names = FALSE)
 
 pyrethroid_resistance <- read.csv("data/pyrethroid_resistance/pyrethroid_resistance.csv")
+
+update_resistance_fit <- function(year, resistance, fix_year = 2020){
+  A <- min(resistance[year <= fix_year]) # fixed lower asymptote
+  K <- resistance[year == fix_year]      # fixed upper asymptote
+  fit <- minpack.lm::nlsLM(
+    resistance ~ A + (K - A) / (1 + exp(-k * (year - t0))),
+    start = list(k = 0.1, t0 = median(year)),
+    lower = c(k = 0,   t0 = min(year)),
+    upper = c(k = Inf, t0 = max(year)),
+    control = minpack.lm::nls.lm.control(maxiter = 200)
+  )
+  predict(fit)
+}
+
+pyrethroid_resistance <- pyrethroid_resistance |>
+  dplyr::rename("pyrethroid_resistance_original" = "pyrethroid_resistance") |>
+  dplyr::mutate(
+    pyrethroid_resistance = update_resistance_fit(
+      year = year - 2000,
+      resistance = pyrethroid_resistance_original,
+      fix_year = 2020 - 2000
+    ),
+    .by = c("iso3c", "X", "Y", "unit")
+  )
+
+resistance_compare_plot <- ggplot2::ggplot(
+  data = pyrethroid_resistance
+) +
+  ggplot2::geom_point(
+    ggplot2::aes(x = year, y = pyrethroid_resistance_original)
+  ) +
+  ggplot2::geom_point(
+    ggplot2::aes(x = year, y = pyrethroid_resistance),
+    colour = "deeppink"
+  ) +
+  ggplot2::facet_wrap(~ iso3c) +
+  ggplot2::theme_bw()
+
+pyrethroid_resistance <- pyrethroid_resistance |>
+  dplyr::select(-pyrethroid_resistance_original)
+
 address <- paste0("vectors/pyrethroid_resistance.csv")
 orderly::orderly_artefact(
   description = "Pyrethroid resistance",

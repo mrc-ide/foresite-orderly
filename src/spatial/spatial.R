@@ -56,7 +56,7 @@ orderly::orderly_dependency(
     "data/who/wmr_cases_deaths.csv" = "wmr_cases_deaths.csv",
     "data/who/wmr_itns_distributed.csv" = "wmr_itns_distributed.csv",
     "data/who/wmr_irs_people_protected.csv" = "wmr_irs_people_protected.csv"
-    )
+  )
 )
 
 orderly::orderly_dependency(
@@ -94,9 +94,11 @@ for(level in admin_levels){
     level,
     ".RDS"
   )
-  shape <- readRDS(shape_address)
-  if(nrow(shape) > 0){
-    break
+  if(file.exists(shape_address)){
+    shape <- readRDS(shape_address)
+    if(nrow(shape) > 0){
+      break
+    }
   }
 }
 
@@ -528,7 +530,7 @@ if(!approximate_itn){
   # Assume median half life and usage rate
   hl <- netz::get_halflife(iso3c)
   ur <- netz::get_usage_rate(iso3c)
-
+  
   
   wmr_use <- read.csv("data/who/wmr_itns_distributed.csv") |>
     dplyr::filter(iso3c == {{iso3c}}) |>
