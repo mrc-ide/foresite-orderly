@@ -69,7 +69,8 @@ write.csv(new_net_introductions, address, row.names = FALSE)
 
 pyrethroid_resistance <- read.csv("data/pyrethroid_resistance/pyrethroid_resistance.csv")
 
-update_resistance_fit <- function(year, resistance, fix_year = 2020){
+# Fixed year chosen when most places had implemented IG2 (effective nets)
+update_resistance_fit <- function(year, resistance, fix_year = 2025){
   A <- min(resistance[year <= fix_year]) # fixed lower asymptote
   K <- resistance[year == fix_year]      # fixed upper asymptote
   fit <- minpack.lm::nlsLM(
@@ -88,7 +89,7 @@ pyrethroid_resistance <- pyrethroid_resistance |>
     pyrethroid_resistance = update_resistance_fit(
       year = year - 2000,
       resistance = pyrethroid_resistance_original,
-      fix_year = 2020 - 2000
+      fix_year = 2025 - 2000
     ),
     .by = c("iso3c", "X", "Y", "unit")
   )
