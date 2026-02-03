@@ -5,7 +5,7 @@ orderly::orderly_description(
   population size would return the observed age distribution (at equilibrium)."
 )
 
-orderly::orderly_parameters(
+p <- orderly::orderly_parameters(
   iso3c = NULL
 )
 

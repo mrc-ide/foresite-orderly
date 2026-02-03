@@ -4,7 +4,7 @@ orderly::orderly_description(
   long = "Calibrates baseline EIR to match prevalence"
 )
 
-orderly::orderly_parameters(
+p <- orderly::orderly_parameters(
   boundary = NULL,
   iso3c = NULL,
   admin_level = NULL,

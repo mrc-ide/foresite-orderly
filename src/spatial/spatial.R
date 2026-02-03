@@ -4,7 +4,7 @@ orderly::orderly_description(
   long = "Extracts pixel-level information from all available rasters"
 )
 
-orderly::orderly_parameters(
+p <- orderly::orderly_parameters(
   boundary = NULL,
   iso3c = NULL
 )

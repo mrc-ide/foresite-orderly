@@ -4,7 +4,7 @@ orderly::orderly_description(
   long = "Report to assess calibration performance"
 )
 
-orderly::orderly_parameters(
+p <- orderly::orderly_parameters(
   boundary = NULL,
   iso3c = NULL,
   admin_level = NULL,
