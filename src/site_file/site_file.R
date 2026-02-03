@@ -839,9 +839,7 @@ site_file$metadata <- list(
   iso3c = iso3c,
   boundary = boundary,
   admin_level = grouping,
-  version = version,
-  start_year = 2000,
-  end_year = 2026
+  version = version
 )
 
 site_file$sites = sites
