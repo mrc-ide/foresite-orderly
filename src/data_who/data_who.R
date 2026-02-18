@@ -1,6 +1,4 @@
 orderly::orderly_resource("data/")
-orderly::orderly_resource("README.md")
-
 
 orderly::orderly_artefact(
   description = "WMR cases, deaths and PAR",

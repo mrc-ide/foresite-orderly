@@ -39,12 +39,12 @@ check_params <- function(site){
     usage_timesteps <- site::calendar_to_timestep(
       year = sub_site$interventions$itn$use$year,
       day_of_year = sub_site$interventions$itn$use$usage_day_of_year,
-      start_year = sub_site$metadata$start_year
+      start_year = min(sub_site$interventions$itn$use$year)
     )
     distribution_timesteps <- site::calendar_to_timestep(
       year = sub_site$interventions$itn$implementation$year,
       day_of_year = sub_site$interventions$itn$implementation$distribution_day_of_year,
-      start_year = sub_site$metadata$start_year
+      start_year = min(sub_site$interventions$itn$implementation$year)
     )
     
     sub_site$interventions$itn$implementation$itn_input_dist <- netz::usage_to_model_distribution(

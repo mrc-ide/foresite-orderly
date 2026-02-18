@@ -1,6 +1,5 @@
 orderly::orderly_resource("data/")
 orderly::orderly_resource("download_worldpop.R")
-orderly::orderly_resource("README.md")
 
 isos <- list.files("data/")
 

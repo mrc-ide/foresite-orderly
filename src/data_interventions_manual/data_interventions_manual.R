@@ -5,11 +5,6 @@ orderly::orderly_description(
 )
 
 orderly::orderly_resource(
-  files = "README.md"
-)
-
-
-orderly::orderly_resource(
   files = "data/chemoprevention_coverage.csv"
 )
 
