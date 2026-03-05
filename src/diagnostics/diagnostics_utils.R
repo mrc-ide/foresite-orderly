@@ -16,7 +16,7 @@ collapse <- function(x, column, population, shape) {
     left_join(shape)
 }
 
-plot_urban_rural <- function(pop_dat){
+plot_urban_rural <- function(pop_dat, title){
   years <- sort(unique(pop_dat$year))
   year_shading <- site:::year_shading_data(
     years,
@@ -40,6 +40,6 @@ plot_urban_rural <- function(pop_dat){
       labels = scales::label_comma(),
       expand = c(0, 0)
     ) +
-    ggplot2::labs(x = "Year", y = "Population", title = "Urbanicity") +
+    ggplot2::labs(x = "Year", y = "Population", title = title) +
     site:::theme_site()
 }

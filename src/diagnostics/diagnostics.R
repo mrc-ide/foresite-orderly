@@ -46,8 +46,8 @@ orderly::orderly_dependency(
 
 
 orderly::orderly_artefact(
- description = "PDF diagnostic report",
- files = "diagnostic_report.pdf"
+  description = "PDF diagnostic report",
+  files = "diagnostic_report.pdf"
 )
 # ------------------------------------------------------------------------------
 #library(knitr)
@@ -65,10 +65,54 @@ source("diagnostics_utils.R")
 # Load inputs ------------------------------------------------------------------
 sitefile <- readRDS("site.rds")
 # Simplify spatial boundaries to increase mapping speed
-sitefile$shape <- lapply(sitefile$shape, sf::st_simplify, dTolerance = 1000)
+sitefile$shape <- lapply(sitefile$shape, sf::st_simplify, dTolerance = 3000)
 # Ordering for site reports
 sitefile$sites <- sitefile$sites |>
   dplyr::arrange(dplyr::across(names(sitefile$sites)))
+# ------------------------------------------------------------------------------
+
+# Cases and deaths -------------------------------------------------------------
+burden_pd <- site$cases_deaths
+
+cases_plot <- ggplot2::ggplot(
+  data = burden_pd,
+  ggplot2::aes(x = year, y = wmr_cases / 1e6, ymin = wmr_cases_l / 1e6, ymax = wmr_cases_u / 1e6)) +
+  ggplot2::geom_point() +
+  ggplot2::geom_errorbar(width = 0.5) +
+  ggplot2::xlab("Year") +
+  ggplot2::ylab("WMR cases\n(millions)") +
+  site::theme_site()
+
+incidence_plot <- ggplot2::ggplot(
+  data = burden_pd,
+  ggplot2::aes(x = year, y = wmr_incidence, ymin = wmr_incidence_l, ymax = wmr_incidence_u)) +
+  ggplot2::scale_y_continuous(labels = scales::label_comma()) +
+  ggplot2::geom_point() +
+  ggplot2::geom_errorbar(width = 0.5) +
+  ggplot2::xlab("Year") +
+  ggplot2::ylab("WMR clinical incidence\n(ppar, py)") +
+  site::theme_site()
+
+deaths_plot <- ggplot2::ggplot(
+  data = burden_pd,
+  ggplot2::aes(x = year, y = wmr_deaths / 1000, ymin = wmr_deaths_l / 1000, ymax = wmr_deaths_u / 1000)) +
+  ggplot2::geom_point() +
+  ggplot2::geom_errorbar(width = 0.5) +
+  ggplot2::xlab("Year") +
+  ggplot2::ylab("WMR deaths\n(thousands)") +
+  site::theme_site()
+
+mortality_plot <- ggplot2::ggplot(
+  data = burden_pd,
+  ggplot2::aes(x = year, y = wmr_mortality, ymin = wmr_mortality_l, ymax = wmr_mortality_u)) +
+  ggplot2::scale_y_continuous(labels = scales::label_comma()) +
+  ggplot2::geom_point() +
+  ggplot2::geom_errorbar(width = 0.5) +
+  ggplot2::xlab("Year") +
+  ggplot2::ylab("WMR mortality rate\n(ppar, py)") +
+  site::theme_site()
+
+burden <- ((cases_plot / incidence_plot) | (deaths_plot / mortality_plot)) + plot_annotation(title = "Burden")
 # ------------------------------------------------------------------------------
 
 # Maps -------------------------------------------------------------------------
@@ -86,7 +130,7 @@ pfpr_map <- ggplot(pfpr_dat) +
   coord_sf() +
   labs(title = "Pf parasite prevalence") +
   theme_void() +
-  theme(title = element_text(size = 18))
+  theme(title = element_text(size = 22))
 
 pvpr_dat <- collapse(
   sitefile$prevalence,
@@ -101,7 +145,7 @@ pvpr_map <- ggplot(pvpr_dat) +
   coord_sf() +
   labs(title = "Pv parasite prevalence") +
   theme_void() +
-  theme(title = element_text(size = 16))
+  theme(title = element_text(size = 22))
 
 
 tx_dat <- collapse(
@@ -117,7 +161,7 @@ tx_cov_map <- ggplot(tx_dat) +
   coord_sf() +
   labs(title = "Treatment coverage") +
   theme_void() +
-  theme(title = element_text(size = 14))
+  theme(title = element_text(size = 22))
 
 itn_dat <- collapse(
   sitefile$interventions$itn$use,
@@ -131,7 +175,8 @@ itn_use_map <- ggplot(itn_dat) +
   facet_wrap(~year, nrow = 1) +
   coord_sf() +
   labs(title = "ITN usage") +
-  theme_void()
+  theme_void() +
+  theme(title = element_text(size = 22))
 
 irs_dat <- collapse(
   sitefile$interventions$irs$implementation,
@@ -145,7 +190,8 @@ irs_cov_map <- ggplot(irs_dat) +
   facet_wrap(~year, nrow = 1) +
   coord_sf() +
   labs(title = "IRS coverage") +
-  theme_void()
+  theme_void() +
+  theme(title = element_text(size = 22))
 
 smc_dat <- collapse(
   filter(sitefile$interventions$smc$implementation, year < 2027),
@@ -159,7 +205,8 @@ smc_cov_map <- ggplot(smc_dat) +
   facet_wrap(~year, nrow = 1) +
   coord_sf() +
   labs(title = "SMC coverage") +
-  theme_void()
+  theme_void() +
+  theme(title = element_text(size = 22))
 
 lsm_dat <- collapse(
   sitefile$interventions$lsm$implementation,
@@ -173,7 +220,8 @@ lsm_cov_map <- ggplot(lsm_dat) +
   facet_wrap(~year, nrow = 1) +
   coord_sf() +
   labs(title = "LSM coverage") +
-  theme_void()
+  theme_void() +
+  theme(title = element_text(size = 22))
 
 r21_dat <- collapse(
   sitefile$interventions$vaccine$implementation,
@@ -187,7 +235,8 @@ r21_cov_map <- ggplot(r21_dat) +
   facet_wrap(~year, nrow = 1) +
   coord_sf() +
   labs(title = "R21 vaccine coverage") +
-  theme_void()
+  theme_void() +
+  theme(title = element_text(size = 22))
 
 rtss_cov_dat <- collapse(
   sitefile$interventions$vaccine$implementation,
@@ -201,7 +250,8 @@ rtss_cov_map <- ggplot(rtss_cov_dat) +
   facet_wrap(~year, nrow = 1) +
   coord_sf() +
   labs(title = "RTS,S vaccine coverage") +
-  theme_void()
+  theme_void() +
+  theme(title = element_text(size = 22))
 
 pmc_cov_dat <- collapse(
   sitefile$interventions$pmc$implementation,
@@ -215,25 +265,9 @@ pmc_cov_map <- ggplot(pmc_cov_dat) +
   facet_wrap(~year, nrow = 1) +
   coord_sf() +
   labs(title = "PMC coverage") +
-  theme_void()
+  theme_void() +
+  theme(title = element_text(size = 22))
 
-
-
-# Population -------------------------------------------------------------------
-
-pop_dat <- sitefile$population$population_by_age |>
-  summarise(
-    pop = sum(pop),
-    par = sum(par),
-    .by = c("year", "urban_rural", "age_lower", "age_upper")
-  ) |>
-  filter(year <= 2050)
-pop_plot <- site::plot_age_distribution_stacked(pop_dat, title = "Age distribution")
-urban_rural_plot <- plot_urban_rural(pop_dat)
-
-# ------------------------------------------------------------------------------
-
-# Combination ------------------------------------------------------------------
 maps <- pfpr_map /
   pvpr_map /
   tx_cov_map /
@@ -244,19 +278,59 @@ maps <- pfpr_map /
   rtss_cov_map /
   r21_cov_map /
   lsm_cov_map
+# ------------------------------------------------------------------------------
 
-pops <- pop_plot / urban_rural_plot
+# Population -------------------------------------------------------------------
 
+pop_dat <- sitefile$population$population_by_age |>
+  summarise(
+    pop = sum(pop),
+    par = sum(par),
+    .by = c("year", "urban_rural", "age_lower", "age_upper")
+  ) |>
+  filter(year <= 2050)
+pop_plot <- site::plot_age_distribution_stacked(pop_dat, title = "Population age distribution")
+urban_rural_plot <- plot_urban_rural(pop_dat, title = "Population urbanicity")
+
+pops <- (pop_plot / urban_rural_plot)
+# ------------------------------------------------------------------------------
+
+# Titles ------------------------------------------------------------------------
+title <- sitefile$sites$country[1]
+subtitle <- paste(
+  "Version: ", version, "\n",
+  "Admin level: ", admin_level, "\n",
+  "Urban rural split: ", urban_rural
+)
+
+title_p <- ggplot() +
+  annotate("text", x = 0.5, y = 0.75, label = title, size = 12, fontface = "bold") +
+  annotate("text", x = 0.5, y = 0.45, label = subtitle, size = 6, colour = "grey40") +
+  theme_void() +
+  xlim(0, 1) + ylim(0, 1)
+
+
+single_site_title_p <- ggplot() +
+  annotate("text", x = 0.5, y = 0.6, label = "Site reports", size = 12, fontface = "bold") +
+  theme_void() +
+  xlim(0, 1) + ylim(0, 1)
+
+# ------------------------------------------------------------------------------
+
+# Combination ------------------------------------------------------------------
+title_file <- tempfile(fileext = ".pdf")
+burden_file <- tempfile(fileext = ".pdf")
 maps_file <- tempfile(fileext = ".pdf")
 pops_file <- tempfile(fileext = ".pdf")
+single_site_title_file <- tempfile(fileext = ".pdf")
 
+ggsave(title_file, title_p, width = 8.27, height = 8.27)
+ggsave(burden_file, burden, height = 8, width = 15)
 ggsave(maps_file, maps, width = 40, height = 30)
 ggsave(pops_file, pops, width = 12, height = 8)
+ggsave(single_site_title_file, single_site_title_p, width = 8.27, height = 8.27)
 
-page_files <- c(maps_file, pops_file)
-
-sitefile$sites
-
+page_files <- c(title_file, burden_file, maps_file, pops_file, single_site_title_file)
 
 for(s in 1:nrow(sitefile$sites)){
   site <- site::subset_site(sitefile, sitefile$sites[s, ])
