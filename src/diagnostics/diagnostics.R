@@ -20,6 +20,10 @@ orderly::orderly_resource(
   files = c("diagnostics_utils.R")
 )
 
+orderly::orderly_resource(
+  files = c("malariaverse_wide.png")
+)
+
 # orderly::orderly_shared_resource("utils.R")
 
 orderly::orderly_dependency(
@@ -72,47 +76,7 @@ sitefile$sites <- sitefile$sites |>
 # ------------------------------------------------------------------------------
 
 # Cases and deaths -------------------------------------------------------------
-burden_pd <- site$cases_deaths
-
-cases_plot <- ggplot2::ggplot(
-  data = burden_pd,
-  ggplot2::aes(x = year, y = wmr_cases / 1e6, ymin = wmr_cases_l / 1e6, ymax = wmr_cases_u / 1e6)) +
-  ggplot2::geom_point() +
-  ggplot2::geom_errorbar(width = 0.5) +
-  ggplot2::xlab("Year") +
-  ggplot2::ylab("WMR cases\n(millions)") +
-  site::theme_site()
-
-incidence_plot <- ggplot2::ggplot(
-  data = burden_pd,
-  ggplot2::aes(x = year, y = wmr_incidence, ymin = wmr_incidence_l, ymax = wmr_incidence_u)) +
-  ggplot2::scale_y_continuous(labels = scales::label_comma()) +
-  ggplot2::geom_point() +
-  ggplot2::geom_errorbar(width = 0.5) +
-  ggplot2::xlab("Year") +
-  ggplot2::ylab("WMR clinical incidence\n(ppar, py)") +
-  site::theme_site()
-
-deaths_plot <- ggplot2::ggplot(
-  data = burden_pd,
-  ggplot2::aes(x = year, y = wmr_deaths / 1000, ymin = wmr_deaths_l / 1000, ymax = wmr_deaths_u / 1000)) +
-  ggplot2::geom_point() +
-  ggplot2::geom_errorbar(width = 0.5) +
-  ggplot2::xlab("Year") +
-  ggplot2::ylab("WMR deaths\n(thousands)") +
-  site::theme_site()
-
-mortality_plot <- ggplot2::ggplot(
-  data = burden_pd,
-  ggplot2::aes(x = year, y = wmr_mortality, ymin = wmr_mortality_l, ymax = wmr_mortality_u)) +
-  ggplot2::scale_y_continuous(labels = scales::label_comma()) +
-  ggplot2::geom_point() +
-  ggplot2::geom_errorbar(width = 0.5) +
-  ggplot2::xlab("Year") +
-  ggplot2::ylab("WMR mortality rate\n(ppar, py)") +
-  site::theme_site()
-
-burden <- ((cases_plot / incidence_plot) | (deaths_plot / mortality_plot)) + plot_annotation(title = "Burden")
+burden <- plot_burden(site$cases_deaths, "Burden")
 # ------------------------------------------------------------------------------
 
 # Maps -------------------------------------------------------------------------
@@ -125,7 +89,7 @@ pfpr_dat <- collapse(
 )
 pfpr_map <- ggplot(pfpr_dat) +
   geom_sf(aes(geometry = geom, fill = pfpr)) +
-  scale_fill_viridis_c() +
+  scale_fill_viridis_c(name = "") +
   facet_wrap(~year, nrow = 1) +
   coord_sf() +
   labs(title = "Pf parasite prevalence") +
@@ -140,7 +104,7 @@ pvpr_dat <- collapse(
 )
 pvpr_map <- ggplot(pvpr_dat) +
   geom_sf(aes(geometry = geom, fill = pvpr)) +
-  scale_fill_viridis_c() +
+  scale_fill_viridis_c(name = "") +
   facet_wrap(~year, nrow = 1) +
   coord_sf() +
   labs(title = "Pv parasite prevalence") +
@@ -156,7 +120,7 @@ tx_dat <- collapse(
 )
 tx_cov_map <- ggplot(tx_dat) +
   geom_sf(aes(geometry = geom, fill = tx_cov)) +
-  scale_fill_viridis_c(option = "C", limits = c(0, 1)) +
+  scale_fill_viridis_c(option = "C", limits = c(0, 1), name = "") +
   facet_wrap(~year, nrow = 1) +
   coord_sf() +
   labs(title = "Treatment coverage") +
@@ -171,7 +135,7 @@ itn_dat <- collapse(
 )
 itn_use_map <- ggplot(itn_dat) +
   geom_sf(aes(geometry = geom, fill = itn_use)) +
-  scale_fill_viridis_c(option = "C", limits = c(0, 1)) +
+  scale_fill_viridis_c(option = "C", limits = c(0, 1), name = "") +
   facet_wrap(~year, nrow = 1) +
   coord_sf() +
   labs(title = "ITN usage") +
@@ -186,7 +150,7 @@ irs_dat <- collapse(
 )
 irs_cov_map <- ggplot(irs_dat) +
   geom_sf(aes(geometry = geom, fill = irs_cov)) +
-  scale_fill_viridis_c(option = "C", limits = c(0, 1)) +
+  scale_fill_viridis_c(option = "C", limits = c(0, 1), name = "") +
   facet_wrap(~year, nrow = 1) +
   coord_sf() +
   labs(title = "IRS coverage") +
@@ -201,7 +165,7 @@ smc_dat <- collapse(
 )
 smc_cov_map <- ggplot(smc_dat) +
   geom_sf(aes(geometry = geom, fill = smc_cov)) +
-  scale_fill_viridis_c(option = "C", limits = c(0, 1)) +
+  scale_fill_viridis_c(option = "C", limits = c(0, 1), name = "") +
   facet_wrap(~year, nrow = 1) +
   coord_sf() +
   labs(title = "SMC coverage") +
@@ -216,7 +180,7 @@ lsm_dat <- collapse(
 )
 lsm_cov_map <- ggplot(lsm_dat) +
   geom_sf(aes(geometry = geom, fill = lsm_cov)) +
-  scale_fill_viridis_c(option = "C", limits = c(0, 1)) +
+  scale_fill_viridis_c(option = "C", limits = c(0, 1), name = "") +
   facet_wrap(~year, nrow = 1) +
   coord_sf() +
   labs(title = "LSM coverage") +
@@ -231,7 +195,7 @@ r21_dat <- collapse(
 )
 r21_cov_map <- ggplot(r21_dat) +
   geom_sf(aes(geometry = geom, fill = r21_primary_cov)) +
-  scale_fill_viridis_c(option = "C", limits = c(0, 1)) +
+  scale_fill_viridis_c(option = "C", limits = c(0, 1), name = "") +
   facet_wrap(~year, nrow = 1) +
   coord_sf() +
   labs(title = "R21 vaccine coverage") +
@@ -246,7 +210,7 @@ rtss_cov_dat <- collapse(
 )
 rtss_cov_map <- ggplot(rtss_cov_dat) +
   geom_sf(aes(geometry = geom, fill = rtss_primary_cov)) +
-  scale_fill_viridis_c(option = "C", limits = c(0, 1)) +
+  scale_fill_viridis_c(option = "C", limits = c(0, 1), name = "") +
   facet_wrap(~year, nrow = 1) +
   coord_sf() +
   labs(title = "RTS,S vaccine coverage") +
@@ -261,7 +225,7 @@ pmc_cov_dat <- collapse(
 )
 pmc_cov_map <- ggplot(pmc_cov_dat) +
   geom_sf(aes(geometry = geom, fill = pmc_cov)) +
-  scale_fill_viridis_c(option = "C", limits = c(0, 1)) +
+  scale_fill_viridis_c(option = "C", limits = c(0, 1), name = "") +
   facet_wrap(~year, nrow = 1) +
   coord_sf() +
   labs(title = "PMC coverage") +
@@ -303,15 +267,19 @@ subtitle <- paste(
   "Urban rural split: ", urban_rural
 )
 
+logo <- png::readPNG("malariaverse_wide.png")
+logo_grob <- grid::rasterGrob(logo, interpolate = TRUE)
+
 title_p <- ggplot() +
-  annotate("text", x = 0.5, y = 0.75, label = title, size = 12, fontface = "bold") +
-  annotate("text", x = 0.5, y = 0.45, label = subtitle, size = 6, colour = "grey40") +
-  theme_void() +
+  annotate("text", x = 0.5, y = 0.75, label = title, size = 12, fontface = "bold", colour = "navy") +
+  annotation_custom(logo_grob, xmin = 0.05, xmax = 0.95, ymin = 0.05, ymax = 0.35) +
+  annotate("text", x = 0.5, y = 0.5, label = subtitle, size = 6, colour = "navy", alpha = 0.6) +
+  theme_void()  +
   xlim(0, 1) + ylim(0, 1)
 
 
 single_site_title_p <- ggplot() +
-  annotate("text", x = 0.5, y = 0.6, label = "Site reports", size = 12, fontface = "bold") +
+  annotate("text", x = 0.5, y = 0.6, label = "Site reports", size = 12, fontface = "bold", colour = "navy") +
   theme_void() +
   xlim(0, 1) + ylim(0, 1)
 
