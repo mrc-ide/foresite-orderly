@@ -50,10 +50,12 @@ calibrate_site <- function(
     prevalence <- sub_site$prevalence$pfpr 
     summary_function <- summary_function_pf
     scaler <- 0.215
+    prev_age <- c(2, 10) * 365
   } else {
     prevalence <- sub_site$prevalence$pvpr 
     summary_function <- summary_function_pv
     scaler <- 0.003
+    prev_age <- c(1, 100) * 365
   }
   target <- prevalence[sub_site$prevalence$year %in% 2010:2024]
   
@@ -82,7 +84,8 @@ calibrate_site <- function(
     ),
     parasite = parasite,
     start_year = 2000 - calibration_burnin,
-    end_year = 2026
+    end_year = 2026,
+    prevalence = prev_age
   )
   
   calibration <- x$eir
@@ -124,11 +127,12 @@ calibrate_site <- function(
       parasite = parasite,
       start_year = 2000 - diagnostic_burnin,
       end_year = 2026,
-      eir = calibration
+      eir = calibration,
+      prevalence = prev_age
     )
     
     s <- malariasimulation::run_simulation(timesteps = p$timesteps, parameters = p)
-    browser()
+    
     prev <- s |>
       postie::drop_burnin(
         burnin = 365 * diagnostic_burnin
@@ -141,6 +145,8 @@ calibrate_site <- function(
           -c("eir")
         )
       )
+    index <- grepl("prevalence", colnames(prev))
+    colnames(prev)[index] <- "lm_prevalence"
     
     epi <- s |>
       postie::drop_burnin(

@@ -79,8 +79,6 @@ if(p$calibration){
 diagnostic_prev <- NULL
 if(p$calibration){
   diagnostic_prev <- readRDS("diagnostic_prev.rds")
-  index <- grepl("prevalence", colnames(diagnostic_prev))
-  colnames(diagnostic_prev)[index] <- "lm_prevalence"
 }
 # ------------------------------------------------------------------------------
 
