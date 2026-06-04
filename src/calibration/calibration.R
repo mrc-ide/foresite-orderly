@@ -70,7 +70,7 @@ eirs <- site$eir
 eirs <- split(eirs, 1:nrow(eirs))
 
 if(parallel){
-  cores <- Sys.getenv("CCP_NUMCPUS")
+  cores <- parallel::detectCores()
   cluster <- parallel::makeCluster(as.integer(cores))
   invisible(parallel::clusterCall(cluster, ".libPaths", .libPaths()))
   parallel::clusterCall(cluster, function() {

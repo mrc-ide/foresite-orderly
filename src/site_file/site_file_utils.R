@@ -36,31 +36,53 @@ check_params <- function(site){
     x <- eirs[[i]]
     sub_site <- site::subset_site(site, x)
     
-    usage_timesteps <- site::calendar_to_timestep(
-      year = sub_site$interventions$itn$use$year,
-      day_of_year = sub_site$interventions$itn$use$usage_day_of_year,
-      start_year = min(sub_site$interventions$itn$use$year)
-    )
-    distribution_timesteps <- site::calendar_to_timestep(
-      year = sub_site$interventions$itn$implementation$year,
-      day_of_year = sub_site$interventions$itn$implementation$distribution_day_of_year,
-      start_year = min(sub_site$interventions$itn$implementation$year)
-    )
+    # usage_timesteps <- site::calendar_to_timestep(
+    #   year = sub_site$interventions$itn$use$year,
+    #   day_of_year = sub_site$interventions$itn$use$usage_day_of_year,
+    #   start_year = min(sub_site$interventions$itn$use$year)
+    # )
+    # distribution_timesteps <- site::calendar_to_timestep(
+    #   year = sub_site$interventions$itn$implementation$year,
+    #   day_of_year = sub_site$interventions$itn$implementation$distribution_day_of_year,
+    #   start_year = min(sub_site$interventions$itn$implementation$year)
+    # )
+    # 
+    # sub_site$interventions$itn$implementation$itn_input_dist <- netz::usage_to_model_distribution(
+    #   usage = sub_site$interventions$itn$use$itn_use,
+    #   usage_timesteps = usage_timesteps,
+    #   distribution_timesteps = distribution_timesteps,
+    #   distribution_lower = sub_site$interventions$itn$implementation$distribution_lower,
+    #   distribution_upper = sub_site$interventions$itn$implementation$distribution_upper,
+    #   net_loss_function = netz::net_loss_map,
+    #   half_life = sub_site$interventions$itn$retention_half_life
+    # )
     
-    sub_site$interventions$itn$implementation$itn_input_dist <- netz::usage_to_model_distribution(
+    sub_site$interventions$itn$implementation$itn_input_dist <- site::site_usage_to_model_distribution(
       usage = sub_site$interventions$itn$use$itn_use,
-      usage_timesteps = usage_timesteps,
-      distribution_timesteps = distribution_timesteps,
+      usage_year = sub_site$interventions$itn$use$year,
+      usage_day_of_year = sub_site$interventions$itn$use$usage_day_of_year,
+      distribution_year = sub_site$interventions$itn$implementation$year,
+      distribution_day_of_year = sub_site$interventions$itn$implementation$distribution_day_of_year,
       distribution_lower = sub_site$interventions$itn$implementation$distribution_lower,
       distribution_upper = sub_site$interventions$itn$implementation$distribution_upper,
       net_loss_function = netz::net_loss_map,
       half_life = sub_site$interventions$itn$retention_half_life
-    )
+    ) 
     
-    sub_site$interventions$itn$use$expected_use <- netz::model_distribution_to_usage(
+    # sub_site$interventions$itn$use$expected_use <- netz::model_distribution_to_usage(
+    #   distribution = sub_site$interventions$itn$implementation$itn_input_dist,
+    #   usage_timesteps = usage_timesteps,
+    #   distribution_timesteps = distribution_timesteps,
+    #   net_loss_function = netz::net_loss_map,
+    #   half_life = sub_site$interventions$itn$retention_half_life
+    # )
+    
+    sub_site$interventions$itn$use$expected_use <- site::site_model_distribution_to_usage(
       distribution = sub_site$interventions$itn$implementation$itn_input_dist,
-      usage_timesteps = usage_timesteps,
-      distribution_timesteps = distribution_timesteps,
+      usage_year = sub_site$interventions$itn$use$year,
+      usage_day_of_year = sub_site$interventions$itn$use$usage_day_of_year,
+      distribution_year = sub_site$interventions$itn$implementation$year,
+      distribution_day_of_year = sub_site$interventions$itn$implementation$distribution_day_of_year,
       net_loss_function = netz::net_loss_map,
       half_life = sub_site$interventions$itn$retention_half_life
     )

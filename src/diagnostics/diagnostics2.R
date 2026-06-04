@@ -9,7 +9,8 @@ p <- orderly::orderly_parameters(
   iso3c = NULL,
   admin_level = NULL,
   urban_rural = NULL,
-  version = NULL
+  version = NULL,
+  calibration = NULL
 )
 
 orderly::orderly_shared_resource("utils.R")
@@ -18,16 +19,27 @@ orderly::orderly_resource(
   files = c("malariaverse_wide.png")
 )
 
-orderly::orderly_dependency(
-  name = "site_file",
-  query = "latest(parameter:boundary == this:boundary && parameter:iso3c == this:iso3c && parameter:admin_level == this:admin_level && parameter:urban_rural == this:urban_rural && parameter:version == this:version)",
-  files = c("site.rds")
-)
+if(!p$calibration){
+  orderly::orderly_dependency(
+    name = "site_file",
+    query = "latest(parameter:boundary == this:boundary && parameter:iso3c == this:iso3c && parameter:admin_level == this:admin_level && parameter:urban_rural == this:urban_rural && parameter:version == this:version)",
+    files = c("site.rds")
+  )
+}
 
 orderly::orderly_artefact(
   description = "PDF diagnostic report",
   files = "diagnostic_report.pdf"
 )
+
+if(p$calibration){
+  orderly::orderly_dependency(
+    name = "calibration",
+    query = "latest(parameter:boundary == this:boundary && parameter:iso3c == this:iso3c && parameter:admin_level == this:admin_level && parameter:urban_rural == this:urban_rural && parameter:version == this:version)",
+    files = c("calibrated_scaled_site.rds", "diagnostic_prev.rds", "national_epi.rds")
+  )
+}
+
 # ------------------------------------------------------------------------------
 library(dplyr)
 library(tidyr)
@@ -39,16 +51,41 @@ source("utils.R")
 
 
 # Load inputs ------------------------------------------------------------------
-sitefile <- readRDS("site.rds")
+if(p$calibration){
+  sitefile <- readRDS("calibrated_scaled_site.rds")
+} else {
+  sitefile <- readRDS("site.rds")
+}
 # Simplify spatial boundaries to increase mapping speed
 sitefile$shape <- lapply(sitefile$shape, sf::st_simplify, dTolerance = 3000)
 # Ordering for site reports
 sitefile$sites <- sitefile$sites |>
   dplyr::arrange(dplyr::across(names(sitefile$sites)))
+
+national_epi <- NULL
+if(p$calibration){
+  scaler <- sitefile$bias_correction
+  cs <- mean(scaler$case_bias_correction[scaler$year %in% 2010:2024])
+  ds <- mean(scaler$death_bias_correction[scaler$year %in% 2010:2024])
+  national_epi <- readRDS("national_epi.rds") |>
+    dplyr::mutate(
+      rescaled_cases = cases * cs,
+      rescaled_clinical = clinical * cs,
+      rescaled_deaths = deaths * ds,
+      rescaled_mortality = mortality * ds
+    )
+}
+
+diagnostic_prev <- NULL
+if(p$calibration){
+  diagnostic_prev <- readRDS("diagnostic_prev.rds")
+  index <- grepl("prevalence", colnames(diagnostic_prev))
+  colnames(diagnostic_prev)[index] <- "lm_prevalence"
+}
 # ------------------------------------------------------------------------------
 
 # Cases and deaths -------------------------------------------------------------
-burden <- plot_burden(site$cases_deaths, "Burden")
+burden <- plot_burden(sitefile$cases_deaths, "Burden", national_epi)
 # ------------------------------------------------------------------------------
 
 # Maps -------------------------------------------------------------------------
@@ -174,9 +211,10 @@ blood_disorder_map <- plot_blood_disorders(sitefile$blood_disorders, sitefile$po
 # Titles -----------------------------------------------------------------------
 title <- sitefile$sites$country[1]
 subtitle <- paste(
-  "Version: ", version, "\n",
-  "Admin level: ", admin_level, "\n",
-  "Urban rural split: ", urban_rural
+  "Version: ", p$version, "\n",
+  "Admin level: ", p$admin_level, "\n",
+  "Urban rural split: ", p$urban_rural, "\n",
+  "Calibrated: ", p$calibration
 )
 
 logo <- png::readPNG("malariaverse_wide.png")
@@ -232,7 +270,7 @@ for(s in 1:nrow(sitefile$sites)){
       net_loss_function = netz::net_loss_map,
       half_life = site$interventions$itn$retention_half_life
     )
-  diag <- site::plot_site_diagnostic(site)
+  diag <- plot_calibrated_site_diagnostic(site, diagnostic_prev = diagnostic_prev)
   site_file <- tempfile(fileext = ".pdf")
   ggsave(site_file, diag, height = 10, width = 12, scale = 1.2)
   page_files <- c(page_files, site_file)
