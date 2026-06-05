@@ -49,12 +49,10 @@ calibrate_site <- function(
   if(parasite == "falciparum"){
     prevalence <- sub_site$prevalence$pfpr 
     summary_function <- summary_function_pf
-    scaler <- 0.215
     prev_age <- c(2, 10) * 365
   } else {
     prevalence <- sub_site$prevalence$pvpr 
     summary_function <- summary_function_pv
-    scaler <- 0.003
     prev_age <- c(1, 100) * 365
   }
   target <- prevalence[sub_site$prevalence$year %in% 2010:2024]
@@ -147,20 +145,12 @@ calibrate_site <- function(
       )
     index <- grepl("prevalence", colnames(prev))
     colnames(prev)[index] <- "lm_prevalence"
-    
-    if(parasite == "vivax"){
-      s$n_inc_severe_0_1824 <- NA
-      s$n_inc_severe_1825_5474 <- NA
-      s$n_inc_severe_5475_36499 <- NA
-    }
-    
+
     epi <- s |>
       postie::drop_burnin(
         burnin = 365 * diagnostic_burnin
       ) |>
-      postie::get_rates(
-        scaler = scaler
-      ) |>
+      postie::get_rates() |>
       dplyr::bind_cols(
         dplyr::select(
           sub_site$eir,
