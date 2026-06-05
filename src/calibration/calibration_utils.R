@@ -148,6 +148,12 @@ calibrate_site <- function(
     index <- grepl("prevalence", colnames(prev))
     colnames(prev)[index] <- "lm_prevalence"
     
+    if(parasite == "vivax"){
+      s$n_inc_severe_0_1824 <- NA
+      s$n_inc_severe_1825_5474 <- NA
+      s$n_inc_severe_5475_36499 <- NA
+    }
+    
     epi <- s |>
       postie::drop_burnin(
         burnin = 365 * diagnostic_burnin
