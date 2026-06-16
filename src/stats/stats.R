@@ -10,6 +10,11 @@ orderly::orderly_artefact(
   description = "Calibration summary plot",
   files = "calibration_summary.png"
 )
+
+orderly::orderly_artefact(
+  description = "Calibration summary unadjusted plot",
+  files = "calibration_summary_unadjusted.png"
+)
 # ------------------------------------------------------------------------------
 
 # Extract outputs --------------------------------------------------------------
@@ -107,6 +112,18 @@ incidence_fit <- ggplot2::ggplot(epi[epi$year >= 2010 & epi$year <= 2024& epi$is
                 title = "Model v WHO incidence\n(2010 - 2024)") +
   site::theme_site(aspect.ratio = 1)
 
+incidence_fit_unadjusted <- ggplot2::ggplot(epi[epi$year >= 2010 & epi$year <= 2024& epi$iso3c != "GNB", ],
+                                 ggplot2::aes(x = wmr_incidence, y = clinical,
+                                              xmin = wmr_incidence_l, xmax = wmr_incidence_u)) +
+  ggplot2::geom_linerange(alpha = 0.2, colour = navy) +
+  ggplot2::geom_point(alpha = 0.2, size = 1.6, colour = navy, stroke = 0) +
+  ggplot2::geom_abline(intercept = 0, slope = 1,
+                       linetype = 2, colour = accent, linewidth = 0.8) +
+  ggplot2::labs(x = "WHO incidence estimate",
+                y = "Calibrated model incidence",
+                title = "Model v WHO incidence\n(2010 - 2024)") +
+  site::theme_site(aspect.ratio = 1)
+
 # 3. Mortality ----------------------------------------------------------------
 mortality_fit <- ggplot2::ggplot(epi[epi$year >= 2010 & epi$year <= 2024 & epi$iso3c != "GNB", ],
                 ggplot2::aes(x = wmr_mortality, y = rescaled_mortality,
@@ -122,7 +139,23 @@ mortality_fit <- ggplot2::ggplot(epi[epi$year >= 2010 & epi$year <= 2024 & epi$i
                 title = "Model v WHO mortality\n(2010 - 2024)") +
   site::theme_site(aspect.ratio = 1)
 
+mortality_fit_unadjusted <- ggplot2::ggplot(epi[epi$year >= 2010 & epi$year <= 2024 & epi$iso3c != "GNB", ],
+                                 ggplot2::aes(x = wmr_mortality, y = mortality,
+                                              xmin = wmr_mortality_l, xmax = wmr_mortality_u)) +
+  ggplot2::geom_linerange(alpha = 0.2, colour = navy) +
+  ggplot2::geom_point(alpha = 0.2, size = 1.6, colour = navy, stroke = 0) +
+  ggplot2::geom_abline(intercept = 0, slope = 1,
+                       linetype = 2, colour = accent, linewidth = 0.8) +
+  ggplot2::scale_x_continuous(breaks = seq(0, 1, 0.25)) +
+  ggplot2::scale_y_continuous(breaks = seq(0, 1, 0.25)) +
+  ggplot2::labs(x = "WHO mortality estimate",
+                y = "Calibrated model mortality",
+                title = "Model v WHO mortality\n(2010 - 2024)") +
+  site::theme_site(aspect.ratio = 1)
+
 library(patchwork)
 calibration_summary <- prevalence_fit + incidence_fit + mortality_fit
+calibration_summary_unadjusted <- prevalence_fit + incidence_fit_unadjusted + mortality_fit_unadjusted
 
 ggplot2::ggsave("calibration_summary.png", calibration_summary, height = 5, width = 12)
+ggplot2::ggsave("calibration_summary_unadjusted.png", calibration_summary_unadjusted, height = 5, width = 12)
