@@ -15,7 +15,6 @@ malaria_endemic_isos <- c(
   "PRK", "IND", "IDN", "MMR", "NPL", "LKA", "THA", "TLS", "KHM", 
   "CHN", "LAO", "MYS", "PNG", "PHL", "KOR", "SLB", "VUT", "VNM"
 )
-malaria_endemic_isos <- c("UGA", "BGD")
 # ------------------------------------------------------------------------------
 
 # Set up cluster ---------------------------------------------------------------
@@ -70,6 +69,11 @@ for(iso in malaria_endemic_isos){
     resources = hipercow::hipercow_resources(cores = 16)
   )
 }
+d <- hipercow::hipercow_bundle_create(
+  ids = unlist(demog_task_ids),
+  name = paste0("Demography_", format(Sys.time(), "%Y-%m-%d_%H-%M-%S"))
+)
+table(hipercow::hipercow_bundle_status(d))
 
 orderly::orderly_run(
   name = "data_map",
@@ -98,10 +102,9 @@ orderly::orderly_run(
 # Run options ------------------------------------------------------------------
 boundary <- "GADM_4.1.0" 
 isos <- list.files(paste0("src/data_boundaries/boundaries/", boundary))
-isos <- c("GHA", "BGD")
 admin <- 1
 urban_rural <- TRUE
-name <- "site-2601_testing"
+name <- "malariaverse"
 formatted_date <- format(Sys.Date(), "%m_%Y")
 version <- paste(name, formatted_date, sep = "_")
 # ------------------------------------------------------------------------------
@@ -124,6 +127,7 @@ n_sites <- sapply(boundary_files, function(x, admin, urban_rural){
 names(n_sites) <- isos
 
 # Boundaries
+## Note - do NOT orderly_cleanup "boundaries/"
 orderly::orderly_run(
   name = "data_boundaries",
   parameters = list(
@@ -228,3 +232,14 @@ for(iso in isos){
     echo = FALSE
   )
 }
+
+orderly::orderly_run(
+  name = "stats",
+  parameters = list(
+    boundary = boundary,
+    admin_level = admin,
+    urban_rural = urban_rural,
+    version = version
+  ),
+  echo = FALSE
+)

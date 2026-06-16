@@ -33,7 +33,7 @@ demography_split <- dplyr::group_split(demography, iso3c, year)
 
 source("adjust_rates.R")
 
-cores <- Sys.getenv("CCP_NUMCPUS")
+cores <- parallel::detectCores()
 
 cluster <- parallel::makeCluster(as.integer(cores))
 
