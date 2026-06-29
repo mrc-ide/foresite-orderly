@@ -1,7 +1,7 @@
 # Adds to rasters associated with years, such that rasters for all_years are
 # present. Missing years before data are given empty values (NA), missing years
 # after data are given replicates of the last raster
-pad_raster <- function(raster, all_years, forward_empty = FALSE){
+pad_raster <- function(raster, all_years, forward_empty = FALSE, back_empty = TRUE){
   years <- as.integer(names(raster))
   
   missing <- setdiff(all_years, years)
@@ -12,7 +12,9 @@ pad_raster <- function(raster, all_years, forward_empty = FALSE){
   missing_pre <- missing[missing < min(years)]
   if(length(missing_pre) > 0){
     empty <- raster[[1]]
-    terra::values(empty) <- NA
+    if(back_empty){
+      terra::values(empty) <- NA
+    }
     pre_padding <- replicate(length(missing_pre), empty, simplify = FALSE) |>
       terra::rast()
     names(pre_padding) <- missing_pre

@@ -11,11 +11,12 @@ summary_function_pf <- function(x){
       prevalence_2_10 = mean(lm_prevalence_2_10),
       .by = "year"
     ) |>
-    dplyr::filter(year %in% 2014:2018) |>
+    dplyr::filter(year %in% 2010:2024) |>
     dplyr::pull(prevalence_2_10)
   
   return(prev)
 }
+
 summary_function_pv <- function(x){
   prev <- x |>
     postie::drop_burnin(
@@ -27,7 +28,7 @@ summary_function_pv <- function(x){
       prevalence_1_100 = mean(lm_prevalence_1_100),
       .by = "year"
     ) |>
-    dplyr::filter(year %in% 2014:2018) |>
+    dplyr::filter(year %in% 2010:2024) |>
     dplyr::pull(prevalence_1_100)
   return(prev)
 }
@@ -39,34 +40,50 @@ calibrate_site <- function(
     diagnostic_burnin,
     max_attempts
 ){
+  # browser()
   print(x)
   sub_site <- site::subset_site(site, x)
-  species <- x$sp
+  parasite <- ifelse(sub_site$eir$sp == "pf", "falciparum", "vivax")
   
   # Define the target prevalence to fit to
-  if(species == "pf"){
+  if(parasite == "falciparum"){
     prevalence <- sub_site$prevalence$pfpr 
     summary_function <- summary_function_pf
-    scaler <- 0.215
+    prev_age <- c(2, 10) * 365
   } else {
     prevalence <- sub_site$prevalence$pvpr 
     summary_function <- summary_function_pv
-    scaler <- 0.003
+    prev_age <- c(1, 100) * 365
   }
-  target <- prevalence[sub_site$prevalence$year %in% 2014:2018]
+  target <- prevalence[sub_site$prevalence$year %in% 2010:2024]
+  
+  # Add ITN input dist
+  sub_site$interventions$itn$implementation$itn_input_dist <- site::site_usage_to_model_distribution(
+    usage = sub_site$interventions$itn$use$itn_use,
+    usage_year = sub_site$interventions$itn$use$year,
+    usage_day_of_year = sub_site$interventions$itn$use$usage_day_of_year,
+    distribution_year = sub_site$interventions$itn$implementation$year,
+    distribution_day_of_year = sub_site$interventions$itn$implementation$distribution_day_of_year,
+    distribution_lower = sub_site$interventions$itn$implementation$distribution_lower,
+    distribution_upper = sub_site$interventions$itn$implementation$distribution_upper,
+    net_loss_function = netz::net_loss_map,
+    half_life = sub_site$interventions$itn$retention_half_life
+  ) 
   
   # Set parameters
   calibration_burnin <- 5
   p <- site::site_parameters(
     interventions = sub_site$interventions,
     demography = sub_site$demography,
-    vectors = sub_site$vectors$vector_species,
-    seasonality = sub_site$seasonality$seasonality_parameters,
+    vectors = sub_site$vectors,
+    seasonality = sub_site$seasonality,
     overrides = list(
       human_population = human_population[1]
     ),
-    species  = species,
-    burnin = calibration_burnin
+    parasite = parasite,
+    start_year = 2000 - calibration_burnin,
+    end_year = 2026,
+    prevalence = prev_age
   )
   
   calibration <- x$eir
@@ -78,7 +95,7 @@ calibrate_site <- function(
           target = target,
           summary_function = summary_function,
           eq_prevalence = min(max(prevalence), 0.85),
-          eq_ft = sub_site$interventions$tx_cov[1],
+          eq_ft = sub_site$interventions$treatment$implementation$tx_cov[1],
           human_population = human_population,
           max_attempts = max_attempts,
           eir_limits = c(0.00001, 1500)
@@ -100,14 +117,16 @@ calibrate_site <- function(
     p <- site::site_parameters(
       interventions = sub_site$interventions,
       demography = sub_site$demography,
-      vectors = sub_site$vectors$vector_species,
-      seasonality = sub_site$seasonality$seasonality_parameters,
+      vectors = sub_site$vectors,
+      seasonality = sub_site$seasonality,
       overrides = list(
         human_population = 50000
       ),
-      species  = species,
-      burnin = diagnostic_burnin,
-      eir = calibration
+      parasite = parasite,
+      start_year = 2000 - diagnostic_burnin,
+      end_year = 2026,
+      eir = calibration,
+      prevalence = prev_age
     )
     
     s <- malariasimulation::run_simulation(timesteps = p$timesteps, parameters = p)
@@ -123,19 +142,15 @@ calibrate_site <- function(
           sub_site$eir,
           -c("eir")
         )
-      ) |>
-      dplyr::rename(
-        prevalence_2_10 = lm_prevalence_2_10,
-        prevalence_1_100 = lm_prevalence_1_100
       )
-    
+    index <- grepl("prevalence", colnames(prev))
+    colnames(prev)[index] <- "lm_prevalence"
+
     epi <- s |>
       postie::drop_burnin(
         burnin = 365 * diagnostic_burnin
       ) |>
-      postie::get_rates(
-        scaler = scaler
-      ) |>
+      postie::get_rates() |>
       dplyr::bind_cols(
         dplyr::select(
           sub_site$eir,

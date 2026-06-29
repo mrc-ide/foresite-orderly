@@ -13,16 +13,23 @@ if(add_new_location){
     url = "https://packit.dide.ic.ac.uk/malariaverse-sitefiles"
   )
 }
+
+orderly::orderly_location_add_packit(
+  name       = "packit.dide2",
+  url = "https://malariaverse-sitefiles.packit.dide.ic.ac.uk/"
+)
+
+
 # ------------------------------------------------------------------------------
 
 # Pushing ----------------------------------------------------------------------
 # Define the parameters to search for
 parameters = list(
   boundary = "GADM_4.1.0",
-  iso3c = "ETH",
-  admin_level = 3,
-  urban_rural = FALSE,
-  version = "ETH_admin_3_request_08_2025"
+  iso3c = "PNG",
+  admin_level = 1,
+  urban_rural = TRUE,
+  version = "malariaverse_06_2026"
 )
 
 condition_string <- paste0(
@@ -45,7 +52,7 @@ packet_id <- orderly::orderly_search(
 # that is a lot of large (raster) files.
 orderly::orderly_location_push(
   expr = packet_id,
-  location = "packit.dide",
+  location = "packit.dide2",
   root = NULL,
   dry_run = FALSE
 )

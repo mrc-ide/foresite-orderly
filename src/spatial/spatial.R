@@ -4,7 +4,7 @@ orderly::orderly_description(
   long = "Extracts pixel-level information from all available rasters"
 )
 
-orderly::orderly_parameters(
+p <- orderly::orderly_parameters(
   boundary = NULL,
   iso3c = NULL
 )
@@ -52,7 +52,11 @@ orderly::orderly_dependency(
 orderly::orderly_dependency(
   name = "data_who",
   query = "latest()",
-  files = c("data/who/" = "data/")
+  files = c(
+    "data/who/wmr_cases_deaths.csv" = "wmr_cases_deaths.csv",
+    "data/who/wmr_itns_distributed.csv" = "wmr_itns_distributed.csv",
+    "data/who/wmr_irs_people_protected.csv" = "wmr_irs_people_protected.csv"
+  )
 )
 
 orderly::orderly_dependency(
@@ -74,7 +78,7 @@ orderly::orderly_artefact(
 # ------------------------------------------------------------------------------
 
 # Fixed inputs -----------------------------------------------------------------
-years <- 2000:2024
+years <- 2000:2026
 source("spatial_utils.R")
 # ------------------------------------------------------------------------------
 
@@ -90,9 +94,11 @@ for(level in admin_levels){
     level,
     ".RDS"
   )
-  shape <- readRDS(shape_address)
-  if(nrow(shape) > 0){
-    break
+  if(file.exists(shape_address)){
+    shape <- readRDS(shape_address)
+    if(nrow(shape) > 0){
+      break
+    }
   }
 }
 
@@ -136,9 +142,9 @@ pfpr_or_pvpr_limits <- pfpr_limits | pvpr_limits
 # ------------------------------------------------------------------------------
 
 # Population -------------------------------------------------------------------
-population_raster <- terra::rast("data/population/population.tif") |>
+population_raster <- terra::rast("data/population/population.tif")[[paste(2015:max(years))]] |>
   terra::resample(pfpr_raster, method = "sum") |>
-  pad_raster(years)
+  pad_raster(years, back_empty = FALSE)
 names(population_raster) <- paste0("population_", years)
 
 urban_population <- readRDS("un_wup.rds") |>
@@ -498,23 +504,6 @@ df <- df |>
     prop_act,
     by = "year"
   )
-
-# Proportion of treatment in the public sector
-prop_public <- read.csv("data/dhs/proportion_public.csv")
-if(iso3c %in% prop_public$iso3c){
-  prop_public <-
-    prop_public |>
-    dplyr::filter(iso3c == {{iso3c}}) |>
-    dplyr::pull(prop_public)
-} else{
-  prop_public <- median(prop_public$prop_public)
-}
-prop_public <- data.frame(year = years, prop_public = prop_public)
-df <- df |>
-  dplyr::left_join(
-    prop_public,
-    by = "year"
-  )
 # ------------------------------------------------------------------------------
 
 # Additional nets and IRS interpolation ----------------------------------------
@@ -541,12 +530,12 @@ if(!approximate_itn){
   # Assume median half life and usage rate
   hl <- netz::get_halflife(iso3c)
   ur <- netz::get_usage_rate(iso3c)
-
   
-  wmr_use <- read.csv("data/who/llins_delivered.csv") |>
+  
+  wmr_use <- read.csv("data/who/wmr_itns_distributed.csv") |>
     dplyr::filter(iso3c == {{iso3c}}) |>
     dplyr::filter(year > itn_max_year) |>
-    dplyr::select(year, llins_sold_or_delivered)
+    dplyr::select(year, itns_distributed)
   
   # Summarise ITN use country-wide
   df_use <- df |>
@@ -568,7 +557,7 @@ if(!approximate_itn){
     ) |>
     dplyr::left_join(wmr_use, by = "year") |>
     dplyr::mutate(
-      n_nets = ifelse(is.na(llins_sold_or_delivered), n_nets , llins_sold_or_delivered),
+      n_nets = ifelse(is.na(itns_distributed), n_nets , itns_distributed),
       dist2 = n_nets / par,
       crop2 = netz::distribution_to_crop(
         dist2,
@@ -596,7 +585,7 @@ if(!approximate_itn){
 # Update IRS cov for years post last IRS cov raster, where we have information
 # on people protected from WRM
 if(!approximate_irs){
-  irs_people <- read.csv("data/who/irs_people_protected.csv") |>
+  irs_people <- read.csv("data/who/wmr_irs_people_protected.csv") |>
     dplyr::filter(iso3c == {{iso3c}}) |>
     dplyr::filter(year > irs_max_year) |>
     dplyr::select(year, irs_interpolated) |>
@@ -624,13 +613,13 @@ if(approximate_itn){
   ur <- netz::get_usage_rate(iso3c)
   
   # Estimate the total people using nets each year | WHO net delivery/distribution
-  nets_distributed <- read.csv("data/who/llins_delivered.csv") |>
+  nets_distributed <- read.csv("data/who/wmr_itns_distributed.csv") |>
     dplyr::filter(iso3c == {{iso3c}}) |>
     dplyr::left_join(par, by = "year") |>
     dplyr::mutate(
       # Assume here distributions are made on first day of year and crop measured at the midpoint
       crop = netz::distribution_to_crop(
-        distribution = itn_interpolated,
+        distribution = itns_interpolated,
         distribution_timesteps = 365 * (year - 2000) + 1,
         crop_timesteps = 365 * (year - 2000) + (365 / 2),
         netz::net_loss_map, half_life = hl) / par,
@@ -674,7 +663,7 @@ if(approximate_itn){
 }
 
 if(approximate_irs){
-  irs_people <- read.csv("data/who/irs_people_protected.csv") |>
+  irs_people <- read.csv("data/who/wmr_irs_people_protected.csv") |>
     dplyr::filter(iso3c == {{iso3c}}) |>
     dplyr::select(year, irs_interpolated) |>
     tidyr::complete(year = years)

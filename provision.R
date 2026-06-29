@@ -1,13 +1,11 @@
 remotes::install_github("mrc-ide/malariasimulation")
-remotes::install_github("mrc-ide/site")
+remotes::install_github("mrc-ide/netz@site-2601")
+remotes::install_github("mrc-ide/site@site-2601")
 remotes::install_github("mrc-ide/cali")
-remotes::install_github("mrc-ide/postie")
+remotes::install_github("mrc-ide/postie@severe_inc")
 remotes::install_github("mrc-ide/scene")
 remotes::install_github("mrc-ide/peeps")
-install.packages(
-  "orderly2",
-  repos = c("https://mrc-ide.r-universe.dev", "https://cloud.r-project.org")
-)
+install.packages("orderly")
 install.packages("sf")
 install.packages("knitr")
 install.packages("rmarkdown")

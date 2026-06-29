@@ -1,13 +1,8 @@
 # Orderly set-up ---------------------------------------------------------------
 orderly::orderly_description(
-  display = "Process non-ratser intervention inputsd",
+  display = "Process non-ratser intervention inputs",
   long = "Take manually curated interventi0on coverage and create rasters"
 )
-
-orderly::orderly_resource(
-  files = "README.md"
-)
-
 
 orderly::orderly_resource(
   files = "data/chemoprevention_coverage.csv"
@@ -42,12 +37,20 @@ orderly::orderly_dependency(
 )
 
 orderly::orderly_shared_resource("utils.R")
+orderly::orderly_artefact(
+  description = "vaccine_delivery",
+  files = "vaccine_delivery.csv"
+)
 # ------------------------------------------------------------------------------
 
 # Inputs -----------------------------------------------------------------------
 chemoprevention_coverage <- read.csv("data/chemoprevention_coverage.csv")
 rtss_trial <- read.csv("data/rtss_trial.csv")
-vaccine_doses <- read.csv("data/vaccine_doses.csv")
+vaccine_doses <- read.csv("data/vaccine_doses.csv") |>
+  dplyr::mutate(
+    iso3c = countrycode::countrycode(country, "country.name", "iso3c")
+  )
+write.csv(vaccine_doses, "vaccine_delivery.csv", row.names = FALSE)
 un_wpp <- readRDS("un_wpp.rds") |>
   dplyr::filter(
     year > 2000,
@@ -70,24 +73,25 @@ extents <- read.csv("extents.csv")
 ## Note that currently due to lack of sub national targeting data we are just
 ## applying doses across the country
 vaccine_coverage <- vaccine_doses |>
+  dplyr::summarise(doses_delivered = sum(doses_delivered),
+                   .by = c("iso3c", "year", "vaccine")) |>
   dplyr::mutate(
-    iso3c = countrycode::countrycode(country, "country.name", "iso3c"),
-    rtss_fvc = round(rtss_doses  / 3.8),
-    r21_fvc = round(r21_doses  / 3.8)
-    ) |>
+    fvc = round(doses_delivered   / 3.8)
+  ) |>
   dplyr::left_join(un_wpp, by = c("iso3c", "year")) |>
   dplyr::mutate(
-    rtss_cov = round(rtss_fvc / population, 2),
-    r21_cov = round(r21_fvc / population, 2),
+    vx_cov = pmin(0.8, round(fvc / population, 2))
   ) |>
-  dplyr::select(iso3c, year, rtss_cov, r21_cov)
-  
+  dplyr::select(iso3c, year, vaccine, vx_cov) |>
+  tidyr::pivot_wider(id_cols = c("iso3c", "year"), names_from = "vaccine", values_from = "vx_cov") |>
+  dplyr::rename("r21_cov" = "r21", "rtss_cov" = "rtss") 
+
 sf_df <- boundary |>
-  dplyr::cross_join(data.frame(year = 2000:2024)) |>
+  dplyr::cross_join(data.frame(year = 2000:max(vaccine_coverage$year))) |>
   dplyr::left_join(vaccine_coverage, by = c("iso3c", "year")) |>
   dplyr::left_join(rtss_trial, by = c("iso3c", "name_1", "year")) |>
-  tidyr::replace_na(list(rtss_trial_cov = 0)) |>
-  dplyr::mutate(rtss_cov = ifelse(rtss_trial_cov == 0.5, 0.5, rtss_cov)) |>
+  tidyr::replace_na(list(vx_cov_trial = 0)) |>
+  dplyr::mutate(rtss_cov = ifelse(rtss_cov_trial == 0.5, 0.5, rtss_cov)) |>
   dplyr::select(iso3c, name_1, year, rtss_cov, r21_cov) |>
   tidyr::replace_na(list(rtss_cov = 0, r21_cov = 0))
 # ------------------------------------------------------------------------------

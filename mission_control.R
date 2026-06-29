@@ -1,12 +1,5 @@
 # Mission control --------------------------------------------------------------
 
-# TODOs ------------------------------------------------------------------------
-# TODO: Internal and external metadata and versioning
-### TODO: Update UN inputs?
-### TODO: Update DHS inputs
-### TODO: Add MAP SMC into workflow when embargo lifted
-# ------------------------------------------------------------------------------
-
 # ISOs -------------------------------------------------------------------------
 malaria_endemic_isos <- c(
   "DZA", "AGO", "BEN", "BWA", "BFA", "BDI", "CPV", "CMR", "CAF", 
@@ -25,7 +18,9 @@ malaria_endemic_isos <- c(
 # ------------------------------------------------------------------------------
 
 # Set up cluster ---------------------------------------------------------------
-hipercow::hipercow_init(driver = 'dide-windows')
+# setwd("P://Pete/foresite-orderly")
+hipercow::hipercow_init()
+hipercow::hipercow_configure(driver = 'dide-windows')
 # hipercow::hipercow_provision()
 # hipercow::hipercow_configuration()
 # ------------------------------------------------------------------------------
@@ -74,6 +69,11 @@ for(iso in malaria_endemic_isos){
     resources = hipercow::hipercow_resources(cores = 16)
   )
 }
+d <- hipercow::hipercow_bundle_create(
+  ids = unlist(demog_task_ids),
+  name = paste0("Demography_", format(Sys.time(), "%Y-%m-%d_%H-%M-%S"))
+)
+table(hipercow::hipercow_bundle_status(d))
 
 orderly::orderly_run(
   name = "data_map",
@@ -102,9 +102,9 @@ orderly::orderly_run(
 # Run options ------------------------------------------------------------------
 boundary <- "GADM_4.1.0" 
 isos <- list.files(paste0("src/data_boundaries/boundaries/", boundary))
-admin <- 3
-urban_rural <- FALSE
-name <- "ETH_admin_3_request"
+admin <- 1
+urban_rural <- TRUE
+name <- "malariaverse"
 formatted_date <- format(Sys.Date(), "%m_%Y")
 version <- paste(name, formatted_date, sep = "_")
 # ------------------------------------------------------------------------------
@@ -127,6 +127,7 @@ n_sites <- sapply(boundary_files, function(x, admin, urban_rural){
 names(n_sites) <- isos
 
 # Boundaries
+## Note - do NOT orderly_cleanup "boundaries/"
 orderly::orderly_run(
   name = "data_boundaries",
   parameters = list(
@@ -183,7 +184,8 @@ for(iso in isos){
       iso3c = iso,
       admin_level = admin,
       urban_rural = urban_rural,
-      version = version
+      version = version,
+      calibration = FALSE
     ),
     echo = FALSE
   )
@@ -202,7 +204,7 @@ for(iso in isos){
         urban_rural = urban_rural,
         version = version
       ),
-      echo = FALSE
+      echo = TRUE
     ),
     parallel = hipercow::hipercow_parallel("parallel"),
     resources = hipercow::hipercow_resources(cores = max(2, min(32, n_sites[iso])))
@@ -216,17 +218,28 @@ x <- hipercow::hipercow_bundle_create(
 )
 table(hipercow::hipercow_bundle_status(x))
 
-# Calibration diagnostic report
 for(iso in isos){
   orderly::orderly_run(
-    name = "calibration_diagnostics",
+    name = "diagnostics",
     parameters = list(
       boundary = boundary,
       iso3c = iso,
       admin_level = admin,
       urban_rural = urban_rural,
-      version = version
+      version = version,
+      calibration = TRUE
     ),
     echo = FALSE
   )
 }
+
+orderly::orderly_run(
+  name = "stats",
+  parameters = list(
+    boundary = boundary,
+    admin_level = admin,
+    urban_rural = urban_rural,
+    version = version
+  ),
+  echo = FALSE
+)

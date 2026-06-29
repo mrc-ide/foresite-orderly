@@ -1,5 +1,4 @@
 orderly::orderly_resource("data/")
-orderly::orderly_resource("README.md")
 orderly::orderly_resource("download_chirps.R")
 
 orderly::orderly_shared_resource("utils.R")

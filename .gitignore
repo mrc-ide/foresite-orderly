@@ -11,6 +11,8 @@ data/
 hipercow/
 operations/extracted/
 operations/custom_requests/
+operations/malariaverse_06_2026/
+backup/
 
 # ---VVV--- added by orderly ---VVV----------------
 # Don't manually edit content between these markers

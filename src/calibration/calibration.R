@@ -4,7 +4,7 @@ orderly::orderly_description(
   long = "Calibrates baseline EIR to match prevalence"
 )
 
-orderly::orderly_parameters(
+p <- orderly::orderly_parameters(
   boundary = NULL,
   iso3c = NULL,
   admin_level = NULL,
@@ -70,7 +70,7 @@ eirs <- site$eir
 eirs <- split(eirs, 1:nrow(eirs))
 
 if(parallel){
-  cores <- Sys.getenv("CCP_NUMCPUS")
+  cores <- parallel::detectCores()
   cluster <- parallel::makeCluster(as.integer(cores))
   invisible(parallel::clusterCall(cluster, ".libPaths", .libPaths()))
   parallel::clusterCall(cluster, function() {

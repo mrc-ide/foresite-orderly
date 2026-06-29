@@ -5,7 +5,7 @@ orderly::orderly_description(
   population size would return the observed age distribution (at equilibrium)."
 )
 
-orderly::orderly_parameters(
+p <- orderly::orderly_parameters(
   iso3c = NULL
 )
 
@@ -33,7 +33,7 @@ demography_split <- dplyr::group_split(demography, iso3c, year)
 
 source("adjust_rates.R")
 
-cores <- Sys.getenv("CCP_NUMCPUS")
+cores <- parallel::detectCores()
 
 cluster <- parallel::makeCluster(as.integer(cores))
 

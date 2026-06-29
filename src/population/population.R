@@ -10,7 +10,7 @@ orderly::orderly_description(
   at these two methodological change points."
 )
 
-orderly::orderly_parameters(
+p <- orderly::orderly_parameters(
   boundary = NULL,
   iso3c = NULL
 )

@@ -1,5 +1,4 @@
 orderly::orderly_resource("data/")
-orderly::orderly_resource("README.md")
 orderly::orderly_resource("download_map.R")
 
 orderly::orderly_shared_resource("utils.R")
@@ -22,9 +21,9 @@ raster_stack <- function(name, years){
 }
 
 # Interventions
-itn_raster <- raster_stack("itn/202406_Africa_Insecticide_Treated_Net_Use_", 2000:2022)
-irs_raster <- raster_stack("irs/202106_Africa_Indoor_Residual_Spraying_Coverage_", 2000:2020)
-tx_raster <- raster_stack("tx/202406_Global_Antimalarial_Effective_Treatment_", 2000:2022) 
+itn_raster <- raster_stack("itn/202508_Africa_Insecticide_Treated_Net_Use_", 2000:2024)
+irs_raster <- raster_stack("irs/202508_Africa_IRS_Coverage_", 2000:2024)
+tx_raster <- raster_stack("tx/202508_Global_Antimalarial_Effective_Treatment_", 2000:2024) 
 smc_times <- paste0(
   rep(2012:2020, each = 12),
   ".",
@@ -33,8 +32,8 @@ smc_times <- paste0(
 smc_raster <- raster_stack("smc/SMC_", smc_times) 
 
 # Prevalence
-pfpr_raster <- raster_stack("pfpr/202406_Global_Pf_Parasite_Rate_", 2000:2022)
-pvpr_raster <- raster_stack("pvpr/202406_Global_Pv_Parasite_Rate_", 2000:2022) 
+pfpr_raster <- raster_stack("pfpr/202508_Global_Pf_Parasite_Rate_", 2000:2024)
+pvpr_raster <- raster_stack("pvpr/202508_Global_Pv_Parasite_Rate_", 2000:2024) 
 
 # Access
 cities_raster <- raster_stack("access/201501_Global_Travel_Time_to_Cities_", 2015) 
