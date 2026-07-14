@@ -63,9 +63,8 @@ individual site-file elements can be (re-)run in isolation with the same script,
 long as their upstream packets already exist.
 
 The framework is the merged **`orderly`** package (`orderly_config.json` pins
-`minimum_orderly_version: 1.99.90`). Calls therefore use the `orderly::` namespace
-(not `orderly2::`), and each report's entrypoint is `src/<report>/<report>.R` — there
-are no `orderly.yml` files.
+`minimum_orderly_version: 1.99.90`). Each report's entrypoint is
+`src/<report>/<report>.R` — there are no `orderly.yml` files.
 
 At a conceptual level the flow is:
 
@@ -87,9 +86,9 @@ To run the full pipeline you need:
 | Requirement | Detail |
 |---|---|
 | **R toolchain** | R + the package stack below. |
-| **mrc-ide package stack** | Installed by [`provision.R`](provision.R). Several packages are pinned to **non-default branches** — these pins are load-bearing and must be preserved when re-provisioning: `mrc-ide/site@site-2601`, `mrc-ide/netz@site-2601`, `mrc-ide/postie@severe_inc`. Others (`malariasimulation`, `cali`, `scene`, `peeps`) track their default branch, plus CRAN packages (`orderly`, `sf`, `dplyr`, `ggplot2`, `knitr`, `rmarkdown`, `quarto`). |
+| **mrc-ide package stack** | Installed by [`provision.R`](provision.R). The mrc-ide packages (`site`, `netz`, `postie`, `malariasimulation`, `cali`, `scene`, `peeps`) are installed from GitHub via `remotes` and track their **default branch**; the remainder are CRAN packages (`orderly`, `sf`, `dplyr`, `ggplot2`, `knitr`, `rmarkdown`, `quarto`). |
 | **DIDE cluster account** | The two heavy steps (`demography`, `calibration`) run on the Imperial DIDE **Windows** cluster via `hipercow` (driver `dide-windows`). See [§7](#7-hpc-execution). |
-| **DIDE network share** | The project must live on the DIDE network share (the mapped **`P:` drive**) so the cluster nodes can see the orderly root. This is hinted at only by a commented `setwd("P://Pete/foresite-orderly")` in `mission_control.R:21`. |
+| **DIDE network share** | The project must live on the DIDE network share — the **malaria drive** (`\\projects.dide.ic.ac.uk\malaria`), mapped locally as the **`P:` drive** — so the cluster nodes can see the orderly root. The maintained, fully-populated copy (including all the large raw-data and boundary inputs that are absent from a git clone) lives in Pete's directory at `\\projects.dide.ic.ac.uk\malaria\pete\foresite-orderly`, i.e. `P://Pete/foresite-orderly` — the commented `setwd(...)` in `mission_control.R:21`. |
 | **`GITHUB_PAT`** | Required only for publishing to packit ([§11](#11-releasing-site-files-packit)). A GitHub Personal Access Token with the **`read:org`** scope, stored in `.Renviron`. This is the only secret the codebase uses. |
 | **Raw inputs** | Raw data and boundary files are **gitignored and absent from a clone** — they must be supplied locally before a run (see [§3](#3-repository-layout) and [§5](#5-data-sources-operational-view)). |
 
@@ -122,55 +121,94 @@ codebase; the data-download scripts hit public endpoints unauthenticated.
   it must be populated (e.g. for `GADM_4.1.0`) before the per-country phase will run.
   **Do not `orderly_cleanup` the `boundaries/` folder** (noted in `mission_control.R`).
 
+> **Where to get these:** the maintained copy on the malaria drive
+> (`\\projects.dide.ic.ac.uk\malaria\pete\foresite-orderly`, mapped to `P:`; see
+> [§2](#2-prerequisites--access)) already holds every one of these inputs, fully
+> populated. The path of least resistance is to run the pipeline from that copy rather
+> than repopulating the data from scratch.
+
 ---
 
 ## 4. The pipeline
 
 ### Dependency graph
 
-Nodes are orderly reports; edges are `orderly_dependency` relationships. The two
-**bold-outlined** nodes (`demography`, `calibration`) run on the HPC cluster.
+Nodes are orderly reports; an arrow runs **from a report to each report that depends
+on it** (declared via `orderly_dependency`), so the graph reads top-to-bottom in build
+order. **Bold arrows** trace the main build path
+(`spatial → population → site_file → calibration → diagnostics`/`stats`); the thin grey
+arrows are the supporting data inputs that fan into `spatial` and `site_file`. Node
+colour marks the pipeline stage, and the two double-bordered red nodes (`demography`,
+`calibration`) are the steps that run on the HPC cluster:
+
+> 🟦 data get & prep &nbsp;·&nbsp; 🟩 per-country build &nbsp;·&nbsp; 🟨 assembled site file &nbsp;·&nbsp; 🟪 diagnostics & summaries &nbsp;·&nbsp; 🟥 HPC cluster step
 
 ```mermaid
+%%{init: {'flowchart': {'curve': 'basis', 'rankSpacing': 55, 'nodeSpacing': 38}}}%%
 flowchart TD
-  subgraph P1["Phase 1 - global data get and prep"]
-    extents
-    data_un
-    data_worldpop
-    data_who
-    data_dhs
-    un_wpp
-    data_map
-    data_chirps
-    data_vectors
-    data_interventions_manual
-    demography
-  end
-  subgraph P2["Phase 2 - per-country build and calibrate"]
-    data_boundaries
-    spatial
-    population
-    site_file
-    calibration
-    diagnostics
-    stats
-  end
+  classDef source fill:#e8effb,stroke:#93b4f5,color:#1e293b;
+  classDef global fill:#cfe0fd,stroke:#3b82f6,color:#0c2a52;
+  classDef hpc fill:#ffe4e6,stroke:#e11d48,stroke-width:3px,color:#881337;
+  classDef country fill:#dcfce7,stroke:#22c55e,color:#052e16;
+  classDef assembly fill:#fde68a,stroke:#d97706,stroke-width:2px,color:#713f12;
+  classDef output fill:#f3e8ff,stroke:#a855f7,color:#3b0764;
+
+  extents(extents):::source
+  data_un(data_un):::source
+  data_worldpop(data_worldpop):::source
+  data_dhs(data_dhs):::source
+  data_who(data_who):::source
+  data_boundaries(data_boundaries):::source
+
+  un_wpp(un_wpp):::global
+  data_map(data_map):::global
+  data_chirps(data_chirps):::global
+  data_vectors(data_vectors):::global
+  data_interventions_manual(data_interventions_manual):::global
+
+  demography[[demography]]:::hpc
+  calibration[[calibration]]:::hpc
+
+  spatial(spatial):::country
+  population(population):::country
+  site_file(site_file):::assembly
+
+  diagnostics(diagnostics):::output
+  stats(stats):::output
 
   data_un --> un_wpp
-  extents --> data_map & data_chirps & data_vectors & data_interventions_manual
-  un_wpp --> data_interventions_manual & demography
-
-  un_wpp & data_map & data_interventions_manual & data_worldpop & data_chirps & data_dhs & data_who & data_vectors & data_boundaries --> spatial
-  spatial & un_wpp --> population
-  demography & spatial & population & data_interventions_manual & data_boundaries & data_vectors & data_who & data_dhs --> site_file
-
+  extents --> data_map
+  extents --> data_chirps
+  extents --> data_vectors
+  extents --> data_interventions_manual
+  un_wpp --> data_interventions_manual
+  un_wpp --> demography
+  data_worldpop --> spatial
+  data_map --> spatial
+  data_chirps --> spatial
+  data_dhs --> spatial
+  data_who --> spatial
+  data_vectors --> spatial
+  data_boundaries --> spatial
+  data_interventions_manual --> spatial
+  un_wpp --> spatial
+  un_wpp --> population
+  spatial --> population
+  population --> site_file
+  demography --> site_file
+  data_dhs --> site_file
+  data_who --> site_file
+  data_vectors --> site_file
+  data_boundaries --> site_file
+  data_interventions_manual --> site_file
+  spatial --> site_file
   site_file --> calibration
   site_file --> diagnostics
   calibration --> diagnostics
   calibration --> stats
 
-  classDef hpc stroke-width:3px,stroke:#c0392b;
-  class demography,calibration hpc;
+  linkStyle default stroke:#9aa7b8,stroke-width:1.1px;
+  linkStyle 17,18,26,27,28,29 stroke:#64748b,stroke-width:2.75px;
 ```
 
 ### Two phases
@@ -323,12 +361,14 @@ rebuilt, provided its upstream packets are present in the archive.
 
 - **Driver:** `dide-windows` (the Imperial DIDE Windows cluster). Configuration is
   inline in `mission_control.R:20-26` — there is no separate cluster config file.
-- **Network share:** the project must be checked out on the DIDE share (mapped
-  **`P:` drive**) so cluster nodes can reach the orderly root. This is the single most
-  important undocumented prerequisite; the only trace of it is the commented
-  `setwd("P://Pete/foresite-orderly")`.
+- **Network share:** the project must live on the DIDE **malaria drive**
+  (`\\projects.dide.ic.ac.uk\malaria`, mapped to **`P:`**) so cluster nodes can reach
+  the orderly root; the maintained copy is Pete's `...\malaria\pete\foresite-orderly`
+  (`P://Pete/foresite-orderly`). This is the single most important undocumented
+  prerequisite; its only trace in code is the commented `setwd(...)` at
+  `mission_control.R:21`.
 - **Provisioning:** run `hipercow::hipercow_provision()` once (it auto-detects
-  [`provision.R`](provision.R)). Preserve the branch pins noted in [§2](#2-prerequisites--access).
+  [`provision.R`](provision.R)).
 - **The two HPC steps:**
   - `demography` — one task per ISO, `hipercow_parallel("parallel")`, **16 cores**
     each, collected into a `Demography_<timestamp>` bundle.
