@@ -23,7 +23,7 @@ orderly::orderly_location_add_packit(
 
 # Pushing ----------------------------------------------------------------------
 # Define the parameters to search for
-parameters = list(
+parameters <- list(
   boundary = "GADM_4.1.0",
   iso3c = "PNG",
   admin_level = 1,

@@ -28,11 +28,6 @@ orderly::orderly_artefact(
 )
 
 orderly::orderly_artefact(
-  description = "Raw list calibration output",
-  files = "calibration_output_raw.rds"
-)
-
-orderly::orderly_artefact(
   description = "Diagnostics rates",
   files = "diagnostic_epi.rds"
 )

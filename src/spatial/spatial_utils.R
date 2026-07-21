@@ -74,7 +74,7 @@ raster_values <- function(x, na_replace = NULL){
   values <- NA
   if(raster_input){
     values <- terra::values(x, mat = FALSE)
-    replace_na = !is.null(na_replace)
+    replace_na <- !is.null(na_replace)
     if(replace_na){
       values[is.na(values)] <- na_replace
     }

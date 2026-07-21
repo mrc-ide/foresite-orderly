@@ -45,7 +45,6 @@ calibrate_site <- function(
     diagnostic_burnin,
     max_attempts
 ){
-  print(x)
   sub_site <- site::subset_site(site, x)
   parasite <- ifelse(sub_site$eir$sp == "pf", "falciparum", "vivax")
 

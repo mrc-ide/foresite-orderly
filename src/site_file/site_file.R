@@ -448,41 +448,6 @@ itn_implementation <- interventions |>
     itn_use$year + itn_use$usage_day_of_year
   ))
 
-
-if(FALSE){
-  # TODO: remove, The following gets done by site:
-  # TODO: site should check that there isn't more than one distribution per day in the
-  ## Flow:
-  ### Parameters given to site
-  ### Checks for columns itn_input_dist and itn_predicted_use
-  ### If missing prompts the user to add them before running the site parameters
-  ### inputs
-  t1 <- dplyr::filter(itn_implementation, name_1 == "Mukono", urban_rural == "rural")
-  t2 <- dplyr::filter(itn_use, name_1 == "Mukono", urban_rural == "rural")
-
-  itn_input_dist <- netz::usage_to_model_distribution(
-    usage = t2$itn_use,
-    usage_timesteps = t2$usage_timestep,
-    distribution_timesteps = t1$distribution_timestep,
-    distribution_upper = t1$upper,
-    distribution_lower = t1$lower,
-    net_loss_function = netz::net_loss_map,
-    half_life = itn_hl
-  )
-
-  itn_predicted_use <- netz::model_distribution_to_usage(
-    usage_timesteps = t2$usage_timestep,
-    distribution = itn_input_dist,
-    distribution_timesteps = t1$distribution_timestep,
-    net_loss_function = netz::net_loss_map,
-    half_life = itn_hl
-  )
-  y <- 2000 + (t2$usage_timestep - 1) / 365
-  plot(itn_predicted_use ~ y, t = "l", ylim =c(0, 1))
-  points(2000:2026, t2$itn_use, pch = 19)
-  points(2000 + (t1$distribution_timestep - 1) / 365, itn_input_dist, col = "orange")
-}
-
 actellic_switch_year <- 2017
 irs_implementation <- interventions |>
   dplyr::select(dplyr::all_of(c(grouping, "year", "irs_cov"))) |>
@@ -558,7 +523,7 @@ if(nrow(vaccine_data) == 0){
   vaccine_primary_schedule <- round(c(unlist(vaccine_data[,c("first", "second", "third")])) * (365 / 12))
   vaccine_booster_space <- NA
   if(vaccine_delivery == "age-based"){
-    vaccine_booster_space = round(unlist(vaccine_data[,"boost1"]) * (365 / 12)) - vaccine_primary_schedule[3]
+    vaccine_booster_space <- round(unlist(vaccine_data[,"boost1"]) * (365 / 12)) - vaccine_primary_schedule[3]
   }
 }
 
@@ -703,9 +668,9 @@ eir <- dplyr::bind_rows(pf_eir, pv_eir)
 # Create the site file ---------------------------------------------------------
 site_file <- list()
 
-site_file$country = unique(spatial$country)
-site_file$boundary = boundary
-site_file$admin_level = grouping
+site_file$country <- unique(spatial$country)
+site_file$boundary <- boundary
+site_file$admin_level <- grouping
 
 site_file$metadata <- list(
   country = unique(spatial$country),
@@ -715,18 +680,18 @@ site_file$metadata <- list(
   version = version
 )
 
-site_file$sites = sites
+site_file$sites <- sites
 
-site_file$shape = shape
+site_file$shape <- shape
 
-site_file$cases_deaths = cases_deaths
+site_file$cases_deaths <- cases_deaths
 
-site_file$prevalence = prevalence
+site_file$prevalence <- prevalence
 
 if(sum(is.na(interventions)) > 0){
   stop("NAs in interventions")
 }
-site_file$interventions = interventions_list
+site_file$interventions <- interventions_list
 
 if(any(population$par > population$pop)){
   stop("PAR > pop in population_total")
@@ -741,35 +706,35 @@ if(any(population_age$par_pv > population_age$par)){
   stop("PAR_pv > par in population_age")
 }
 
-site_file$population = list(
+site_file$population <- list(
   population_total = population,
   population_by_age = population_age
 )
 
-site_file$demography = demography
+site_file$demography <- demography
 
-site_file$vectors = list(
+site_file$vectors <- list(
   vector_species = vectors,
   pyrethroid_resistance = pyrethroid_resistance
 )
 
-site_file$seasonality = list(
+site_file$seasonality <- list(
   seasonality_parameters = seasonal_parameters,
   monthly_rainfall = rainfall,
   fourier_prediction = seasonal_curve,
   peak_season = peak_season
 )
 
-site_file$blood_disorders = blood_disorders
+site_file$blood_disorders <- blood_disorders
 
-site_file$accessibility = accessibility
+site_file$accessibility <- accessibility
 
-site_file$eir = eir
+site_file$eir <- eir
 
 format(object.size(site_file), "Mb")
 
 # Check that the resulting site file can be used to create a malariasimulation
-## parameter list
+# parameter list
 check_params(site_file)
 
 saveRDS(site_file, "site.rds")
