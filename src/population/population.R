@@ -59,7 +59,8 @@ spatial <- readRDS("spatial.rds")
 
 # Future urbanisation ----------------------------------------------------------
 source("population_utils.R")
-msy <-  2020
+# Pivot year: populations are extrapolated / urbanisation-adjusted beyond this
+msy <- 2020
 
 future_urbanisation <-
   un_wup |>
@@ -78,13 +79,13 @@ future_urbanisation <-
   tidyr::pivot_longer(
     c(urban, rural),
     names_to = "urban_rural",
-    values_to = "adjustment" 
+    values_to = "adjustment"
   ) |>
   dplyr::select(iso3c, urban_rural, year, adjustment)
 # ------------------------------------------------------------------------------
 
 # Aggregation ------------------------------------------------------------------
-aggregation_levels <- c("country", "iso3c", "name_1", "name_2", "name_3", "urban_rural") 
+aggregation_levels <- c("country", "iso3c", "name_1", "name_2", "name_3", "urban_rural")
 aggregation_levels <- aggregation_levels[aggregation_levels %in% names(spatial)]
 years <- min(spatial$year):max(un_wpp$year)
 
@@ -138,7 +139,7 @@ population_age <- spatial |>
     par_prop = par_prop * adjustment,
     par_pf_prop = par_pf_prop * adjustment,
     par_pv_prop = par_pv_prop * adjustment,
-  )  |>
+  ) |>
   # Make sure sum to 1 (relative to pop)
   dplyr::mutate(
     par_prop = par_prop / sum(pop_prop),

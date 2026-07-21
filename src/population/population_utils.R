@@ -1,9 +1,11 @@
-# Define logistic function
-logistic_function <- function(year, B, C) {
+# Logistic curve used to model the urban proportion over time
+logistic_function <- function(year, B, C){
   1 / (1 + exp(-B * (year - C)))
 }
 
-extrapolate_logistic <- function(year, proportion_urban, threshold_year) {
+# Fit the logistic curve to the observed urban proportions and use it to
+# extrapolate proportion_urban for years beyond threshold_year.
+extrapolate_logistic <- function(year, proportion_urban, threshold_year){
   # Filter data for fitting
   data <- data.frame(
     year = year[year <= threshold_year & year >= 2030],
@@ -32,8 +34,7 @@ extrapolate_logistic <- function(year, proportion_urban, threshold_year) {
       start = list(B = initial_B, C = initial_C),
       lower = lower_bounds,
       upper = upper_bounds,
-      algorithm = "port"  # Use the 'port' algorithm for bounded parameters,
-
+      algorithm = "port"  # 'port' algorithm allows bounded parameters
     )
 
   # Create a sequence for prediction
