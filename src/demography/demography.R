@@ -29,10 +29,12 @@ demography <- readRDS("un_wpp.rds") |>
     year >= 2000,
     iso3c == {{iso3c}}
   )
+# One fitting task per country-year group
 demography_split <- dplyr::group_split(demography, iso3c, year)
 
 source("adjust_rates.R")
 
+# Fit each country-year group in parallel across the allocated cores
 cores <- parallel::detectCores()
 
 cluster <- parallel::makeCluster(as.integer(cores))

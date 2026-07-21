@@ -61,22 +61,20 @@ un_wpp <- readRDS("un_wpp.rds") |>
 library(sf)
 boundary <- readRDS("admin1_boundary_combined.RDS")
 
-#sf_df <- boundary |>
-#  dplyr::left_join(manual_coverage, by = c("iso3c", "name_1"))
-
 template <- terra::rast("pfpr_template_raster.tif")
 
 extents <- read.csv("extents.csv")
 # ------------------------------------------------------------------------------
 
 # Process vaccine data ---------------------------------------------------------
-## Note that currently due to lack of sub national targeting data we are just
-## applying doses across the country
+# Note: no sub-national targeting data, so doses are applied uniformly across
+# each country.
 vaccine_coverage <- vaccine_doses |>
   dplyr::summarise(doses_delivered = sum(doses_delivered),
                    .by = c("iso3c", "year", "vaccine")) |>
   dplyr::mutate(
-    fvc = round(doses_delivered   / 3.8)
+    # ~3.8 doses per fully vaccinated child (fvc)
+    fvc = round(doses_delivered / 3.8)
   ) |>
   dplyr::left_join(un_wpp, by = c("iso3c", "year")) |>
   dplyr::mutate(
@@ -104,6 +102,8 @@ sf_df <- sf_df |>
 # ------------------------------------------------------------------------------
 
 # Create raster stacks ---------------------------------------------------------
+# Rasterise one coverage variable onto the template grid, one layer per year,
+# keeping only years that have non-zero coverage.
 make_stack <- function(variable, sf_df, template){
   stack <- list()
   for(y in 2000:max(sf_df$year)){
@@ -128,6 +128,9 @@ rtss_cov <- make_stack("rtss_cov", sf_df, template)
 r21_cov <- make_stack("r21_cov", sf_df, template)
 
 source("utils.R")
+
+# Clip a coverage raster to one country's extent and write it as an orderly
+# artefact; countries the raster does not cover are skipped.
 split <- function(raster, extent, iso, name, NAflag = NULL){
   raster <- process_raster(raster, extent)
   if(!is.null(raster)){
