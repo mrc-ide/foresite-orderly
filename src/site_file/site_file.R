@@ -106,7 +106,7 @@ sites <- unique(spatial[, grouping])
 
 # Shape ------------------------------------------------------------------------
 shape <- list()
-## User provided admin levels and all higher levels included
+# User-provided admin level plus all higher levels
 levels <- admin_level:0
 for(level in levels){
 
@@ -285,7 +285,7 @@ rainfall <- spatial |>
     dplyr::all_of(grouping), year, month, month_name, t, rainfall
   )
 
-seasonal_parameters <- rainfall|>
+seasonal_parameters <- rainfall |>
   dplyr::summarise(
     coefficients = fit_fourier_df(rainfall, t),
     .by = dplyr::all_of(grouping)
@@ -315,8 +315,8 @@ peak_season <- seasonal_curve |>
 # Interventions ----------------------------------------------------------------
 
 # TODO: Should all "Timesteps" or "Model day" values be relative to the year.
-## We need to deal with adding "burnin" for the sites. Absolute timesteps makes
-## this hard, and actually isn't meaningful to the site-file user?
+# We need to deal with adding "burnin" for the sites. Absolute timesteps makes
+# this hard, and actually isn't meaningful to the site-file user?
 
 interventions <- spatial |>
   dplyr::summarise(
@@ -332,7 +332,6 @@ interventions <- spatial |>
     smc_cov = weighted.mean2(smc_cov, par, na.rm = TRUE),
     pmc_cov = weighted.mean2(pmc_cov, par, na.rm = TRUE),
     prop_act = weighted.mean2(prop_act, par, na.rm = TRUE),
-    #dplyr::across(dplyr::contains("smc"), \(x) weighted.mean2(x, par, na.rm = TRUE)),
     .by = dplyr::all_of(c(grouping, "year"))
   ) |>
   dplyr::arrange(dplyr::across(dplyr::all_of(c(grouping, "year"))))
@@ -383,7 +382,7 @@ interventions <- interventions |>
 interventions <- interventions |>
   dplyr::arrange(dplyr::across(dplyr::all_of(c(grouping, "year"))))
 
-## Treatment
+# Treatment
 tx_cov <- interventions |>
   dplyr::mutate(day_of_year = 1) |>
   dplyr::select(dplyr::all_of(c(grouping, "year", "day_of_year", "tx_cov", "prop_act")))
@@ -395,7 +394,7 @@ if(iso3c %in% tx_prop_public$iso3c){
     tx_prop_public |>
     dplyr::filter(iso3c == {{iso3c}}) |>
     dplyr::pull(prop_public)
-} else{
+} else {
   tx_prop_public <- median(tx_prop_public$prop_public)
 }
 
@@ -405,9 +404,9 @@ itn_hl <- netz::get_halflife(iso3c)
 itn_data_latest_year <- 2023
 itn_use <- interventions |>
   dplyr::select(dplyr::all_of(c(grouping, "year", "itn_use"))) |>
-  # As a crude, but ok approximation (have checked) to these being average use over the year,
-  ## we assume the usage value is taken at a single timepoint in the year. The user can always
-  ## specify specific distributions and usage data points for more accuracy
+  # As a crude but ok approximation (checked) to these being average use over the
+  # year, we assume the usage value is taken at a single timepoint. The user can
+  # always specify distributions and usage data points for more accuracy.
   dplyr::mutate(usage_day_of_year = 182) |>
   # Instead of constant use extrapolation we use %% 3 years
   dplyr::mutate(
@@ -445,7 +444,7 @@ itn_implementation <- interventions |>
     )
   ) |>
   dplyr::arrange(dplyr::across(dplyr::all_of(c(grouping, "year")))) |>
-  dplyr::filter((year + distribution_day_of_year)<= max(
+  dplyr::filter((year + distribution_day_of_year) <= max(
     itn_use$year + itn_use$usage_day_of_year
   ))
 
@@ -544,7 +543,7 @@ pmc_coverage <- interventions |>
   dplyr::select(dplyr::all_of(c(grouping, "year", "day_of_year", "pmc_cov")))
 
 
-# TODO: in site have to devide booser cov by primary cov to get correct input form
+# TODO: in site have to divide booster cov by primary cov to get correct input form
 vaccine_data <- read.csv("vaccine_delivery.csv") |>
   dplyr::filter(iso3c == {{iso3c}}) |>
   dplyr::slice_max(year, n = 1) |>
@@ -645,14 +644,14 @@ vectors <- spatial |>
     .by = dplyr::all_of(grouping)
   ) |>
   tidyr::pivot_longer(
-    -dplyr::all_of(grouping), names_to = "species",  values_to = "prop"
+    -dplyr::all_of(grouping), names_to = "species", values_to = "prop"
   ) |>
   dplyr::group_by(dplyr::across(dplyr::all_of(grouping))) |>
   dplyr::mutate(rank = rank(-prop, ties = "first")) |>
   dplyr::filter(rank <= 3) |>
   dplyr::select(-rank) |>
-  # Missing values get assigned equal probability of occurence
-  dplyr::mutate(prop = ifelse(is.na(prop) | sum(prop) == 0, 1/dplyr::n(), prop)) |>
+  # Missing values get assigned equal probability of occurrence
+  dplyr::mutate(prop = ifelse(is.na(prop) | sum(prop) == 0, 1 / dplyr::n(), prop)) |>
   dplyr::mutate(prop = prop / sum(prop)) |>
   dplyr::ungroup() |>
   dplyr::mutate(species = stringr::str_replace(species, "occurrence_", "")) |>
