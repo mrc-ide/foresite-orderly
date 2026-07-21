@@ -1,4 +1,4 @@
-# Orderly2 packit interaction --------------------------------------------------
+# Packit interaction -----------------------------------------------------------
 
 # Adding the remote location to push packets -----------------------------------
 # This has been done and shouldn't need to be done again.
@@ -15,10 +15,9 @@ if(add_new_location){
 }
 
 orderly::orderly_location_add_packit(
-  name       = "packit.dide2",
+  name = "packit.dide2",
   url = "https://malariaverse-sitefiles.packit.dide.ic.ac.uk/"
 )
-
 
 # ------------------------------------------------------------------------------
 

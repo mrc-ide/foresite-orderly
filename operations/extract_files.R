@@ -1,5 +1,5 @@
 # Extract a named file from a report and put into an external directory --------
-# This is a temporary solutin whilst we get more formal distribution channels
+# This is a temporary solution whilst we get more formal distribution channels
 # up and running.
 get_file <- function(parameters, report, file){
   dest <- paste0("operations/extracted/", parameters$iso3c)
@@ -46,6 +46,5 @@ for(iso in isos){
   get_file(parameters, "diagnostics", "diagnostic_report.html")
   get_file(parameters, "calibration", "calibrated_scaled_site.rds")
   get_file(parameters, "calibration_diagnostics", "calibration_report.html")
-
 }
 # ------------------------------------------------------------------------------
