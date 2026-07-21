@@ -5,7 +5,8 @@ get_file <- function(parameters, report, file){
   dest <- paste0("operations/extracted/", parameters$iso3c)
 
   if(!dir.exists(dest)){
-    dir.create(dest)
+    # recursive so the parent operations/extracted/ dir is created if absent
+    dir.create(dest, recursive = TRUE)
   }
 
   condition_string <- paste0(
@@ -38,13 +39,13 @@ parameters <- list(
   iso3c = NULL,
   admin_level = 1,
   urban_rural = TRUE,
-  version = "malariaverse_01_2025"
+  # Keep in sync with the release you intend to extract (cf. push_packit.R).
+  version = "malariaverse_06_2026"
 )
 
 for(iso in isos){
   parameters$iso3c <- iso
-  get_file(parameters, "diagnostics", "diagnostic_report.html")
+  get_file(parameters, "diagnostics", "diagnostic_report.pdf")
   get_file(parameters, "calibration", "calibrated_scaled_site.rds")
-  get_file(parameters, "calibration_diagnostics", "calibration_report.html")
 }
 # ------------------------------------------------------------------------------
