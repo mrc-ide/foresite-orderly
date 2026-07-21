@@ -1,7 +1,7 @@
 # Orderly set-up ---------------------------------------------------------------
 orderly::orderly_description(
-  display = "Process non-ratser intervention inputs",
-  long = "Take manually curated interventi0on coverage and create rasters"
+  display = "Process non-raster intervention inputs",
+  long = "Take manually curated intervention coverage and create rasters"
 )
 
 orderly::orderly_resource(

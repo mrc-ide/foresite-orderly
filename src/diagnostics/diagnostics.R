@@ -1,7 +1,7 @@
 # Orderly set-up ---------------------------------------------------------------
 orderly::orderly_description(
   display = "Site file diagnostics",
-  long = "Take a daw site file and prepares a diagnostic report"
+  long = "Takes a site file and prepares a diagnostic report"
 )
 
 p <- orderly::orderly_parameters(
