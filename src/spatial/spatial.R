@@ -231,22 +231,6 @@ if(file.exists("data/manual/smc.tif")){
     pad_raster(years)
   names(smc_raster) <- paste0("smc_cov_", years)
 }
-
-## MAP embargoed inputs, not used at present
-# if(file.exists("data/map/smc.tif")){
-#   smc_raster <- terra::rast("data/map/smc.tif") |>
-#     monthify()
-#   smc_raster <- lapply(smc_raster, pad_raster, all_years = years)
-#   smc_raster <- lapply(smc_raster, function(x){
-#     names(x) <- paste0("smc_cov_", years)
-#     return(x)
-#   })
-# } else {
-#   smc_raster <- lapply(1:12, function(x){
-#     NA
-#   })
-#   names(smc_raster) <- 1:12
-# }
 # ------------------------------------------------------------------------------
 
 # PMC --------------------------------------------------------------------------
@@ -310,7 +294,7 @@ vector_occurrence_raster <- vector_occurrence_raster[!is.na(vector_occurrence_ra
 vector_occurrence_df <-
   lapply(vector_occurrence_raster, raster_values) |>
   as.data.frame()
-colnames(vector_occurrence_df) <- paste0("occurrence_",names(vector_occurrence_raster))
+colnames(vector_occurrence_df) <- paste0("occurrence_", names(vector_occurrence_raster))
 # ------------------------------------------------------------------------------
 
 # Rainfall ---------------------------------------------------------------------
@@ -397,19 +381,6 @@ df <- data.frame(
   irs_cov = raster_values(irs_raster, na_replace = 0),
   tx_cov = raster_values(tx_raster),
   smc_cov = raster_values(smc_raster, na_replace = 0),
-  ## MAP embargoed inputs, not used at present
-  # smc_1 = raster_values(smc_raster[[1]], na_replace = 0),
-  # smc_2 = raster_values(smc_raster[[2]], na_replace = 0),
-  # smc_3 = raster_values(smc_raster[[3]], na_replace = 0),
-  # smc_4 = raster_values(smc_raster[[4]], na_replace = 0),
-  # smc_5 = raster_values(smc_raster[[5]], na_replace = 0),
-  # smc_6 = raster_values(smc_raster[[6]], na_replace = 0),
-  # smc_7 = raster_values(smc_raster[[7]], na_replace = 0),
-  # smc_8 = raster_values(smc_raster[[8]], na_replace = 0),
-  # smc_9 = raster_values(smc_raster[[9]], na_replace = 0),
-  # smc_10 = raster_values(smc_raster[[10]], na_replace = 0),
-  # smc_11 = raster_values(smc_raster[[11]], na_replace = 0),
-  # smc_12 = raster_values(smc_raster[[12]], na_replace = 0),
   pmc_cov = raster_values(pmc_raster, na_replace = 0),
   rtss_cov = raster_values(rtss_raster, na_replace = 0),
   r21_cov = raster_values(r21_raster, na_replace = 0),
@@ -454,32 +425,8 @@ format(object.size(df), "Mb")
 
 # Fill interventions without spatial-raster inputs -----------------------------
 
-## Vaccine
-# rtss_cov_data <- read.csv("data/who/rtss_coverage.csv") |>
-#   dplyr::group_by(iso3c, name_1) |>
-#   tidyr::complete(year = min(year):as.integer(format(Sys.Date(), "%Y"))) |>
-#   tidyr::fill(rtss_cov) |>
-#   dplyr::ungroup()
-# if(iso3c %in% rtss_cov_data$iso3c){
-#   df <- df |>
-#     dplyr::left_join(
-#       rtss_cov_data,
-#       by = c("iso3c", "name_1", "year")
-#     ) |>
-#     tidyr::replace_na(
-#       replace = list(
-#         rtss_cov = 0
-#       )
-#     )
-# } else {
-#   df$rtss_cov = 0
-# }
-# df$r21_cov <- 0
-
 # Historical larval source management
 df$lsm_cov <- 0
-# Historical PMC (formerly IPTi)
-# df$pmc_cov <- 0
 
 # Proportion of treatment that is act
 prop_act <- read.csv("data/dhs/proportion_act.csv")
@@ -488,7 +435,7 @@ if(iso3c %in% prop_act$iso3c){
     prop_act |>
     dplyr::filter(iso3c == {{iso3c}}) |>
     dplyr::select(year, prop_act)
-} else{
+} else {
   prop_act <-
     prop_act |>
     dplyr::summarise(
@@ -531,7 +478,6 @@ if(!approximate_itn){
   hl <- netz::get_halflife(iso3c)
   ur <- netz::get_usage_rate(iso3c)
 
-
   wmr_use <- read.csv("data/who/wmr_itns_distributed.csv") |>
     dplyr::filter(iso3c == {{iso3c}}) |>
     dplyr::filter(year > itn_max_year) |>
@@ -557,7 +503,7 @@ if(!approximate_itn){
     ) |>
     dplyr::left_join(wmr_use, by = "year") |>
     dplyr::mutate(
-      n_nets = ifelse(is.na(itns_distributed), n_nets , itns_distributed),
+      n_nets = ifelse(is.na(itns_distributed), n_nets, itns_distributed),
       dist2 = n_nets / par,
       crop2 = netz::distribution_to_crop(
         dist2,

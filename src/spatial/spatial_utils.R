@@ -21,7 +21,6 @@ pad_raster <- function(raster, all_years, forward_empty = FALSE, back_empty = TR
     raster <- c(pre_padding, raster)
   }
 
-
   missing_post <- missing[missing > max(years)]
   if(length(missing_post) > 0){
     if(forward_empty){
@@ -83,6 +82,8 @@ raster_values <- function(x, na_replace = NULL){
   return(values)
 }
 
+# Convert net access to net crop using netz's non-parametric fits (a local copy
+# of netz's access-to-crop with a hybrid loess/linear option for low access).
 access_to_crop2 <- function(access, type = "loess", hybrid = TRUE){
   if(any(access < 0 | access > 1, na.rm = TRUE)){
     stop("access must be between 0 and 1")
@@ -104,6 +105,8 @@ access_to_crop2 <- function(access, type = "loess", hybrid = TRUE){
   return(pred)
 }
 
+# Inverse of access_to_crop2: recover net access from net crop by inverting the
+# fitted access -> crop relationship.
 crop_to_access2 <- function(crop, type = "loess", hybrid = TRUE){
   if(!type %in% c("loess", "loess_extrapolate", "linear")){
     stop("type must be one of: loess, loess_extrapolate or linear")
