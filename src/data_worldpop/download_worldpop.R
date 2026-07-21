@@ -1,18 +1,18 @@
 
 country_year_worldpop <- function(iso3c, year, url = "https://www.worldpop.org/rest/data/pop/G2_CN_POP_R25A_1km?iso3="){
-  
+
   raster_meta <- jsonlite::fromJSON(paste0(
     url,
     iso3c
   ))
-  
+
   raster_files <- raster_meta$data |>
     dplyr::filter(popyear == as.character(year)) |>
     dplyr::select(files) |>
     unlist()
-  
+
   raster_file <- raster_files[grepl(".tif", raster_files)]
-  
+
   td <- tempdir()
   raster_address <- paste0(td, "/", iso3c, ".tif")
   df <- utils::download.file(
@@ -22,7 +22,7 @@ country_year_worldpop <- function(iso3c, year, url = "https://www.worldpop.org/r
   )
   pop <- terra::rast(raster_address)
   names(pop) <- "pop"
-  
+
   dir <- paste0("src/data_worldpop/data/", iso3c)
   if(!dir.exists(dir)){
     dir.create(dir)

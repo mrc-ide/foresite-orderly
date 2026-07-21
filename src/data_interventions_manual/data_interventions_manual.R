@@ -64,7 +64,7 @@ boundary <- readRDS("admin1_boundary_combined.RDS")
 #sf_df <- boundary |>
 #  dplyr::left_join(manual_coverage, by = c("iso3c", "name_1"))
 
-template <- terra::rast("pfpr_template_raster.tif") 
+template <- terra::rast("pfpr_template_raster.tif")
 
 extents <- read.csv("extents.csv")
 # ------------------------------------------------------------------------------
@@ -84,7 +84,7 @@ vaccine_coverage <- vaccine_doses |>
   ) |>
   dplyr::select(iso3c, year, vaccine, vx_cov) |>
   tidyr::pivot_wider(id_cols = c("iso3c", "year"), names_from = "vaccine", values_from = "vx_cov") |>
-  dplyr::rename("r21_cov" = "r21", "rtss_cov" = "rtss") 
+  dplyr::rename("r21_cov" = "r21", "rtss_cov" = "rtss")
 
 sf_df <- boundary |>
   dplyr::cross_join(data.frame(year = 2000:max(vaccine_coverage$year))) |>
@@ -108,7 +108,7 @@ make_stack <- function(variable, sf_df, template){
   stack <- list()
   for(y in 2000:max(sf_df$year)){
     b <- dplyr::filter(sf_df, year == y)
-    total_cov <- b |> 
+    total_cov <- b |>
       dplyr::pull(variable) |>
       sum()
     if(total_cov > 0){
@@ -151,7 +151,7 @@ make <- sapply(paths, dir.create)
 
 for(iso in isos){
   extent <- terra::ext(unlist(extents[extents$iso3c == iso, 2:5]))
-  
+
   split(smc_cov, extent, iso, "smc")
   split(pmc_cov, extent, iso, "pmc")
   split(rtss_cov, extent, iso, "rtss")

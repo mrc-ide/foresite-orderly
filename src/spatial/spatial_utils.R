@@ -3,12 +3,12 @@
 # after data are given replicates of the last raster
 pad_raster <- function(raster, all_years, forward_empty = FALSE, back_empty = TRUE){
   years <- as.integer(names(raster))
-  
+
   missing <- setdiff(all_years, years)
   if(length(missing) == 0){
     return(raster)
   }
-  
+
   missing_pre <- missing[missing < min(years)]
   if(length(missing_pre) > 0){
     empty <- raster[[1]]
@@ -20,8 +20,8 @@ pad_raster <- function(raster, all_years, forward_empty = FALSE, back_empty = TR
     names(pre_padding) <- missing_pre
     raster <- c(pre_padding, raster)
   }
-  
-  
+
+
   missing_post <- missing[missing > max(years)]
   if(length(missing_post) > 0){
     if(forward_empty){
@@ -35,7 +35,7 @@ pad_raster <- function(raster, all_years, forward_empty = FALSE, back_empty = TR
     names(post_padding) <- missing_post
     raster <- c(raster, post_padding)
   }
-  
+
   return(raster)
 }
 
@@ -90,11 +90,11 @@ access_to_crop2 <- function(access, type = "loess", hybrid = TRUE){
   if(!type %in% c("loess", "loess_extrapolate", "linear", "hybrid")){
     stop("type must be one of: loess, loess_extrapolate, linear or hybrid")
   }
-  
+
   smooth <- netz::npc_fits[[type]]
   pred <- unname(stats::predict(smooth, newdata = data.frame(access_mean = access)))
   pred[access == 0] <- 0
-  
+
   if(hybrid){
     smooth2 <- netz::npc_fits[["linear"]]
     pred2 <- unname(stats::predict(smooth2, newdata = data.frame(access_mean = access)))

@@ -109,7 +109,7 @@ shape <- list()
 ## User provided admin levels and all higher levels included
 levels <- admin_level:0
 for(level in levels){
-  
+
   shape_address <- paste0(
     "boundaries/",
     iso3c,
@@ -117,9 +117,9 @@ for(level in levels){
     level,
     ".RDS"
   )
-  
+
   s <- readRDS(shape_address)
-  
+
   lookup <- c(
     uid = "uid",
     iso3c = "GID_0",
@@ -129,13 +129,13 @@ for(level in levels){
     name_3 = "NAME_3",
     geom = "geom"
   )
-  
+
   s <- s |>
     dplyr::rename(
       dplyr::any_of(lookup)
     ) |>
     dplyr::select(dplyr::any_of(names(lookup)))
-  
+
   shape[[paste0("level_", level)]] <- s
 }
 
@@ -166,17 +166,17 @@ old_resistance <- read.csv("vectors/pyrethroid_resistance.csv")
 
 if(iso3c %in% old_resistance$iso3c){
   old_resistance <- old_resistance |>
-    dplyr::filter(iso3c == {{iso3c}}) 
+    dplyr::filter(iso3c == {{iso3c}})
   old_centroids <- old_resistance |>
     dplyr::select(unit, X, Y) |>
     unique() |>
     dplyr::filter(!(is.na(X) | is.na(Y)))
-  
+
   new_centroids <- shape[[paste0("level_", admin_level)]]
   sf::st_agr(new_centroids) <- "constant"
   new_centroids <- new_centroids |>
     sf::st_centroid()
-  
+
   unit <- c()
   for(i in 1:nrow(new_centroids)){
     coord <- sf::st_geometry(new_centroids[i,]) |>
@@ -184,7 +184,7 @@ if(iso3c %in% old_resistance$iso3c){
     dist <- sqrt((coord[,1] - old_centroids$X) ^ 2 + (coord[,2] - old_centroids$Y) ^ 2)
     unit[i] <- old_centroids$unit[which.min(dist)]
   }
-  
+
   pyrethroid_resistance <- shape[[paste0("level_", admin_level)]] |>
     sf::st_drop_geometry() |>
     dplyr::mutate(unit = unit) |>
@@ -222,7 +222,7 @@ if(urban_rural){
       n != max(n)
     ) |>
     dplyr::select(dplyr::all_of(c(grouping, "year")))
-  
+
   if(nrow(not_full) > 0){
     replaced <- not_full |>
       dplyr::mutate(
@@ -234,7 +234,7 @@ if(urban_rural){
         urban_rural = ifelse(urban_rural == "urban", "rural", "urban")
       ) |>
       dplyr::anti_join(not_full, by = c(grouping, "year"))
-    
+
     prevalence <- prevalence |>
       dplyr::bind_rows(replaced) |>
       dplyr::arrange(dplyr::across(dplyr::all_of(c(grouping, "year"))))
@@ -321,8 +321,8 @@ peak_season <- seasonal_curve |>
 interventions <- spatial |>
   dplyr::summarise(
     # Some map has some areas with NA (usually due to a misalignment between)
-    # boundary file and raster) that we define as having PAR, these 
-    # shouldn't be interpreted as 0, so are dropped 
+    # boundary file and raster) that we define as having PAR, these
+    # shouldn't be interpreted as 0, so are dropped
     tx_cov = weighted.mean2(tx_cov, par, na.rm = TRUE),
     itn_use = weighted.mean2(itn_use, par, na.rm = TRUE),
     irs_cov = weighted.mean2(irs_cov, par, na.rm = TRUE),
@@ -350,7 +350,7 @@ if(urban_rural){
       n != max(n)
     ) |>
     dplyr::select(dplyr::all_of(c(grouping, "year")))
-  
+
   if(nrow(not_full) > 0){
     replaced <- not_full |>
       dplyr::mutate(
@@ -362,7 +362,7 @@ if(urban_rural){
         urban_rural = ifelse(urban_rural == "urban", "rural", "urban")
       ) |>
       dplyr::anti_join(not_full, by = c(grouping, "year"))
-    
+
     interventions <- interventions |>
       dplyr::bind_rows(replaced)
   }
@@ -402,24 +402,24 @@ if(iso3c %in% tx_prop_public$iso3c){
 # ITNs
 itn_hl <- netz::get_halflife(iso3c)
 
-itn_data_latest_year <- 2023 
+itn_data_latest_year <- 2023
 itn_use <- interventions |>
   dplyr::select(dplyr::all_of(c(grouping, "year", "itn_use"))) |>
-  # As a crude, but ok approximation (have checked) to these being average use over the year, 
+  # As a crude, but ok approximation (have checked) to these being average use over the year,
   ## we assume the usage value is taken at a single timepoint in the year. The user can always
   ## specify specific distributions and usage data points for more accuracy
   dplyr::mutate(usage_day_of_year = 182) |>
   # Instead of constant use extrapolation we use %% 3 years
   dplyr::mutate(
     itn_use = ifelse(
-      year > itn_data_latest_year, 
-      itn_use[match(year - 3, year)], 
+      year > itn_data_latest_year,
+      itn_use[match(year - 3, year)],
       itn_use
     ),
     .by = dplyr::all_of(grouping)
   )
 
-new_net_introductions <- read.csv("vectors/new_net_introductions.csv") 
+new_net_introductions <- read.csv("vectors/new_net_introductions.csv")
 itn_implementation <- interventions |>
   dplyr::select(dplyr::all_of(c(grouping, "year"))) |>
   dplyr::mutate(
@@ -448,7 +448,7 @@ itn_implementation <- interventions |>
   dplyr::filter((year + distribution_day_of_year)<= max(
     itn_use$year + itn_use$usage_day_of_year
   ))
-  
+
 
 if(FALSE){
   # TODO: remove, The following gets done by site:
@@ -460,7 +460,7 @@ if(FALSE){
   ### inputs
   t1 <- dplyr::filter(itn_implementation, name_1 == "Mukono", urban_rural == "rural")
   t2 <- dplyr::filter(itn_use, name_1 == "Mukono", urban_rural == "rural")
-  
+
   itn_input_dist <- netz::usage_to_model_distribution(
     usage = t2$itn_use,
     usage_timesteps = t2$usage_timestep,
@@ -470,7 +470,7 @@ if(FALSE){
     net_loss_function = netz::net_loss_map,
     half_life = itn_hl
   )
-  
+
   itn_predicted_use <- netz::model_distribution_to_usage(
     usage_timesteps = t2$usage_timestep,
     distribution = itn_input_dist,
@@ -480,7 +480,7 @@ if(FALSE){
   )
   y <- 2000 + (t2$usage_timestep - 1) / 365
   plot(itn_predicted_use ~ y, t = "l", ylim =c(0, 1))
-  points(2000:2026, t2$itn_use, pch = 19)  
+  points(2000:2026, t2$itn_use, pch = 19)
   points(2000 + (t1$distribution_timestep - 1) / 365, itn_input_dist, col = "orange")
 }
 

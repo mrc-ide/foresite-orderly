@@ -52,7 +52,7 @@ for(iso in isos){
   split(relative_abundance_arabiensis, extent, iso, "relative_arabiensis")
   split(relative_abundance_funestus, extent, iso, "relative_funestus")
   split(relative_abundance_gambiae, extent, iso, "relative_gambiae")
-  
+
   for(i in 1:length(relative_occurence_raster)){
     split(relative_occurence_raster[[i]], extent, iso, relative_occurence_names[[i]])
   }

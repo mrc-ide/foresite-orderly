@@ -23,28 +23,28 @@ raster_stack <- function(name, years){
 # Interventions
 itn_raster <- raster_stack("itn/202508_Africa_Insecticide_Treated_Net_Use_", 2000:2024)
 irs_raster <- raster_stack("irs/202508_Africa_IRS_Coverage_", 2000:2024)
-tx_raster <- raster_stack("tx/202508_Global_Antimalarial_Effective_Treatment_", 2000:2024) 
+tx_raster <- raster_stack("tx/202508_Global_Antimalarial_Effective_Treatment_", 2000:2024)
 smc_times <- paste0(
   rep(2012:2020, each = 12),
   ".",
   c("01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12")
 )
-smc_raster <- raster_stack("smc/SMC_", smc_times) 
+smc_raster <- raster_stack("smc/SMC_", smc_times)
 
 # Prevalence
 pfpr_raster <- raster_stack("pfpr/202508_Global_Pf_Parasite_Rate_", 2000:2024)
-pvpr_raster <- raster_stack("pvpr/202508_Global_Pv_Parasite_Rate_", 2000:2024) 
+pvpr_raster <- raster_stack("pvpr/202508_Global_Pv_Parasite_Rate_", 2000:2024)
 
 # Access
-cities_raster <- raster_stack("access/201501_Global_Travel_Time_to_Cities_", 2015) 
-motor_raster <- raster_stack("access/202001_Global_Motorized_Travel_Time_to_Healthcare_", 2019) 
-walk_raster <- raster_stack("access/202001_Global_Walking_Only_Travel_Time_To_Healthcare_", 2019) 
+cities_raster <- raster_stack("access/201501_Global_Travel_Time_to_Cities_", 2015)
+motor_raster <- raster_stack("access/202001_Global_Motorized_Travel_Time_to_Healthcare_", 2019)
+walk_raster <- raster_stack("access/202001_Global_Walking_Only_Travel_Time_To_Healthcare_", 2019)
 
 # Blood disorders
-hbc_raster <- raster_stack("blood_disorders/201201_Africa_HbC_Allele_Frequency_", 2010) 
-duffy_raster <- raster_stack("blood_disorders/201201_Global_Duffy_Negativity_Phenotype_Frequency_", 2010) 
-g6pd_raster <- raster_stack("blood_disorders/201201_Global_G6PDd_Allele_Frequency_", 2010) 
-sickle_raster <- raster_stack("blood_disorders/201201_Global_Sickle_Haemoglobin_HbS_Allele_Frequency_", 2010) 
+hbc_raster <- raster_stack("blood_disorders/201201_Africa_HbC_Allele_Frequency_", 2010)
+duffy_raster <- raster_stack("blood_disorders/201201_Global_Duffy_Negativity_Phenotype_Frequency_", 2010)
+g6pd_raster <- raster_stack("blood_disorders/201201_Global_G6PDd_Allele_Frequency_", 2010)
+sickle_raster <- raster_stack("blood_disorders/201201_Global_Sickle_Haemoglobin_HbS_Allele_Frequency_", 2010)
 
 source("utils.R")
 
@@ -70,7 +70,7 @@ make <- sapply(paths, dir.create)
 
 for(iso in isos){
   extent <- terra::ext(unlist(extents[extents$iso3c == iso, 2:5]))
-  
+
   split(itn_raster, extent, iso, "itn")
   split(irs_raster, extent, iso, "irs")
   split(tx_raster, extent, iso, "tx")

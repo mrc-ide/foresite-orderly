@@ -3,7 +3,7 @@
 middle_days <- data.frame(
   month = 1:12,
   month_name = c(
-    "Jan", "Feb", "Mar", "Apr", "May", 
+    "Jan", "Feb", "Mar", "Apr", "May",
     "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
   ),
   t = c(16, 45.5, 75, 105.5, 136, 166.5, 197, 228, 258.5, 289, 319.5, 350)
@@ -35,7 +35,7 @@ check_params <- function(site){
   for(i in 1:length(eirs)){
     x <- eirs[[i]]
     sub_site <- site::subset_site(site, x)
-    
+
     # usage_timesteps <- site::calendar_to_timestep(
     #   year = sub_site$interventions$itn$use$year,
     #   day_of_year = sub_site$interventions$itn$use$usage_day_of_year,
@@ -46,7 +46,7 @@ check_params <- function(site){
     #   day_of_year = sub_site$interventions$itn$implementation$distribution_day_of_year,
     #   start_year = min(sub_site$interventions$itn$implementation$year)
     # )
-    # 
+    #
     # sub_site$interventions$itn$implementation$itn_input_dist <- netz::usage_to_model_distribution(
     #   usage = sub_site$interventions$itn$use$itn_use,
     #   usage_timesteps = usage_timesteps,
@@ -56,7 +56,7 @@ check_params <- function(site){
     #   net_loss_function = netz::net_loss_map,
     #   half_life = sub_site$interventions$itn$retention_half_life
     # )
-    
+
     sub_site$interventions$itn$implementation$itn_input_dist <- site::site_usage_to_model_distribution(
       usage = sub_site$interventions$itn$use$itn_use,
       usage_year = sub_site$interventions$itn$use$year,
@@ -67,8 +67,8 @@ check_params <- function(site){
       distribution_upper = sub_site$interventions$itn$implementation$distribution_upper,
       net_loss_function = netz::net_loss_map,
       half_life = sub_site$interventions$itn$retention_half_life
-    ) 
-    
+    )
+
     # sub_site$interventions$itn$use$expected_use <- netz::model_distribution_to_usage(
     #   distribution = sub_site$interventions$itn$implementation$itn_input_dist,
     #   usage_timesteps = usage_timesteps,
@@ -76,7 +76,7 @@ check_params <- function(site){
     #   net_loss_function = netz::net_loss_map,
     #   half_life = sub_site$interventions$itn$retention_half_life
     # )
-    
+
     sub_site$interventions$itn$use$expected_use <- site::site_model_distribution_to_usage(
       distribution = sub_site$interventions$itn$implementation$itn_input_dist,
       usage_year = sub_site$interventions$itn$use$year,
@@ -86,7 +86,7 @@ check_params <- function(site){
       net_loss_function = netz::net_loss_map,
       half_life = sub_site$interventions$itn$retention_half_life
     )
-    
+
     parasite <- ifelse(x$sp == "pf", "falciparum", "vivax")
     start_year <- 1995
     end_year <- 2026

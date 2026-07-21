@@ -62,7 +62,7 @@ source("calibration_utils.R")
 # Calibration ------------------------------------------------------------------
 parallel <- TRUE
 human_population <- c(5000, 10000, 100000)
-diagnostic_burnin <- 20 
+diagnostic_burnin <- 20
 max_attempts <- 30
 
 # Split out individual jobs
@@ -85,7 +85,7 @@ if(parallel){
     source("calibration_utils.R")
     TRUE
   })
-  
+
   calibration_output <- parallel::parLapply(
     cl = cluster,
     X = eirs,
@@ -111,7 +111,7 @@ saveRDS(calibration_output, "calibration_output_raw.rds")
 # ------------------------------------------------------------------------------
 
 # Collate EIR ------------------------------------------------------------------
-eir_estimates <- 
+eir_estimates <-
   lapply(calibration_output, "[[", 1) |>
   dplyr::bind_rows()
 
@@ -144,7 +144,7 @@ diagnostic_epi <-  lapply(calibration_output, "[[", 2) |>
   dplyr::left_join(pop, by = c(site$metadata$admin_level, "age_group", "year")) |>
   dplyr::mutate(
     severe = ifelse(is.na(severe), 0, severe),
-    mortality = ifelse(is.na(mortality), 0, mortality)   
+    mortality = ifelse(is.na(mortality), 0, mortality)
   ) |>
   dplyr::mutate(
     par = ifelse(sp == "pf", par_pf, par_pv)
@@ -152,7 +152,7 @@ diagnostic_epi <-  lapply(calibration_output, "[[", 2) |>
   dplyr::mutate(
     cases = clinical * par,
     deaths = mortality * par
-  ) 
+  )
 
 diagnostic_epi$name <- apply(diagnostic_epi[,group_names], 1, paste, collapse = " | ")
 saveRDS(diagnostic_epi, "diagnostic_epi.rds")

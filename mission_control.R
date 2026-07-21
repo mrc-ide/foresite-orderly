@@ -2,17 +2,17 @@
 
 # ISOs -------------------------------------------------------------------------
 malaria_endemic_isos <- c(
-  "DZA", "AGO", "BEN", "BWA", "BFA", "BDI", "CPV", "CMR", "CAF", 
-  "TCD", "COM", "COG", "CIV", "COD", "GNQ", "ERI", "SWZ", "ETH", 
-  "GAB", "GMB", "GHA", "GIN", "GNB", "KEN", "LBR", "MDG", "MWI", 
-  "MLI", "MRT", "MOZ", "NAM", "NER", "NGA", "RWA", "STP", "SEN", 
-  "SLE", "ZAF", "SSD", "TGO", "UGA", "TZA", "ZMB", "ZWE", "ARG", 
-  "BLZ", "BOL", "BRA", "COL", "CRI", "DOM", "ECU", "SLV", "GUF", 
-  "GTM", "GUY", "HTI", "HND", "MEX", "NIC", "PAN", "PRY", "PER", 
-  "SUR", "VEN", "AFG", "DJI", "EGY", "IRN", "IRQ", "MAR", "OMN", 
-  "PAK", "SAU", "SOM", "SDN", "SYR", "ARE", "YEM", "ARM", "AZE", 
-  "GEO", "KAZ", "KGZ", "TJK", "TUR", "TKM", "UZB", "BGD", "BTN", 
-  "PRK", "IND", "IDN", "MMR", "NPL", "LKA", "THA", "TLS", "KHM", 
+  "DZA", "AGO", "BEN", "BWA", "BFA", "BDI", "CPV", "CMR", "CAF",
+  "TCD", "COM", "COG", "CIV", "COD", "GNQ", "ERI", "SWZ", "ETH",
+  "GAB", "GMB", "GHA", "GIN", "GNB", "KEN", "LBR", "MDG", "MWI",
+  "MLI", "MRT", "MOZ", "NAM", "NER", "NGA", "RWA", "STP", "SEN",
+  "SLE", "ZAF", "SSD", "TGO", "UGA", "TZA", "ZMB", "ZWE", "ARG",
+  "BLZ", "BOL", "BRA", "COL", "CRI", "DOM", "ECU", "SLV", "GUF",
+  "GTM", "GUY", "HTI", "HND", "MEX", "NIC", "PAN", "PRY", "PER",
+  "SUR", "VEN", "AFG", "DJI", "EGY", "IRN", "IRQ", "MAR", "OMN",
+  "PAK", "SAU", "SOM", "SDN", "SYR", "ARE", "YEM", "ARM", "AZE",
+  "GEO", "KAZ", "KGZ", "TJK", "TUR", "TKM", "UZB", "BGD", "BTN",
+  "PRK", "IND", "IDN", "MMR", "NPL", "LKA", "THA", "TLS", "KHM",
   "CHN", "LAO", "MYS", "PNG", "PHL", "KOR", "SLB", "VUT", "VNM"
 )
 # ------------------------------------------------------------------------------
@@ -100,7 +100,7 @@ orderly::orderly_run(
 # ------------------------------------------------------------------------------
 
 # Run options ------------------------------------------------------------------
-boundary <- "GADM_4.1.0" 
+boundary <- "GADM_4.1.0"
 isos <- list.files(paste0("src/data_boundaries/boundaries/", boundary))
 admin <- 1
 urban_rural <- TRUE
@@ -146,7 +146,7 @@ for(iso in isos){
     ),
     echo = FALSE
   )
-}  
+}
 
 # Population projections
 for(iso in isos){

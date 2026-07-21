@@ -7,13 +7,13 @@ isos <- list.files("data/")
 # Get the intersection of all extents
 get_common_extent <- function(file_list) {
   extents <- lapply(file_list, function(f) terra::ext(terra::rast(f)))
-  
+
   # Find intersection
   xmin <- max(sapply(extents, function(e) e$xmin))
   xmax <- min(sapply(extents, function(e) e$xmax))
   ymin <- max(sapply(extents, function(e) e$ymin))
   ymax <- min(sapply(extents, function(e) e$ymax))
-  
+
   return(terra::ext(xmin, xmax, ymin, ymax))
 }
 

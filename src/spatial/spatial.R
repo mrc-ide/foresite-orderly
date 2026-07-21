@@ -356,21 +356,21 @@ if(file.exists("data/map/duffy.tif")){
 motor_travel_healthcare_raster <- NA
 if(file.exists("data/map/motor.tif")){
   motor_travel_healthcare_raster <- terra::rast("data/map/motor.tif") |>
-    terra::resample(pfpr_raster) |>  
+    terra::resample(pfpr_raster) |>
     pad_raster(years, forward_empty = TRUE)
 }
 
 walking_travel_healthcare_raster <- NA
 if(file.exists("data/map/walk.tif")){
   walking_travel_healthcare_raster <- terra::rast("data/map/walk.tif") |>
-    terra::resample(pfpr_raster) |>  
+    terra::resample(pfpr_raster) |>
     pad_raster(years, forward_empty = TRUE)
 }
 
 city_travel_time_raster <- NA
 if(file.exists("data/map/cities.tif")){
   city_travel_time_raster <- terra::rast("data/map/cities.tif") |>
-    terra::resample(pfpr_raster) |>  
+    terra::resample(pfpr_raster) |>
     pad_raster(years, forward_empty = TRUE)
 }
 
@@ -440,7 +440,7 @@ df <- data.frame(
     vector_occurrence_df
   ) |>
   # Remove pixels that don't fall within a polygon
-  dplyr::filter(!is.na(uid)) |> 
+  dplyr::filter(!is.na(uid)) |>
   # Categorise urban_rural
   dplyr::mutate(urban_rural = ifelse(urban_rural == 1, "urban", "rural")) |>
   # Link to shape data
@@ -530,13 +530,13 @@ if(!approximate_itn){
   # Assume median half life and usage rate
   hl <- netz::get_halflife(iso3c)
   ur <- netz::get_usage_rate(iso3c)
-  
-  
+
+
   wmr_use <- read.csv("data/who/wmr_itns_distributed.csv") |>
     dplyr::filter(iso3c == {{iso3c}}) |>
     dplyr::filter(year > itn_max_year) |>
     dplyr::select(year, itns_distributed)
-  
+
   # Summarise ITN use country-wide
   df_use <- df |>
     dplyr::summarise(
@@ -569,7 +569,7 @@ if(!approximate_itn){
       itn_use2 = netz::access_to_usage(access2, ur),
       use_multiplier = ifelse(year > itn_max_year, round(itn_use2 / itn_use, 2), 1)
     )
-  
+
   max_observed_use <- max(df$itn_use, na.rm = TRUE)
   df <- df |>
     dplyr::left_join(
@@ -590,13 +590,13 @@ if(!approximate_irs){
     dplyr::filter(year > irs_max_year) |>
     dplyr::select(year, irs_interpolated) |>
     dplyr::filter(!is.na(irs_interpolated))
-  
+
   df_pp <- df |>
     dplyr::summarise(
       pp = sum(irs_cov * par, na.rm = TRUE),
       .by = "year"
     )
-  
+
   # We assume no change in IRS targeted areas
   max_cov <- 0.8
   for(i in seq_along(irs_people$year)){
@@ -607,11 +607,11 @@ if(!approximate_irs){
 }
 
 if(approximate_itn){
-  
+
   # Assume median half life and usage rate
   hl <- netz::get_halflife(iso3c)
   ur <- netz::get_usage_rate(iso3c)
-  
+
   # Estimate the total people using nets each year | WHO net delivery/distribution
   nets_distributed <- read.csv("data/who/wmr_itns_distributed.csv") |>
     dplyr::filter(iso3c == {{iso3c}}) |>
@@ -629,13 +629,13 @@ if(approximate_itn){
     ) |>
     dplyr::select(year, people_using_nets) |>
     tidyr::complete(year = years)
-  
+
   if(sum(is.na(nets_distributed$people_using_nets)) > 0){
     # Extrapolate assuming 3 year cycle
     na_index <- which(is.na(nets_distributed$people_using_nets))
     nets_distributed$people_using_nets[na_index] <- nets_distributed$people_using_nets[pmax(0, na_index - 3)]
   }
-  
+
   # Target nets at maximum of 55% use (to be in linear section of net model),
   # Targeting is based on 2000 prevalence
   max_use <- 0.55
@@ -667,13 +667,13 @@ if(approximate_irs){
     dplyr::filter(iso3c == {{iso3c}}) |>
     dplyr::select(year, irs_interpolated) |>
     tidyr::complete(year = years)
-  
+
   if(sum(is.na(irs_people$irs_interpolated)) > 0){
     # Extrapolate assuming last year with data continues
     na_index <- which(is.na(irs_people$irs_interpolated))
     irs_people$irs_interpolated[na_index] <- irs_people$irs_interpolated[max(1, min(na_index) - 1)]
   }
-  
+
   # Target irs at maximum of 80% coverage,
   # Targeting is based on 2000 prevalence
   max_cov <- 0.8
@@ -698,7 +698,7 @@ if(approximate_irs){
       list(irs_cov = 0)
     ) |>
     dplyr::select(-c("rank", "pop_cov", "irs_interpolated"))
-  
+
 }
 # ------------------------------------------------------------------------------
 

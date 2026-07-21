@@ -19,17 +19,17 @@ orderly::orderly_dependency(
 )
 
 orderly::orderly_artefact(
-  description = "UN WPP population and demography data", 
+  description = "UN WPP population and demography data",
   files = "un_wpp.rds"
 )
 
 orderly::orderly_artefact(
-  description = "UNICEF neonatal mortality rates", 
+  description = "UNICEF neonatal mortality rates",
   files = "unicef_neonatal_mortality.rds"
 )
 
 orderly::orderly_artefact(
-  description = "UN WUP population urbanisation", 
+  description = "UN WUP population urbanisation",
   files = "un_wup.rds"
 )
 # ------------------------------------------------------------------------------
@@ -48,7 +48,7 @@ life_tables <- historical_life_tables |>
   ) |>
   dplyr::mutate(
     age_upper = ifelse(
-      age_lower < 100, 
+      age_lower < 100,
       age_lower + 1,
       age_lower + 100
     )
@@ -58,8 +58,8 @@ life_tables <- historical_life_tables |>
   ) |>
   dplyr::select(
     iso3c,
-    year, 
-    age_lower, 
+    year,
+    age_lower,
     age_upper,
     qx
   )
@@ -80,7 +80,7 @@ populations <- historical_populations |>
   dplyr::mutate(
     population = as.integer(round(population * 1000)),
     age_upper = ifelse(
-      age_lower < 100, 
+      age_lower < 100,
       age_lower + 1,
       age_lower + 100
     )
@@ -94,12 +94,12 @@ populations <- historical_populations |>
   ) |>
   dplyr::select(
     iso3c,
-    year, 
-    age_lower, 
+    year,
+    age_lower,
     age_upper,
     population,
     population_proportion
-  ) 
+  )
 # ------------------------------------------------------------------------------
 
 # Combined ---------------------------------------------------------------------
