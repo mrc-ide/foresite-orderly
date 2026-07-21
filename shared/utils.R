@@ -1,5 +1,6 @@
+# Raster helpers ---------------------------------------------------------------
+# TRUE if a raster overlaps an extent (used to decide whether to keep a country)
 extents_overlap <- function(raster, extent){
-  #boundary <- terra::ext(boundary)
   overlap <- TRUE
   intersection <- terra::intersect(raster, extent)
   if(is.null(intersection)){
@@ -8,6 +9,8 @@ extents_overlap <- function(raster, extent){
   return(overlap)
 }
 
+# Crop a raster to an extent, returning NULL if it holds no data there (unless
+# force_out = TRUE)
 process_raster <- function(raster, extent, force_out = FALSE){
   has_info <- FALSE
   overlaps <- extents_overlap(raster, extent)
@@ -22,6 +25,8 @@ process_raster <- function(raster, extent, force_out = FALSE){
   NULL
 }
 
+# weighted.mean that degrades gracefully when all weights are zero: returns 0 if
+# x is all NA, otherwise the unweighted mean
 weighted.mean2 <- function(x, w, na.rm = TRUE){
   out <- weighted.mean(x, w, na.rm = na.rm)
   if(sum(w) == 0){
@@ -34,7 +39,9 @@ weighted.mean2 <- function(x, w, na.rm = TRUE){
   return(out)
 }
 
-### Plotting ###################################################################
+# Plotting ---------------------------------------------------------------------
+# Population-weighted collapse of a per-pixel column up to admin units, then
+# joined back onto the shape for mapping
 collapse <- function(x, column, population, shape) {
   x |>
     left_join(population) |>
@@ -53,6 +60,7 @@ collapse <- function(x, column, population, shape) {
     left_join(shape)
 }
 
+# Stacked urban/rural population over time
 plot_urban_rural <- function(pop_dat, title){
   years <- sort(unique(pop_dat$year))
   year_shading <- site:::year_shading_data(
@@ -81,6 +89,8 @@ plot_urban_rural <- function(pop_dat, title){
     site:::theme_site()
 }
 
+# WMR cases / incidence / deaths / mortality panels, with optional modelled and
+# bias-adjusted overlays (national_epi)
 plot_burden <- function(burden_pd, title, national_epi = NULL){
   years <- sort(unique(burden_pd$year))
   year_shading <- site:::year_shading_data(
@@ -210,6 +220,7 @@ plot_burden <- function(burden_pd, title, national_epi = NULL){
   return(burden)
 }
 
+# Choropleth of a population-weighted column across admin units, faceted by year
 plot_map <- function(data, column_name, population, shape, title, title_size = 22, viridis_option = "C", lims = c(0, 1)){
   map_dat <- collapse(
     data,
@@ -230,6 +241,7 @@ plot_map <- function(data, column_name, population, shape, title, title_size = 2
       aspect.ratio = 1
     )
 }
+# Maps of the four blood-disorder frequencies (sickle, G6PD, HbC, Duffy)
 plot_blood_disorders <- function(data, population){
   d <- data |>
     left_join(population) |>
@@ -272,6 +284,7 @@ plot_blood_disorders <- function(data, population){
     )
 }
 
+# Maps of travel time to healthcare (motor / walking) and to the nearest city
 plot_accessibility <- function(data, population){
   d <- data |>
     left_join(population) |>
@@ -313,6 +326,7 @@ plot_accessibility <- function(data, population){
     )
 }
 
+# Model-vs-MAP prevalence fit for a single calibrated site
 plot_calibrated_site_prevalence <- function(prevalence, title = NULL, diagnostic_prev = NULL) {
   plot_data <- prevalence |>
     tidyr::pivot_longer(
@@ -361,6 +375,7 @@ plot_calibrated_site_prevalence <- function(prevalence, title = NULL, diagnostic
   return(prev_plot)
 }
 
+# Assemble the full per-site diagnostic page (a patchwork of the site's plots)
 plot_calibrated_site_diagnostic <- function(site, max_year = 2030, diagnostic_prev = NULL) {
   map <- site::plot_site_map(site)
 
