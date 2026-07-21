@@ -3,12 +3,14 @@
 middle_days <- data.frame(
   month = 1:12,
   month_name = c(
-    "Jan", "Feb", "Mar", "Apr", "May", 
+    "Jan", "Feb", "Mar", "Apr", "May",
     "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
   ),
   t = c(16, 45.5, 75, 105.5, 136, 166.5, 197, 228, 258.5, 289, 319.5, 350)
 )
 
+# Fit a Fourier series to monthly rainfall (via umbrella) and return the
+# coefficients as a one-row-per-coefficient data frame (wrapped in a list).
 fit_fourier_df <- function(rainfall, t){
   out <- umbrella::fit_fourier(rainfall, t, 0)
   list(
@@ -21,6 +23,8 @@ fit_fourier_df <- function(rainfall, t){
 # ------------------------------------------------------------------------------
 
 # Interventions ----------------------------------------------------------------
+# Objective for matching an exponential net-loss mean retention to the smooth-
+# compact (map) net-loss half-life: summed squared difference over `years`.
 net_loss_match_objective <- function(mean_retention, half_life, years = 3){
   t <- 1:(365 * years)
   ex <- netz::net_loss_exp(t, mean_retention)
@@ -30,33 +34,14 @@ net_loss_match_objective <- function(mean_retention, half_life, years = 3){
 # ------------------------------------------------------------------------------
 
 # Checks -----------------------------------------------------------------------
+# For every EIR row, subset the site to that unit/species and confirm it can
+# build a valid malariasimulation parameter set; stops the run if any site fails.
 check_params <- function(site){
   eirs <- base::split(site$eir, 1:nrow(site$eir))
   for(i in 1:length(eirs)){
     x <- eirs[[i]]
     sub_site <- site::subset_site(site, x)
-    
-    # usage_timesteps <- site::calendar_to_timestep(
-    #   year = sub_site$interventions$itn$use$year,
-    #   day_of_year = sub_site$interventions$itn$use$usage_day_of_year,
-    #   start_year = min(sub_site$interventions$itn$use$year)
-    # )
-    # distribution_timesteps <- site::calendar_to_timestep(
-    #   year = sub_site$interventions$itn$implementation$year,
-    #   day_of_year = sub_site$interventions$itn$implementation$distribution_day_of_year,
-    #   start_year = min(sub_site$interventions$itn$implementation$year)
-    # )
-    # 
-    # sub_site$interventions$itn$implementation$itn_input_dist <- netz::usage_to_model_distribution(
-    #   usage = sub_site$interventions$itn$use$itn_use,
-    #   usage_timesteps = usage_timesteps,
-    #   distribution_timesteps = distribution_timesteps,
-    #   distribution_lower = sub_site$interventions$itn$implementation$distribution_lower,
-    #   distribution_upper = sub_site$interventions$itn$implementation$distribution_upper,
-    #   net_loss_function = netz::net_loss_map,
-    #   half_life = sub_site$interventions$itn$retention_half_life
-    # )
-    
+
     sub_site$interventions$itn$implementation$itn_input_dist <- site::site_usage_to_model_distribution(
       usage = sub_site$interventions$itn$use$itn_use,
       usage_year = sub_site$interventions$itn$use$year,
@@ -67,16 +52,8 @@ check_params <- function(site){
       distribution_upper = sub_site$interventions$itn$implementation$distribution_upper,
       net_loss_function = netz::net_loss_map,
       half_life = sub_site$interventions$itn$retention_half_life
-    ) 
-    
-    # sub_site$interventions$itn$use$expected_use <- netz::model_distribution_to_usage(
-    #   distribution = sub_site$interventions$itn$implementation$itn_input_dist,
-    #   usage_timesteps = usage_timesteps,
-    #   distribution_timesteps = distribution_timesteps,
-    #   net_loss_function = netz::net_loss_map,
-    #   half_life = sub_site$interventions$itn$retention_half_life
-    # )
-    
+    )
+
     sub_site$interventions$itn$use$expected_use <- site::site_model_distribution_to_usage(
       distribution = sub_site$interventions$itn$implementation$itn_input_dist,
       usage_year = sub_site$interventions$itn$use$year,
@@ -86,7 +63,7 @@ check_params <- function(site){
       net_loss_function = netz::net_loss_map,
       half_life = sub_site$interventions$itn$retention_half_life
     )
-    
+
     parasite <- ifelse(x$sp == "pf", "falciparum", "vivax")
     start_year <- 1995
     end_year <- 2026
@@ -100,7 +77,7 @@ check_params <- function(site){
           overrides = list(
             human_population = 1000
           ),
-          parasite  = parasite,
+          parasite = parasite,
           start_year = start_year,
           end_year = end_year
         )

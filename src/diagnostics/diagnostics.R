@@ -1,7 +1,7 @@
 # Orderly set-up ---------------------------------------------------------------
 orderly::orderly_description(
   display = "Site file diagnostics",
-  long = "Take a daw site file and prepares a diagnostic report"
+  long = "Takes a site file and prepares a diagnostic report"
 )
 
 p <- orderly::orderly_parameters(
@@ -41,6 +41,8 @@ if(p$calibration){
 }
 
 # ------------------------------------------------------------------------------
+
+# Initial set up ---------------------------------------------------------------
 library(dplyr)
 library(tidyr)
 library(ggplot2)
@@ -48,7 +50,7 @@ library(patchwork)
 library(sf)
 library(qpdf)
 source("utils.R")
-
+# ------------------------------------------------------------------------------
 
 # Load inputs ------------------------------------------------------------------
 if(p$calibration){
@@ -162,7 +164,6 @@ pmc_cov_map <- plot_map(
   title = "PMC coverage"
 )
 
-
 maps1 <- pfpr_map /
   pvpr_map /
   tx_cov_map /
@@ -222,9 +223,8 @@ title_p <- ggplot() +
   annotate("text", x = 0.5, y = 0.75, label = title, size = 12, fontface = "bold", colour = "navy") +
   annotation_custom(logo_grob, xmin = 0.05, xmax = 0.95, ymin = 0.05, ymax = 0.35) +
   annotate("text", x = 0.5, y = 0.5, label = subtitle, size = 6, colour = "navy", alpha = 0.6) +
-  theme_void()  +
+  theme_void() +
   xlim(0, 1) + ylim(0, 1)
-
 
 single_site_title_p <- ggplot() +
   annotate("text", x = 0.5, y = 0.6, label = "Site reports", size = 12, fontface = "bold", colour = "navy") +
@@ -234,6 +234,7 @@ single_site_title_p <- ggplot() +
 # ------------------------------------------------------------------------------
 
 # Combination ------------------------------------------------------------------
+# Write each page to a temporary PDF, then stitch them into one report
 title_file <- tempfile(fileext = ".pdf")
 burden_file <- tempfile(fileext = ".pdf")
 maps1_file <- tempfile(fileext = ".pdf")
@@ -254,6 +255,7 @@ ggsave(single_site_title_file, single_site_title_p, width = 8.27, height = 8.27)
 
 page_files <- c(title_file, burden_file, maps1_file, maps2_file, pops_file, accessibility_file, blood_file, single_site_title_file)
 
+# Append one diagnostic page per individual site
 for(s in 1:nrow(sitefile$sites)){
   site <- site::subset_site(sitefile, sitefile$sites[s, ])
   site$interventions$itn$implementation$itn_input_dist <-

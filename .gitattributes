@@ -1,0 +1,18 @@
+# Normalise line endings: store text as LF, force LF on checkout regardless of
+# each user's core.autocrlf setting. Data/binary inputs are left untouched.
+* text=auto eol=lf
+
+*.R      text eol=lf
+*.md     text eol=lf
+*.csv    text eol=lf
+*.json   text eol=lf
+
+*.rds    binary
+*.tif    binary
+*.tiff   binary
+*.png    binary
+*.jpg    binary
+*.jpeg   binary
+*.pdf    binary
+*.RData  binary
+*.zip    binary

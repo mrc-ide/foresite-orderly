@@ -231,22 +231,6 @@ if(file.exists("data/manual/smc.tif")){
     pad_raster(years)
   names(smc_raster) <- paste0("smc_cov_", years)
 }
-
-## MAP embargoed inputs, not used at present
-# if(file.exists("data/map/smc.tif")){
-#   smc_raster <- terra::rast("data/map/smc.tif") |>
-#     monthify()
-#   smc_raster <- lapply(smc_raster, pad_raster, all_years = years)
-#   smc_raster <- lapply(smc_raster, function(x){
-#     names(x) <- paste0("smc_cov_", years)
-#     return(x)
-#   })
-# } else {
-#   smc_raster <- lapply(1:12, function(x){
-#     NA
-#   })
-#   names(smc_raster) <- 1:12
-# }
 # ------------------------------------------------------------------------------
 
 # PMC --------------------------------------------------------------------------
@@ -310,7 +294,7 @@ vector_occurrence_raster <- vector_occurrence_raster[!is.na(vector_occurrence_ra
 vector_occurrence_df <-
   lapply(vector_occurrence_raster, raster_values) |>
   as.data.frame()
-colnames(vector_occurrence_df) <- paste0("occurrence_",names(vector_occurrence_raster))
+colnames(vector_occurrence_df) <- paste0("occurrence_", names(vector_occurrence_raster))
 # ------------------------------------------------------------------------------
 
 # Rainfall ---------------------------------------------------------------------
@@ -356,21 +340,21 @@ if(file.exists("data/map/duffy.tif")){
 motor_travel_healthcare_raster <- NA
 if(file.exists("data/map/motor.tif")){
   motor_travel_healthcare_raster <- terra::rast("data/map/motor.tif") |>
-    terra::resample(pfpr_raster) |>  
+    terra::resample(pfpr_raster) |>
     pad_raster(years, forward_empty = TRUE)
 }
 
 walking_travel_healthcare_raster <- NA
 if(file.exists("data/map/walk.tif")){
   walking_travel_healthcare_raster <- terra::rast("data/map/walk.tif") |>
-    terra::resample(pfpr_raster) |>  
+    terra::resample(pfpr_raster) |>
     pad_raster(years, forward_empty = TRUE)
 }
 
 city_travel_time_raster <- NA
 if(file.exists("data/map/cities.tif")){
   city_travel_time_raster <- terra::rast("data/map/cities.tif") |>
-    terra::resample(pfpr_raster) |>  
+    terra::resample(pfpr_raster) |>
     pad_raster(years, forward_empty = TRUE)
 }
 
@@ -397,19 +381,6 @@ df <- data.frame(
   irs_cov = raster_values(irs_raster, na_replace = 0),
   tx_cov = raster_values(tx_raster),
   smc_cov = raster_values(smc_raster, na_replace = 0),
-  ## MAP embargoed inputs, not used at present
-  # smc_1 = raster_values(smc_raster[[1]], na_replace = 0),
-  # smc_2 = raster_values(smc_raster[[2]], na_replace = 0),
-  # smc_3 = raster_values(smc_raster[[3]], na_replace = 0),
-  # smc_4 = raster_values(smc_raster[[4]], na_replace = 0),
-  # smc_5 = raster_values(smc_raster[[5]], na_replace = 0),
-  # smc_6 = raster_values(smc_raster[[6]], na_replace = 0),
-  # smc_7 = raster_values(smc_raster[[7]], na_replace = 0),
-  # smc_8 = raster_values(smc_raster[[8]], na_replace = 0),
-  # smc_9 = raster_values(smc_raster[[9]], na_replace = 0),
-  # smc_10 = raster_values(smc_raster[[10]], na_replace = 0),
-  # smc_11 = raster_values(smc_raster[[11]], na_replace = 0),
-  # smc_12 = raster_values(smc_raster[[12]], na_replace = 0),
   pmc_cov = raster_values(pmc_raster, na_replace = 0),
   rtss_cov = raster_values(rtss_raster, na_replace = 0),
   r21_cov = raster_values(r21_raster, na_replace = 0),
@@ -440,7 +411,7 @@ df <- data.frame(
     vector_occurrence_df
   ) |>
   # Remove pixels that don't fall within a polygon
-  dplyr::filter(!is.na(uid)) |> 
+  dplyr::filter(!is.na(uid)) |>
   # Categorise urban_rural
   dplyr::mutate(urban_rural = ifelse(urban_rural == 1, "urban", "rural")) |>
   # Link to shape data
@@ -454,32 +425,8 @@ format(object.size(df), "Mb")
 
 # Fill interventions without spatial-raster inputs -----------------------------
 
-## Vaccine
-# rtss_cov_data <- read.csv("data/who/rtss_coverage.csv") |>
-#   dplyr::group_by(iso3c, name_1) |>
-#   tidyr::complete(year = min(year):as.integer(format(Sys.Date(), "%Y"))) |>
-#   tidyr::fill(rtss_cov) |>
-#   dplyr::ungroup()
-# if(iso3c %in% rtss_cov_data$iso3c){
-#   df <- df |>
-#     dplyr::left_join(
-#       rtss_cov_data,
-#       by = c("iso3c", "name_1", "year")
-#     ) |>
-#     tidyr::replace_na(
-#       replace = list(
-#         rtss_cov = 0
-#       )
-#     )
-# } else {
-#   df$rtss_cov = 0
-# }
-# df$r21_cov <- 0
-
 # Historical larval source management
 df$lsm_cov <- 0
-# Historical PMC (formerly IPTi)
-# df$pmc_cov <- 0
 
 # Proportion of treatment that is act
 prop_act <- read.csv("data/dhs/proportion_act.csv")
@@ -488,7 +435,7 @@ if(iso3c %in% prop_act$iso3c){
     prop_act |>
     dplyr::filter(iso3c == {{iso3c}}) |>
     dplyr::select(year, prop_act)
-} else{
+} else {
   prop_act <-
     prop_act |>
     dplyr::summarise(
@@ -530,13 +477,12 @@ if(!approximate_itn){
   # Assume median half life and usage rate
   hl <- netz::get_halflife(iso3c)
   ur <- netz::get_usage_rate(iso3c)
-  
-  
+
   wmr_use <- read.csv("data/who/wmr_itns_distributed.csv") |>
     dplyr::filter(iso3c == {{iso3c}}) |>
     dplyr::filter(year > itn_max_year) |>
     dplyr::select(year, itns_distributed)
-  
+
   # Summarise ITN use country-wide
   df_use <- df |>
     dplyr::summarise(
@@ -557,7 +503,7 @@ if(!approximate_itn){
     ) |>
     dplyr::left_join(wmr_use, by = "year") |>
     dplyr::mutate(
-      n_nets = ifelse(is.na(itns_distributed), n_nets , itns_distributed),
+      n_nets = ifelse(is.na(itns_distributed), n_nets, itns_distributed),
       dist2 = n_nets / par,
       crop2 = netz::distribution_to_crop(
         dist2,
@@ -569,7 +515,7 @@ if(!approximate_itn){
       itn_use2 = netz::access_to_usage(access2, ur),
       use_multiplier = ifelse(year > itn_max_year, round(itn_use2 / itn_use, 2), 1)
     )
-  
+
   max_observed_use <- max(df$itn_use, na.rm = TRUE)
   df <- df |>
     dplyr::left_join(
@@ -590,13 +536,13 @@ if(!approximate_irs){
     dplyr::filter(year > irs_max_year) |>
     dplyr::select(year, irs_interpolated) |>
     dplyr::filter(!is.na(irs_interpolated))
-  
+
   df_pp <- df |>
     dplyr::summarise(
       pp = sum(irs_cov * par, na.rm = TRUE),
       .by = "year"
     )
-  
+
   # We assume no change in IRS targeted areas
   max_cov <- 0.8
   for(i in seq_along(irs_people$year)){
@@ -607,11 +553,11 @@ if(!approximate_irs){
 }
 
 if(approximate_itn){
-  
+
   # Assume median half life and usage rate
   hl <- netz::get_halflife(iso3c)
   ur <- netz::get_usage_rate(iso3c)
-  
+
   # Estimate the total people using nets each year | WHO net delivery/distribution
   nets_distributed <- read.csv("data/who/wmr_itns_distributed.csv") |>
     dplyr::filter(iso3c == {{iso3c}}) |>
@@ -629,13 +575,13 @@ if(approximate_itn){
     ) |>
     dplyr::select(year, people_using_nets) |>
     tidyr::complete(year = years)
-  
+
   if(sum(is.na(nets_distributed$people_using_nets)) > 0){
     # Extrapolate assuming 3 year cycle
     na_index <- which(is.na(nets_distributed$people_using_nets))
     nets_distributed$people_using_nets[na_index] <- nets_distributed$people_using_nets[pmax(0, na_index - 3)]
   }
-  
+
   # Target nets at maximum of 55% use (to be in linear section of net model),
   # Targeting is based on 2000 prevalence
   max_use <- 0.55
@@ -667,13 +613,13 @@ if(approximate_irs){
     dplyr::filter(iso3c == {{iso3c}}) |>
     dplyr::select(year, irs_interpolated) |>
     tidyr::complete(year = years)
-  
+
   if(sum(is.na(irs_people$irs_interpolated)) > 0){
     # Extrapolate assuming last year with data continues
     na_index <- which(is.na(irs_people$irs_interpolated))
     irs_people$irs_interpolated[na_index] <- irs_people$irs_interpolated[max(1, min(na_index) - 1)]
   }
-  
+
   # Target irs at maximum of 80% coverage,
   # Targeting is based on 2000 prevalence
   max_cov <- 0.8
@@ -698,7 +644,7 @@ if(approximate_irs){
       list(irs_cov = 0)
     ) |>
     dplyr::select(-c("rank", "pop_cov", "irs_interpolated"))
-  
+
 }
 # ------------------------------------------------------------------------------
 

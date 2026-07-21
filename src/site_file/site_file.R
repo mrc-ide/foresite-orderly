@@ -106,10 +106,10 @@ sites <- unique(spatial[, grouping])
 
 # Shape ------------------------------------------------------------------------
 shape <- list()
-## User provided admin levels and all higher levels included
+# User-provided admin level plus all higher levels
 levels <- admin_level:0
 for(level in levels){
-  
+
   shape_address <- paste0(
     "boundaries/",
     iso3c,
@@ -117,9 +117,9 @@ for(level in levels){
     level,
     ".RDS"
   )
-  
+
   s <- readRDS(shape_address)
-  
+
   lookup <- c(
     uid = "uid",
     iso3c = "GID_0",
@@ -129,13 +129,13 @@ for(level in levels){
     name_3 = "NAME_3",
     geom = "geom"
   )
-  
+
   s <- s |>
     dplyr::rename(
       dplyr::any_of(lookup)
     ) |>
     dplyr::select(dplyr::any_of(names(lookup)))
-  
+
   shape[[paste0("level_", level)]] <- s
 }
 
@@ -166,17 +166,17 @@ old_resistance <- read.csv("vectors/pyrethroid_resistance.csv")
 
 if(iso3c %in% old_resistance$iso3c){
   old_resistance <- old_resistance |>
-    dplyr::filter(iso3c == {{iso3c}}) 
+    dplyr::filter(iso3c == {{iso3c}})
   old_centroids <- old_resistance |>
     dplyr::select(unit, X, Y) |>
     unique() |>
     dplyr::filter(!(is.na(X) | is.na(Y)))
-  
+
   new_centroids <- shape[[paste0("level_", admin_level)]]
   sf::st_agr(new_centroids) <- "constant"
   new_centroids <- new_centroids |>
     sf::st_centroid()
-  
+
   unit <- c()
   for(i in 1:nrow(new_centroids)){
     coord <- sf::st_geometry(new_centroids[i,]) |>
@@ -184,7 +184,7 @@ if(iso3c %in% old_resistance$iso3c){
     dist <- sqrt((coord[,1] - old_centroids$X) ^ 2 + (coord[,2] - old_centroids$Y) ^ 2)
     unit[i] <- old_centroids$unit[which.min(dist)]
   }
-  
+
   pyrethroid_resistance <- shape[[paste0("level_", admin_level)]] |>
     sf::st_drop_geometry() |>
     dplyr::mutate(unit = unit) |>
@@ -222,7 +222,7 @@ if(urban_rural){
       n != max(n)
     ) |>
     dplyr::select(dplyr::all_of(c(grouping, "year")))
-  
+
   if(nrow(not_full) > 0){
     replaced <- not_full |>
       dplyr::mutate(
@@ -234,7 +234,7 @@ if(urban_rural){
         urban_rural = ifelse(urban_rural == "urban", "rural", "urban")
       ) |>
       dplyr::anti_join(not_full, by = c(grouping, "year"))
-    
+
     prevalence <- prevalence |>
       dplyr::bind_rows(replaced) |>
       dplyr::arrange(dplyr::across(dplyr::all_of(c(grouping, "year"))))
@@ -285,7 +285,7 @@ rainfall <- spatial |>
     dplyr::all_of(grouping), year, month, month_name, t, rainfall
   )
 
-seasonal_parameters <- rainfall|>
+seasonal_parameters <- rainfall |>
   dplyr::summarise(
     coefficients = fit_fourier_df(rainfall, t),
     .by = dplyr::all_of(grouping)
@@ -315,14 +315,14 @@ peak_season <- seasonal_curve |>
 # Interventions ----------------------------------------------------------------
 
 # TODO: Should all "Timesteps" or "Model day" values be relative to the year.
-## We need to deal with adding "burnin" for the sites. Absolute timesteps makes
-## this hard, and actually isn't meaningful to the site-file user?
+# We need to deal with adding "burnin" for the sites. Absolute timesteps makes
+# this hard, and actually isn't meaningful to the site-file user?
 
 interventions <- spatial |>
   dplyr::summarise(
     # Some map has some areas with NA (usually due to a misalignment between)
-    # boundary file and raster) that we define as having PAR, these 
-    # shouldn't be interpreted as 0, so are dropped 
+    # boundary file and raster) that we define as having PAR, these
+    # shouldn't be interpreted as 0, so are dropped
     tx_cov = weighted.mean2(tx_cov, par, na.rm = TRUE),
     itn_use = weighted.mean2(itn_use, par, na.rm = TRUE),
     irs_cov = weighted.mean2(irs_cov, par, na.rm = TRUE),
@@ -332,7 +332,6 @@ interventions <- spatial |>
     smc_cov = weighted.mean2(smc_cov, par, na.rm = TRUE),
     pmc_cov = weighted.mean2(pmc_cov, par, na.rm = TRUE),
     prop_act = weighted.mean2(prop_act, par, na.rm = TRUE),
-    #dplyr::across(dplyr::contains("smc"), \(x) weighted.mean2(x, par, na.rm = TRUE)),
     .by = dplyr::all_of(c(grouping, "year"))
   ) |>
   dplyr::arrange(dplyr::across(dplyr::all_of(c(grouping, "year"))))
@@ -350,7 +349,7 @@ if(urban_rural){
       n != max(n)
     ) |>
     dplyr::select(dplyr::all_of(c(grouping, "year")))
-  
+
   if(nrow(not_full) > 0){
     replaced <- not_full |>
       dplyr::mutate(
@@ -362,7 +361,7 @@ if(urban_rural){
         urban_rural = ifelse(urban_rural == "urban", "rural", "urban")
       ) |>
       dplyr::anti_join(not_full, by = c(grouping, "year"))
-    
+
     interventions <- interventions |>
       dplyr::bind_rows(replaced)
   }
@@ -383,7 +382,7 @@ interventions <- interventions |>
 interventions <- interventions |>
   dplyr::arrange(dplyr::across(dplyr::all_of(c(grouping, "year"))))
 
-## Treatment
+# Treatment
 tx_cov <- interventions |>
   dplyr::mutate(day_of_year = 1) |>
   dplyr::select(dplyr::all_of(c(grouping, "year", "day_of_year", "tx_cov", "prop_act")))
@@ -395,31 +394,31 @@ if(iso3c %in% tx_prop_public$iso3c){
     tx_prop_public |>
     dplyr::filter(iso3c == {{iso3c}}) |>
     dplyr::pull(prop_public)
-} else{
+} else {
   tx_prop_public <- median(tx_prop_public$prop_public)
 }
 
 # ITNs
 itn_hl <- netz::get_halflife(iso3c)
 
-itn_data_latest_year <- 2023 
+itn_data_latest_year <- 2023
 itn_use <- interventions |>
   dplyr::select(dplyr::all_of(c(grouping, "year", "itn_use"))) |>
-  # As a crude, but ok approximation (have checked) to these being average use over the year, 
-  ## we assume the usage value is taken at a single timepoint in the year. The user can always
-  ## specify specific distributions and usage data points for more accuracy
+  # As a crude but ok approximation (checked) to these being average use over the
+  # year, we assume the usage value is taken at a single timepoint. The user can
+  # always specify distributions and usage data points for more accuracy.
   dplyr::mutate(usage_day_of_year = 182) |>
   # Instead of constant use extrapolation we use %% 3 years
   dplyr::mutate(
     itn_use = ifelse(
-      year > itn_data_latest_year, 
-      itn_use[match(year - 3, year)], 
+      year > itn_data_latest_year,
+      itn_use[match(year - 3, year)],
       itn_use
     ),
     .by = dplyr::all_of(grouping)
   )
 
-new_net_introductions <- read.csv("vectors/new_net_introductions.csv") 
+new_net_introductions <- read.csv("vectors/new_net_introductions.csv")
 itn_implementation <- interventions |>
   dplyr::select(dplyr::all_of(c(grouping, "year"))) |>
   dplyr::mutate(
@@ -445,44 +444,9 @@ itn_implementation <- interventions |>
     )
   ) |>
   dplyr::arrange(dplyr::across(dplyr::all_of(c(grouping, "year")))) |>
-  dplyr::filter((year + distribution_day_of_year)<= max(
+  dplyr::filter((year + distribution_day_of_year) <= max(
     itn_use$year + itn_use$usage_day_of_year
   ))
-  
-
-if(FALSE){
-  # TODO: remove, The following gets done by site:
-  # TODO: site should check that there isn't more than one distribution per day in the
-  ## Flow:
-  ### Parameters given to site
-  ### Checks for columns itn_input_dist and itn_predicted_use
-  ### If missing prompts the user to add them before running the site parameters
-  ### inputs
-  t1 <- dplyr::filter(itn_implementation, name_1 == "Mukono", urban_rural == "rural")
-  t2 <- dplyr::filter(itn_use, name_1 == "Mukono", urban_rural == "rural")
-  
-  itn_input_dist <- netz::usage_to_model_distribution(
-    usage = t2$itn_use,
-    usage_timesteps = t2$usage_timestep,
-    distribution_timesteps = t1$distribution_timestep,
-    distribution_upper = t1$upper,
-    distribution_lower = t1$lower,
-    net_loss_function = netz::net_loss_map,
-    half_life = itn_hl
-  )
-  
-  itn_predicted_use <- netz::model_distribution_to_usage(
-    usage_timesteps = t2$usage_timestep,
-    distribution = itn_input_dist,
-    distribution_timesteps = t1$distribution_timestep,
-    net_loss_function = netz::net_loss_map,
-    half_life = itn_hl
-  )
-  y <- 2000 + (t2$usage_timestep - 1) / 365
-  plot(itn_predicted_use ~ y, t = "l", ylim =c(0, 1))
-  points(2000:2026, t2$itn_use, pch = 19)  
-  points(2000 + (t1$distribution_timestep - 1) / 365, itn_input_dist, col = "orange")
-}
 
 actellic_switch_year <- 2017
 irs_implementation <- interventions |>
@@ -544,7 +508,7 @@ pmc_coverage <- interventions |>
   dplyr::select(dplyr::all_of(c(grouping, "year", "day_of_year", "pmc_cov")))
 
 
-# TODO: in site have to devide booser cov by primary cov to get correct input form
+# TODO: in site have to divide booster cov by primary cov to get correct input form
 vaccine_data <- read.csv("vaccine_delivery.csv") |>
   dplyr::filter(iso3c == {{iso3c}}) |>
   dplyr::slice_max(year, n = 1) |>
@@ -559,7 +523,7 @@ if(nrow(vaccine_data) == 0){
   vaccine_primary_schedule <- round(c(unlist(vaccine_data[,c("first", "second", "third")])) * (365 / 12))
   vaccine_booster_space <- NA
   if(vaccine_delivery == "age-based"){
-    vaccine_booster_space = round(unlist(vaccine_data[,"boost1"]) * (365 / 12)) - vaccine_primary_schedule[3]
+    vaccine_booster_space <- round(unlist(vaccine_data[,"boost1"]) * (365 / 12)) - vaccine_primary_schedule[3]
   }
 }
 
@@ -645,14 +609,14 @@ vectors <- spatial |>
     .by = dplyr::all_of(grouping)
   ) |>
   tidyr::pivot_longer(
-    -dplyr::all_of(grouping), names_to = "species",  values_to = "prop"
+    -dplyr::all_of(grouping), names_to = "species", values_to = "prop"
   ) |>
   dplyr::group_by(dplyr::across(dplyr::all_of(grouping))) |>
   dplyr::mutate(rank = rank(-prop, ties = "first")) |>
   dplyr::filter(rank <= 3) |>
   dplyr::select(-rank) |>
-  # Missing values get assigned equal probability of occurence
-  dplyr::mutate(prop = ifelse(is.na(prop) | sum(prop) == 0, 1/dplyr::n(), prop)) |>
+  # Missing values get assigned equal probability of occurrence
+  dplyr::mutate(prop = ifelse(is.na(prop) | sum(prop) == 0, 1 / dplyr::n(), prop)) |>
   dplyr::mutate(prop = prop / sum(prop)) |>
   dplyr::ungroup() |>
   dplyr::mutate(species = stringr::str_replace(species, "occurrence_", "")) |>
@@ -704,9 +668,9 @@ eir <- dplyr::bind_rows(pf_eir, pv_eir)
 # Create the site file ---------------------------------------------------------
 site_file <- list()
 
-site_file$country = unique(spatial$country)
-site_file$boundary = boundary
-site_file$admin_level = grouping
+site_file$country <- unique(spatial$country)
+site_file$boundary <- boundary
+site_file$admin_level <- grouping
 
 site_file$metadata <- list(
   country = unique(spatial$country),
@@ -716,18 +680,18 @@ site_file$metadata <- list(
   version = version
 )
 
-site_file$sites = sites
+site_file$sites <- sites
 
-site_file$shape = shape
+site_file$shape <- shape
 
-site_file$cases_deaths = cases_deaths
+site_file$cases_deaths <- cases_deaths
 
-site_file$prevalence = prevalence
+site_file$prevalence <- prevalence
 
 if(sum(is.na(interventions)) > 0){
   stop("NAs in interventions")
 }
-site_file$interventions = interventions_list
+site_file$interventions <- interventions_list
 
 if(any(population$par > population$pop)){
   stop("PAR > pop in population_total")
@@ -742,35 +706,35 @@ if(any(population_age$par_pv > population_age$par)){
   stop("PAR_pv > par in population_age")
 }
 
-site_file$population = list(
+site_file$population <- list(
   population_total = population,
   population_by_age = population_age
 )
 
-site_file$demography = demography
+site_file$demography <- demography
 
-site_file$vectors = list(
+site_file$vectors <- list(
   vector_species = vectors,
   pyrethroid_resistance = pyrethroid_resistance
 )
 
-site_file$seasonality = list(
+site_file$seasonality <- list(
   seasonality_parameters = seasonal_parameters,
   monthly_rainfall = rainfall,
   fourier_prediction = seasonal_curve,
   peak_season = peak_season
 )
 
-site_file$blood_disorders = blood_disorders
+site_file$blood_disorders <- blood_disorders
 
-site_file$accessibility = accessibility
+site_file$accessibility <- accessibility
 
-site_file$eir = eir
+site_file$eir <- eir
 
 format(object.size(site_file), "Mb")
 
 # Check that the resulting site file can be used to create a malariasimulation
-## parameter list
+# parameter list
 check_params(site_file)
 
 saveRDS(site_file, "site.rds")

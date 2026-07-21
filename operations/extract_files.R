@@ -1,13 +1,13 @@
 # Extract a named file from a report and put into an external directory --------
-# This is a temporary solutin whilst we get more formal distribution channels
+# This is a temporary solution whilst we get more formal distribution channels
 # up and running.
 get_file <- function(parameters, report, file){
   dest <- paste0("operations/extracted/", parameters$iso3c)
-  
+
   if(!dir.exists(dest)){
     dir.create(dest)
   }
-  
+
   condition_string <- paste0(
     "latest(",
     paste0(
@@ -15,13 +15,13 @@ get_file <- function(parameters, report, file){
     ),
     ")"
   )
-  
+
   path <- orderly::orderly_search(
     condition_string,
     parameters = parameters,
     name = report
   )
-  
+
   if(!is.na(path)){
     names(file) <- paste0(parameters$iso3c, "_", file)
     orderly::orderly_copy_files(path, files = file, dest = dest)
@@ -30,7 +30,7 @@ get_file <- function(parameters, report, file){
 # ------------------------------------------------------------------------------
 
 # Run extraction ---------------------------------------------------------------
-boundary <- "GADM_4.1.0" 
+boundary <- "GADM_4.1.0"
 isos <- list.files(paste0("src/data_boundaries/boundaries/", boundary, "/"))
 
 parameters <- list(
@@ -46,6 +46,5 @@ for(iso in isos){
   get_file(parameters, "diagnostics", "diagnostic_report.html")
   get_file(parameters, "calibration", "calibrated_scaled_site.rds")
   get_file(parameters, "calibration_diagnostics", "calibration_report.html")
-  
 }
 # ------------------------------------------------------------------------------

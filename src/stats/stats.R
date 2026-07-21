@@ -18,48 +18,48 @@ orderly::orderly_artefact(
 # ------------------------------------------------------------------------------
 
 # Extract outputs --------------------------------------------------------------
-# Pull out diagnsotics from calibrations
+# Pull out diagnostics from each country's calibration packet
 prev <- list()
 epi <- list()
 
 for(iso in isos){
   print(iso)
 
- orderly::orderly_dependency(
+  orderly::orderly_dependency(
     name = "calibration",
     query = "latest(parameter:boundary == this:boundary && parameter:iso3c == environment:iso && parameter:admin_level == this:admin_level && parameter:urban_rural == this:urban_rural && parameter:version == this:version)",
     files = c("diagnostic_prev_${iso}.rds" = "diagnostic_prev.rds")
   )
- 
- orderly::orderly_dependency(
-   name = "calibration",
-   query = "latest(parameter:boundary == this:boundary && parameter:iso3c == environment:iso && parameter:admin_level == this:admin_level && parameter:urban_rural == this:urban_rural && parameter:version == this:version)",
-   files = c("national_epi_${iso}.rds" = "national_epi.rds")
- )
-  
+
+  orderly::orderly_dependency(
+    name = "calibration",
+    query = "latest(parameter:boundary == this:boundary && parameter:iso3c == environment:iso && parameter:admin_level == this:admin_level && parameter:urban_rural == this:urban_rural && parameter:version == this:version)",
+    files = c("national_epi_${iso}.rds" = "national_epi.rds")
+  )
+
   orderly::orderly_dependency(
     name = "calibration",
     query = "latest(parameter:boundary == this:boundary && parameter:iso3c == environment:iso && parameter:admin_level == this:admin_level && parameter:urban_rural == this:urban_rural && parameter:version == this:version)",
     files = c("calibrated_scaled_site_${iso}.rds" = "calibrated_scaled_site.rds")
   )
-  
+
   sitefile <- readRDS(paste0("calibrated_scaled_site_", iso, ".rds"))
-  
+
   map <- sitefile$prevalence |>
     tidyr::pivot_longer(cols = c(pfpr, pvpr), names_to = "sp", values_to = "map_lm_prevalence") |>
     dplyr::mutate(sp = stringr::str_replace_all(string = sp, "pr", ""))
-  
+
   groups <- names(map)[!names(map) == "map_lm_prevalence"]
-  
+
   pp <- readRDS(paste0("diagnostic_prev_", iso, ".rds")) |>
     dplyr::summarise(
-      lm_prevalence = mean(lm_prevalence), 
+      lm_prevalence = mean(lm_prevalence),
       time = mean(time),
       .by = dplyr::all_of(groups)
     )
-  
+
   # Epi
-  
+
   scaler <- sitefile$bias_correction
   cs <- mean(scaler$case_bias_correction[scaler$year %in% 2010:2024])
   ds <- mean(scaler$death_bias_correction[scaler$year %in% 2010:2024])
@@ -70,10 +70,10 @@ for(iso in isos){
       rescaled_deaths = deaths * ds,
       rescaled_mortality = mortality * ds
     )
-  
+
   epi[[iso]] <- sitefile$cases_deaths |>
     dplyr::left_join(national_epi, by = "year")
-  
+
   prev[[iso]] <- dplyr::left_join(map, pp, by = groups)
 }
 
@@ -100,7 +100,7 @@ prevalence_fit <- ggplot2::ggplot(prev[prev$year >= 2010 & prev$year <= 2024, ],
   site::theme_site(aspect.ratio = 1)
 
 # 2. Incidence ----------------------------------------------------------------
-incidence_fit <- ggplot2::ggplot(epi[epi$year >= 2010 & epi$year <= 2024& epi$iso3c != "GNB", ],
+incidence_fit <- ggplot2::ggplot(epi[epi$year >= 2010 & epi$year <= 2024 & epi$iso3c != "GNB", ],
                 ggplot2::aes(x = wmr_incidence, y = rescaled_clinical,
                              xmin = wmr_incidence_l, xmax = wmr_incidence_u)) +
   ggplot2::geom_linerange(alpha = 0.2, colour = navy) +
@@ -112,7 +112,7 @@ incidence_fit <- ggplot2::ggplot(epi[epi$year >= 2010 & epi$year <= 2024& epi$is
                 title = "Model v WHO incidence\n(2010 - 2024)") +
   site::theme_site(aspect.ratio = 1)
 
-incidence_fit_unadjusted <- ggplot2::ggplot(epi[epi$year >= 2010 & epi$year <= 2024& epi$iso3c != "GNB", ],
+incidence_fit_unadjusted <- ggplot2::ggplot(epi[epi$year >= 2010 & epi$year <= 2024 & epi$iso3c != "GNB", ],
                                  ggplot2::aes(x = wmr_incidence, y = clinical,
                                               xmin = wmr_incidence_l, xmax = wmr_incidence_u)) +
   ggplot2::geom_linerange(alpha = 0.2, colour = navy) +

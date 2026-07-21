@@ -19,22 +19,23 @@ orderly::orderly_dependency(
 )
 
 orderly::orderly_artefact(
-  description = "UN WPP population and demography data", 
+  description = "UN WPP population and demography data",
   files = "un_wpp.rds"
 )
 
 orderly::orderly_artefact(
-  description = "UNICEF neonatal mortality rates", 
+  description = "UNICEF neonatal mortality rates",
   files = "unicef_neonatal_mortality.rds"
 )
 
 orderly::orderly_artefact(
-  description = "UN WUP population urbanisation", 
+  description = "UN WUP population urbanisation",
   files = "un_wup.rds"
 )
 # ------------------------------------------------------------------------------
 
 # Life tables ------------------------------------------------------------------
+# Combine historical and projected life tables into single-year qx per country
 historical_life_tables <- read.csv("life_table_past.csv")
 future_life_tables <- read.csv("life_table_future.csv")
 
@@ -42,30 +43,32 @@ life_tables <- historical_life_tables |>
   dplyr::bind_rows(future_life_tables) |>
   dplyr::rename(
     iso3c = ISO3_code,
-    year  =  Time,
+    year = Time,
     age_lower = AgeGrpStart,
     qx = qx
   ) |>
   dplyr::mutate(
     age_upper = ifelse(
-      age_lower < 100, 
+      age_lower < 100,
       age_lower + 1,
       age_lower + 100
     )
-  )  |>
+  ) |>
   dplyr::filter(
     !iso3c == ""
   ) |>
   dplyr::select(
     iso3c,
-    year, 
-    age_lower, 
+    year,
+    age_lower,
     age_upper,
     qx
   )
 # ------------------------------------------------------------------------------
 
 # Population -------------------------------------------------------------------
+# Combine historical and projected populations; convert to counts and per
+# country-year age shares
 historical_populations <- read.csv("population_past.csv")
 future_populations <- read.csv("population_future.csv")
 
@@ -73,18 +76,18 @@ populations <- historical_populations |>
   dplyr::bind_rows(future_populations) |>
   dplyr::rename(
     iso3c = ISO3_code,
-    year  =  Time,
+    year = Time,
     age_lower = AgeGrpStart,
     population = PopTotal
   ) |>
   dplyr::mutate(
     population = as.integer(round(population * 1000)),
     age_upper = ifelse(
-      age_lower < 100, 
+      age_lower < 100,
       age_lower + 1,
       age_lower + 100
     )
-  )  |>
+  ) |>
   dplyr::filter(
     !iso3c == ""
   ) |>
@@ -94,15 +97,16 @@ populations <- historical_populations |>
   ) |>
   dplyr::select(
     iso3c,
-    year, 
-    age_lower, 
+    year,
+    age_lower,
     age_upper,
     population,
     population_proportion
-  ) 
+  )
 # ------------------------------------------------------------------------------
 
 # Combined ---------------------------------------------------------------------
+# Join mortality (qx) onto population by country-year-age
 un_wpp <- life_tables |>
   dplyr::left_join(
     populations,
@@ -113,6 +117,8 @@ saveRDS(un_wpp, "un_wpp.rds")
 # ------------------------------------------------------------------------------
 
 # Neonatal mortality -----------------------------------------------------------
+# UNICEF neonatal mortality: keep median estimates, map country names to ISO3,
+# and reshape to long (per country-year) form
 unicef_neonatal_mortality <- read.csv("neonatal_mortality.csv") |>
   dplyr::filter(
     Uncertainty.Bounds. == "Median",

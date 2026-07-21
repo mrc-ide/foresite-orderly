@@ -1,5 +1,6 @@
-# summary ----------------------------------------------------------------------
-## x malariasimulation output
+# Summary functions ------------------------------------------------------------
+# Summarise a malariasimulation run (x) into the annual PfPR2-10 series used as
+# the calibration target (2010-2024).
 summary_function_pf <- function(x){
   prev <- x |>
     postie::drop_burnin(
@@ -13,10 +14,11 @@ summary_function_pf <- function(x){
     ) |>
     dplyr::filter(year %in% 2010:2024) |>
     dplyr::pull(prevalence_2_10)
-  
+
   return(prev)
 }
 
+# PvPR (1-100) equivalent of summary_function_pf.
 summary_function_pv <- function(x){
   prev <- x |>
     postie::drop_burnin(
@@ -34,29 +36,30 @@ summary_function_pv <- function(x){
 }
 # ------------------------------------------------------------------------------
 
+# Calibrate one site x species (a single EIR row, x): subset the site, build the
+# malariasimulation parameters, search EIR to match the MAP prevalence target,
+# then run a diagnostic simulation and return the fit plus prevalence and rates.
 calibrate_site <- function(
     x, site,
     human_population,
     diagnostic_burnin,
     max_attempts
 ){
-  # browser()
-  print(x)
   sub_site <- site::subset_site(site, x)
   parasite <- ifelse(sub_site$eir$sp == "pf", "falciparum", "vivax")
-  
+
   # Define the target prevalence to fit to
   if(parasite == "falciparum"){
-    prevalence <- sub_site$prevalence$pfpr 
+    prevalence <- sub_site$prevalence$pfpr
     summary_function <- summary_function_pf
     prev_age <- c(2, 10) * 365
   } else {
-    prevalence <- sub_site$prevalence$pvpr 
+    prevalence <- sub_site$prevalence$pvpr
     summary_function <- summary_function_pv
     prev_age <- c(1, 100) * 365
   }
   target <- prevalence[sub_site$prevalence$year %in% 2010:2024]
-  
+
   # Add ITN input dist
   sub_site$interventions$itn$implementation$itn_input_dist <- site::site_usage_to_model_distribution(
     usage = sub_site$interventions$itn$use$itn_use,
@@ -68,8 +71,8 @@ calibrate_site <- function(
     distribution_upper = sub_site$interventions$itn$implementation$distribution_upper,
     net_loss_function = netz::net_loss_map,
     half_life = sub_site$interventions$itn$retention_half_life
-  ) 
-  
+  )
+
   # Set parameters
   calibration_burnin <- 5
   p <- site::site_parameters(
@@ -85,7 +88,7 @@ calibrate_site <- function(
     end_year = 2026,
     prevalence = prev_age
   )
-  
+
   calibration <- x$eir
   if(is.na(calibration)){
     tryCatch(
@@ -109,10 +112,10 @@ calibrate_site <- function(
       }
     )
   }
-  
+
   prev <- NULL
   epi <- NULL
-  
+
   if(!is.na(calibration)){
     p <- site::site_parameters(
       interventions = sub_site$interventions,
@@ -128,9 +131,9 @@ calibrate_site <- function(
       eir = calibration,
       prevalence = prev_age
     )
-    
+
     s <- malariasimulation::run_simulation(timesteps = p$timesteps, parameters = p)
-    
+
     prev <- s |>
       postie::drop_burnin(
         burnin = 365 * diagnostic_burnin
@@ -158,9 +161,9 @@ calibrate_site <- function(
         )
       )
   }
-  
+
   x$eir <- calibration
-  out <-  list(
+  out <- list(
     eir_fit = x,
     epi = epi,
     prev = prev

@@ -1,5 +1,6 @@
+# Raster helpers ---------------------------------------------------------------
+# TRUE if a raster overlaps an extent (used to decide whether to keep a country)
 extents_overlap <- function(raster, extent){
-  #boundary <- terra::ext(boundary)
   overlap <- TRUE
   intersection <- terra::intersect(raster, extent)
   if(is.null(intersection)){
@@ -8,6 +9,8 @@ extents_overlap <- function(raster, extent){
   return(overlap)
 }
 
+# Crop a raster to an extent, returning NULL if it holds no data there (unless
+# force_out = TRUE)
 process_raster <- function(raster, extent, force_out = FALSE){
   has_info <- FALSE
   overlaps <- extents_overlap(raster, extent)
@@ -22,6 +25,8 @@ process_raster <- function(raster, extent, force_out = FALSE){
   NULL
 }
 
+# weighted.mean that degrades gracefully when all weights are zero: returns 0 if
+# x is all NA, otherwise the unweighted mean
 weighted.mean2 <- function(x, w, na.rm = TRUE){
   out <- weighted.mean(x, w, na.rm = na.rm)
   if(sum(w) == 0){
@@ -34,7 +39,9 @@ weighted.mean2 <- function(x, w, na.rm = TRUE){
   return(out)
 }
 
-### Plotting ###################################################################
+# Plotting ---------------------------------------------------------------------
+# Population-weighted collapse of a per-pixel column up to admin units, then
+# joined back onto the shape for mapping
 collapse <- function(x, column, population, shape) {
   x |>
     left_join(population) |>
@@ -53,6 +60,7 @@ collapse <- function(x, column, population, shape) {
     left_join(shape)
 }
 
+# Stacked urban/rural population over time
 plot_urban_rural <- function(pop_dat, title){
   years <- sort(unique(pop_dat$year))
   year_shading <- site:::year_shading_data(
@@ -61,7 +69,7 @@ plot_urban_rural <- function(pop_dat, title){
     ymin = 0,
     ymax = Inf
   )
-  
+
   ggplot2::ggplot(
     pop_dat,
     ggplot2::aes(x = .data$year, y = .data$par, fill = .data$urban_rural)
@@ -81,6 +89,8 @@ plot_urban_rural <- function(pop_dat, title){
     site:::theme_site()
 }
 
+# WMR cases / incidence / deaths / mortality panels, with optional modelled and
+# bias-adjusted overlays (national_epi)
 plot_burden <- function(burden_pd, title, national_epi = NULL){
   years <- sort(unique(burden_pd$year))
   year_shading <- site:::year_shading_data(
@@ -89,7 +99,7 @@ plot_burden <- function(burden_pd, title, national_epi = NULL){
     ymin = 0,
     ymax = Inf
   )
-  
+
   cases_plot <- ggplot2::ggplot() +
     site:::year_shading_layer(year_shading) +
     ggplot2::geom_point(
@@ -103,7 +113,7 @@ plot_burden <- function(burden_pd, title, national_epi = NULL){
     ggplot2::xlab("Year") +
     ggplot2::ylab("WMR cases\n(millions)") +
     site::theme_site()
-  
+
   if(!is.null(national_epi)){
     cases_plot <- cases_plot +
       ggplot2::geom_line(
@@ -117,7 +127,7 @@ plot_burden <- function(burden_pd, title, national_epi = NULL){
         colour = "deeppink"
       )
   }
-  
+
   incidence_plot <- ggplot2::ggplot() +
     site:::year_shading_layer(year_shading) +
     ggplot2::scale_y_continuous(labels = scales::label_comma()) +
@@ -132,7 +142,7 @@ plot_burden <- function(burden_pd, title, national_epi = NULL){
     ggplot2::xlab("Year") +
     ggplot2::ylab("WMR clinical incidence\n(ppar, py)") +
     site::theme_site()
-  
+
   if(!is.null(national_epi)){
     incidence_plot <- incidence_plot +
       ggplot2::geom_line(
@@ -146,7 +156,7 @@ plot_burden <- function(burden_pd, title, national_epi = NULL){
         colour = "deeppink"
       )
   }
-  
+
   deaths_plot <- ggplot2::ggplot() +
     site:::year_shading_layer(year_shading) +
     ggplot2::geom_point(
@@ -160,7 +170,7 @@ plot_burden <- function(burden_pd, title, national_epi = NULL){
     ggplot2::xlab("Year") +
     ggplot2::ylab("WMR deaths\n(thousands)") +
     site::theme_site()
-  
+
   if(!is.null(national_epi)){
     deaths_plot <- deaths_plot +
       ggplot2::geom_line(
@@ -174,7 +184,7 @@ plot_burden <- function(burden_pd, title, national_epi = NULL){
         colour = "deeppink"
       )
   }
-  
+
   mortality_plot <- ggplot2::ggplot() +
     site:::year_shading_layer(year_shading) +
     ggplot2::scale_y_continuous(labels = scales::label_comma()) +
@@ -189,7 +199,7 @@ plot_burden <- function(burden_pd, title, national_epi = NULL){
     ggplot2::xlab("Year") +
     ggplot2::ylab("WMR mortality rate\n(ppar, py)") +
     site::theme_site()
-  
+
   if(!is.null(national_epi)){
     mortality_plot <- mortality_plot +
       ggplot2::geom_line(
@@ -203,13 +213,14 @@ plot_burden <- function(burden_pd, title, national_epi = NULL){
         colour = "deeppink"
       )
   }
-  
-  burden <- ((cases_plot / incidence_plot) | (deaths_plot / mortality_plot)) + 
+
+  burden <- ((cases_plot / incidence_plot) | (deaths_plot / mortality_plot)) +
     plot_annotation(title = "Burden", theme = site::theme_site())
-  
+
   return(burden)
 }
 
+# Choropleth of a population-weighted column across admin units, faceted by year
 plot_map <- function(data, column_name, population, shape, title, title_size = 22, viridis_option = "C", lims = c(0, 1)){
   map_dat <- collapse(
     data,
@@ -230,6 +241,7 @@ plot_map <- function(data, column_name, population, shape, title, title_size = 2
       aspect.ratio = 1
     )
 }
+# Maps of the four blood-disorder frequencies (sickle, G6PD, HbC, Duffy)
 plot_blood_disorders <- function(data, population){
   d <- data |>
     left_join(population) |>
@@ -251,11 +263,11 @@ plot_blood_disorders <- function(data, population){
         "name_4",
         "year",
         "Disorder"
-      )) 
+      ))
     ) |>
     dplyr::left_join(sitefile$shape[[1]])
-  
-  
+
+
   ggplot(d) +
     geom_sf(aes(geometry = geom, fill = freq)) +
     scale_fill_viridis_c(option = "B", name = "") +
@@ -272,6 +284,7 @@ plot_blood_disorders <- function(data, population){
     )
 }
 
+# Maps of travel time to healthcare (motor / walking) and to the nearest city
 plot_accessibility <- function(data, population){
   d <- data |>
     left_join(population) |>
@@ -292,11 +305,11 @@ plot_accessibility <- function(data, population){
         "name_4",
         "year",
         "Mode"
-      )) 
+      ))
     ) |>
     dplyr::left_join(sitefile$shape[[1]])
-  
-  
+
+
   ggplot(d) +
     geom_sf(aes(geometry = geom, fill = Minutes)) +
     scale_fill_viridis_c(option = "B", name = "") +
@@ -313,6 +326,7 @@ plot_accessibility <- function(data, population){
     )
 }
 
+# Model-vs-MAP prevalence fit for a single calibrated site
 plot_calibrated_site_prevalence <- function(prevalence, title = NULL, diagnostic_prev = NULL) {
   plot_data <- prevalence |>
     tidyr::pivot_longer(
@@ -320,10 +334,10 @@ plot_calibrated_site_prevalence <- function(prevalence, title = NULL, diagnostic
       names_to = "Species",
       values_to = "Prevalence"
     )
-  
+
   years <- sort(unique(prevalence$year))
   year_shading <- site:::year_shading_data(years)
-  
+
   prev_plot <- ggplot2::ggplot() +
     site:::year_shading_layer(year_shading) +
     ggplot2::geom_line(
@@ -350,30 +364,31 @@ plot_calibrated_site_prevalence <- function(prevalence, title = NULL, diagnostic
     ) +
     ggplot2::labs(x = "Year", y = "Prevalence", title = title) +
     site::theme_site()
-  
+
   if(!is.null(diagnostic_prev)){
     prev_plot <- prev_plot +
       ggplot2::geom_line(
-        data = diagnostic_prev, 
+        data = diagnostic_prev,
         ggplot2::aes(x = time, y = lm_prevalence, colour = Species)
       )
   }
   return(prev_plot)
 }
 
+# Assemble the full per-site diagnostic page (a patchwork of the site's plots)
 plot_calibrated_site_diagnostic <- function(site, max_year = 2030, diagnostic_prev = NULL) {
   map <- site::plot_site_map(site)
-  
+
   if(!is.null(diagnostic_prev)){
     cols <- intersect(names(site$sites), names(diagnostic_prev))
-    diagnostic_prev <- 
+    diagnostic_prev <-
       diagnostic_prev |>
       dplyr::semi_join(site$sites[cols], by = cols)
-    
+
     if(nrow(diagnostic_prev) > 0){
       diagnostic_prev <- diagnostic_prev |>
       dplyr::summarise(
-        lm_prevalence = mean(lm_prevalence), 
+        lm_prevalence = mean(lm_prevalence),
         time = mean(time),
         .by = c(year, month, sp)
       )
@@ -383,7 +398,7 @@ plot_calibrated_site_diagnostic <- function(site, max_year = 2030, diagnostic_pr
     }
   }
   prev <- plot_calibrated_site_prevalence(site$prevalence, title = "Prevalence", diagnostic_prev)
-  
+
   int <- site::plot_site_interventions(site, title = "Interventions")
   vectors <- site::plot_vector_species(
     site$vectors$vector_species,
@@ -397,13 +412,13 @@ plot_calibrated_site_diagnostic <- function(site, max_year = 2030, diagnostic_pr
     dplyr::filter(site$population$population_by_age, .data$year <= max_year),
     title = "Age distribution"
   )
-  
+
   name <- paste(dplyr::select(site$sites[1, ], -"iso3c"), collapse = " | ")
-  
+
   tr <- (map | (prev / int)) +
     patchwork::plot_layout(widths = c(1, 2))
   br <- ((age / resistance) | vectors)
-  
+
   (tr / br) +
     patchwork::plot_layout(heights = c(2, 1.25)) +
     patchwork::plot_annotation(

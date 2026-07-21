@@ -1,19 +1,22 @@
+# Orderly set-up ---------------------------------------------------------------
 orderly::orderly_resource("data/")
 orderly::orderly_resource("download_worldpop.R")
+# ------------------------------------------------------------------------------
 
+# Resample WorldPop rasters to a common per-country grid -----------------------
 isos <- list.files("data/")
 
-
-# Get the intersection of all extents
+# Intersection of a set of raster extents. Helper kept for reference; it is not
+# used by the resampling loop below.
 get_common_extent <- function(file_list) {
   extents <- lapply(file_list, function(f) terra::ext(terra::rast(f)))
-  
+
   # Find intersection
   xmin <- max(sapply(extents, function(e) e$xmin))
   xmax <- min(sapply(extents, function(e) e$xmax))
   ymin <- max(sapply(extents, function(e) e$ymin))
   ymax <- min(sapply(extents, function(e) e$ymax))
-  
+
   return(terra::ext(xmin, xmax, ymin, ymax))
 }
 
@@ -28,6 +31,7 @@ for(iso in isos){
     files = address
   )
   pop_files <- paste0("data/", iso, "/population_", iso, "_", pop_years, ".tif")
+  # Resample every year onto the most recent year's grid so all layers align
   country_template <- terra::rast(tail(pop_files, 1))
   pop_rasters <- lapply(pop_files, function(f) {
     r <- terra::rast(f)
@@ -37,4 +41,5 @@ for(iso in isos){
   names(pop_raster) <- pop_years
   terra::writeRaster(pop_raster, address)
 }
+# ------------------------------------------------------------------------------
 

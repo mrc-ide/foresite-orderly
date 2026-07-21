@@ -41,8 +41,9 @@ HPC cluster, and links out to their documentation rather than re-explaining them
 10. [Diagnostics & QA](#10-diagnostics--qa)
 11. [Releasing site files (packit)](#11-releasing-site-files-packit)
 12. [Known issues / tech debt](#12-known-issues--tech-debt)
-13. [Package glossary](#13-package-glossary)
-14. [Links](#14-links)
+13. [Code conventions](#13-code-conventions)
+14. [Package glossary](#14-package-glossary)
+15. [Links](#15-links)
 
 ---
 
@@ -507,7 +508,31 @@ this documentation.
 
 ---
 
-## 13. Package glossary
+## 13. Code conventions
+
+The R code here is **hand-formatted** — there is no `styler` / `air` / `lintr` step, so match
+the surrounding style when editing. `.editorconfig` and `.gitattributes` enforce the whitespace
+and line-ending rules automatically.
+
+- **Indentation:** 2 spaces, never tabs.
+- **Assignment:** `<-` (reserve `=` for named arguments inside a call, e.g. `list(x = 1)`).
+- **Strings:** double quotes. **Pipes:** native `|>`. **Names:** `snake_case`.
+- **Control flow (tight house style):** `if(cond){`, `for(x in y){`, `} else {`.
+- **Function definitions:** `name <- function(args){`.
+- **Sections:** delimit script sections with `# Title ----` banners closed by a `# ----` rule;
+  each report opens with an `# Orderly set-up ----` block (parameters, resources, dependencies,
+  artefacts).
+- **Comments:** plain `#` explaining *why*, plus a one-line `#` description above each function.
+  No roxygen (`#'`) — this is an orderly project, not a package.
+- **Line endings / whitespace:** LF, UTF-8, a final newline, no trailing whitespace.
+- **Namespacing:** existing `library()` vs `pkg::` usage is left as-is; don't refactor it.
+- **orderly:** keep `orderly_*()` calls (parameters / resource / dependency / artefact) as
+  top-level calls with literal-string arguments where they already sit — orderly parses them
+  statically, so don't wrap those strings across lines or turn them into variables.
+
+---
+
+## 14. Package glossary
 
 **malariaverse / domain packages**
 
@@ -535,7 +560,7 @@ this documentation.
 
 ---
 
-## 14. Links
+## 15. Links
 
 - orderly — <https://mrc-ide.github.io/orderly/>
 - hipercow — <https://mrc-ide.github.io/hipercow/>

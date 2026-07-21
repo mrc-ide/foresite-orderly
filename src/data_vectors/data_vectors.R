@@ -1,3 +1,4 @@
+# Orderly set-up ---------------------------------------------------------------
 orderly::orderly_resource("data/")
 
 orderly::orderly_shared_resource("utils.R")
@@ -7,12 +8,16 @@ orderly::orderly_dependency(
   query = "latest()",
   files = "extents.csv"
 )
+# ------------------------------------------------------------------------------
 
+# Vector abundance and occurrence rasters --------------------------------------
 extents <- read.csv("extents.csv")
 isos <- extents$iso3c
 
 source("utils.R")
 
+# Clip a global vector raster to one country's extent and write it as an orderly
+# artefact; countries the raster does not cover are skipped.
 split <- function(raster, extent, iso, name, NAflag = NULL){
   raster <- process_raster(raster, extent)
   if(!is.null(raster)){
@@ -41,7 +46,7 @@ relative_occurence_raster <- lapply(relative_occurence_files, function(x){
   raster <- terra::rast(x)
   names(raster) <- 2016
   return(raster)
-} )
+})
 relative_occurence_names <- gsub(".tif", "", list.files("data/vector_occurrence"))
 
 library(sf)
@@ -52,12 +57,14 @@ for(iso in isos){
   split(relative_abundance_arabiensis, extent, iso, "relative_arabiensis")
   split(relative_abundance_funestus, extent, iso, "relative_funestus")
   split(relative_abundance_gambiae, extent, iso, "relative_gambiae")
-  
+
   for(i in 1:length(relative_occurence_raster)){
     split(relative_occurence_raster[[i]], extent, iso, relative_occurence_names[[i]])
   }
 }
+# ------------------------------------------------------------------------------
 
+# New net introductions --------------------------------------------------------
 new_net_introductions <- read.csv("data/alliance_malaria_prevention/new_net_introductions.csv")
 address <- paste0("vectors/new_net_introductions.csv")
 orderly::orderly_artefact(
@@ -65,10 +72,14 @@ orderly::orderly_artefact(
   files = address
 )
 write.csv(new_net_introductions, address, row.names = FALSE)
+# ------------------------------------------------------------------------------
 
+# Pyrethroid resistance --------------------------------------------------------
 pyrethroid_resistance <- read.csv("data/pyrethroid_resistance/pyrethroid_resistance.csv")
 
-# Fixed year chosen when most places had implemented IG2 (effective nets)
+# Refit a logistic trend to a resistance time series, holding the asymptotes
+# fixed at the fix_year value. fix_year is chosen as the point when most places
+# had implemented IG2 (effective) nets.
 update_resistance_fit <- function(year, resistance, fix_year = 2025){
   A <- min(resistance[year <= fix_year]) # fixed lower asymptote
   K <- resistance[year == fix_year]      # fixed upper asymptote
@@ -115,7 +126,9 @@ orderly::orderly_artefact(
   files = address
 )
 write.csv(pyrethroid_resistance, address, row.names = FALSE)
+# ------------------------------------------------------------------------------
 
+# Insecticide parameters and vector bionomics ----------------------------------
 irs_insecticide_parameters <- read.csv("data/insecticide_parameters/irs_insecticide_parameters.csv")
 address <- "vectors/irs_insecticide_parameters.csv"
 orderly::orderly_artefact(
@@ -139,3 +152,4 @@ orderly::orderly_artefact(
   files = address
 )
 write.csv(vector_bionomics, address, row.names = FALSE)
+# ------------------------------------------------------------------------------

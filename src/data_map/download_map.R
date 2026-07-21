@@ -1,7 +1,11 @@
-# Check for updates here:
-available_rasters <- malariaAtlas::listRaster()
-View(dplyr::filter(available_rasters, max_raster_year == 2024))
+# One-off data-acquisition script: downloads the Malaria Atlas Project (MAP)
+# rasters used by data_map into src/data_map/data.../. Run manually from the
+# repo root (declared as an orderly_resource for provenance).
 
+# To check for updated MAP rasters, inspect (interactively):
+#   malariaAtlas::listRaster() |> dplyr::filter(max_raster_year == 2024)
+
+# Download each requested year of a MAP variable to <address><year>.tif
 download <- function(variable, years, address, overwrite = TRUE){
   for(year in years){
     print(year)

@@ -28,11 +28,6 @@ orderly::orderly_artefact(
 )
 
 orderly::orderly_artefact(
-  description = "Raw list calibration output",
-  files = "calibration_output_raw.rds"
-)
-
-orderly::orderly_artefact(
   description = "Diagnostics rates",
   files = "diagnostic_epi.rds"
 )
@@ -62,7 +57,7 @@ source("calibration_utils.R")
 # Calibration ------------------------------------------------------------------
 parallel <- TRUE
 human_population <- c(5000, 10000, 100000)
-diagnostic_burnin <- 20 
+diagnostic_burnin <- 20
 max_attempts <- 30
 
 # Split out individual jobs
@@ -85,7 +80,7 @@ if(parallel){
     source("calibration_utils.R")
     TRUE
   })
-  
+
   calibration_output <- parallel::parLapply(
     cl = cluster,
     X = eirs,
@@ -111,12 +106,11 @@ saveRDS(calibration_output, "calibration_output_raw.rds")
 # ------------------------------------------------------------------------------
 
 # Collate EIR ------------------------------------------------------------------
-eir_estimates <- 
+eir_estimates <-
   lapply(calibration_output, "[[", 1) |>
   dplyr::bind_rows()
 
 site$eir <- eir_estimates
-#saveRDS(site, "calibrated_site.rds")
 # ------------------------------------------------------------------------------
 
 # Format raw output ------------------------------------------------------------
@@ -136,7 +130,7 @@ pop <- site$population$population_by_age |>
     .by = c(site$metadata$admin_level, "age_group", "year")
   )
 
-diagnostic_epi <-  lapply(calibration_output, "[[", 2) |>
+diagnostic_epi <- lapply(calibration_output, "[[", 2) |>
   dplyr::bind_rows() |>
   dplyr::mutate(
     age_group = cut(age_lower, breaks = breaks, labels = labels, right = TRUE)
@@ -144,7 +138,7 @@ diagnostic_epi <-  lapply(calibration_output, "[[", 2) |>
   dplyr::left_join(pop, by = c(site$metadata$admin_level, "age_group", "year")) |>
   dplyr::mutate(
     severe = ifelse(is.na(severe), 0, severe),
-    mortality = ifelse(is.na(mortality), 0, mortality)   
+    mortality = ifelse(is.na(mortality), 0, mortality)
   ) |>
   dplyr::mutate(
     par = ifelse(sp == "pf", par_pf, par_pv)
@@ -152,7 +146,7 @@ diagnostic_epi <-  lapply(calibration_output, "[[", 2) |>
   dplyr::mutate(
     cases = clinical * par,
     deaths = mortality * par
-  ) 
+  )
 
 diagnostic_epi$name <- apply(diagnostic_epi[,group_names], 1, paste, collapse = " | ")
 saveRDS(diagnostic_epi, "diagnostic_epi.rds")
@@ -165,10 +159,9 @@ prev_pop <- site$population$population_by_age |>
     .by = c(site$metadata$admin_level, "year")
   )
 
-diagnostic_prev <-  lapply(calibration_output, "[[", 3) |>
+diagnostic_prev <- lapply(calibration_output, "[[", 3) |>
   dplyr::bind_rows() |>
   dplyr::left_join(prev_pop, by = c(site$metadata$admin_level, "year"))
-
 
 diagnostic_prev$name <- apply(diagnostic_prev[,group_names, drop = FALSE], 1, paste, collapse = " | ")
 saveRDS(diagnostic_prev, "diagnostic_prev.rds")
@@ -192,6 +185,8 @@ saveRDS(national_epi, "national_epi.rds")
 # ------------------------------------------------------------------------------
 
 # Bias corrections -------------------------------------------------------------
+# Multiplicative corrections that scale modelled national cases/deaths onto the
+# WHO WMR totals; stored on the site and applied downstream.
 bias_correction <- national_epi |>
   dplyr::left_join(site$cases_deaths, by = "year") |>
   dplyr::mutate(
