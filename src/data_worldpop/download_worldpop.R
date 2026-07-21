@@ -1,4 +1,9 @@
 
+# One-off data-acquisition script: downloads per-country, per-year WorldPop 1km
+# population rasters into src/data_worldpop/data/<iso3c>/. Run manually from the
+# repo root (declared as an orderly_resource for provenance).
+
+# Download a single country-year raster and save it under the country's folder
 country_year_worldpop <- function(iso3c, year, url = "https://www.worldpop.org/rest/data/pop/G2_CN_POP_R25A_1km?iso3="){
 
   raster_meta <- jsonlite::fromJSON(paste0(
@@ -31,6 +36,8 @@ country_year_worldpop <- function(iso3c, year, url = "https://www.worldpop.org/r
   terra::writeRaster(pop, filename = file, overwrite = TRUE)
 }
 
+# WorldPop serves the 2000-2014 back-series from a different endpoint than
+# 2015 onwards, so fetch the two ranges separately
 for(iso in malaria_endemic_isos){
   print(iso)
   for(y in 2000:2014){

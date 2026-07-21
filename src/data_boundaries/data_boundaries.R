@@ -1,3 +1,4 @@
+# Orderly set-up ---------------------------------------------------------------
 p <- orderly::orderly_parameters(
   boundary = NULL
 )
@@ -20,8 +21,12 @@ orderly::orderly_artefact(
   description = "Spatial extents",
   files = "extents.rds"
 )
+# ------------------------------------------------------------------------------
 
-# Get spatial extent for each country
+# Spatial extents --------------------------------------------------------------
+# Record the bounding box of each country's admin-0 boundary, so downstream
+# raster-clipping reports can work from a small extents table rather than the
+# full boundary files.
 boundary_isos <- list.files(paste0("boundaries/", boundary, "/"))
 
 extents <- list()
@@ -30,3 +35,4 @@ for(iso in boundary_isos){
   extents[[iso]] <- as.vector(terra::ext(admin0))
 }
 saveRDS(extents, "extents.rds")
+# ------------------------------------------------------------------------------
