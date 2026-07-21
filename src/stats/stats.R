@@ -17,6 +17,31 @@ orderly::orderly_artefact(
 )
 # ------------------------------------------------------------------------------
 
+# Identify calibrated sites ----------------------------------------------------
+# Derive the ISO list from the archive so this report is self-contained: find
+# every calibration packet matching this run's parameters and read its iso3c.
+# Previously `isos` was picked up implicitly from the calling environment
+# (mission_control.R), which made the report fragile to run standalone.
+calibration_ids <- orderly::orderly_search(
+  "parameter:boundary == this:boundary && parameter:admin_level == this:admin_level && parameter:urban_rural == this:urban_rural && parameter:version == this:version",
+  parameters = list(
+    boundary = p$boundary,
+    admin_level = p$admin_level,
+    urban_rural = p$urban_rural,
+    version = p$version
+  ),
+  name = "calibration"
+)
+isos <- unique(vapply(
+  calibration_ids,
+  function(id) orderly::orderly_metadata(id)$parameters$iso3c,
+  character(1)
+))
+if(length(isos) == 0){
+  stop("No calibration packets found for this boundary/version; run calibration first.")
+}
+# ------------------------------------------------------------------------------
+
 # Extract outputs --------------------------------------------------------------
 # Pull out diagnostics from each country's calibration packet
 prev <- list()
