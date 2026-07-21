@@ -1,5 +1,6 @@
-# summary ----------------------------------------------------------------------
-## x malariasimulation output
+# Summary functions ------------------------------------------------------------
+# Summarise a malariasimulation run (x) into the annual PfPR2-10 series used as
+# the calibration target (2010-2024).
 summary_function_pf <- function(x){
   prev <- x |>
     postie::drop_burnin(
@@ -17,6 +18,7 @@ summary_function_pf <- function(x){
   return(prev)
 }
 
+# PvPR (1-100) equivalent of summary_function_pf.
 summary_function_pv <- function(x){
   prev <- x |>
     postie::drop_burnin(
@@ -34,13 +36,15 @@ summary_function_pv <- function(x){
 }
 # ------------------------------------------------------------------------------
 
+# Calibrate one site x species (a single EIR row, x): subset the site, build the
+# malariasimulation parameters, search EIR to match the MAP prevalence target,
+# then run a diagnostic simulation and return the fit plus prevalence and rates.
 calibrate_site <- function(
     x, site,
     human_population,
     diagnostic_burnin,
     max_attempts
 ){
-  # browser()
   print(x)
   sub_site <- site::subset_site(site, x)
   parasite <- ifelse(sub_site$eir$sp == "pf", "falciparum", "vivax")
@@ -160,7 +164,7 @@ calibrate_site <- function(
   }
 
   x$eir <- calibration
-  out <-  list(
+  out <- list(
     eir_fit = x,
     epi = epi,
     prev = prev

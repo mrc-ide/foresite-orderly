@@ -116,7 +116,6 @@ eir_estimates <-
   dplyr::bind_rows()
 
 site$eir <- eir_estimates
-#saveRDS(site, "calibrated_site.rds")
 # ------------------------------------------------------------------------------
 
 # Format raw output ------------------------------------------------------------
@@ -136,7 +135,7 @@ pop <- site$population$population_by_age |>
     .by = c(site$metadata$admin_level, "age_group", "year")
   )
 
-diagnostic_epi <-  lapply(calibration_output, "[[", 2) |>
+diagnostic_epi <- lapply(calibration_output, "[[", 2) |>
   dplyr::bind_rows() |>
   dplyr::mutate(
     age_group = cut(age_lower, breaks = breaks, labels = labels, right = TRUE)
@@ -165,10 +164,9 @@ prev_pop <- site$population$population_by_age |>
     .by = c(site$metadata$admin_level, "year")
   )
 
-diagnostic_prev <-  lapply(calibration_output, "[[", 3) |>
+diagnostic_prev <- lapply(calibration_output, "[[", 3) |>
   dplyr::bind_rows() |>
   dplyr::left_join(prev_pop, by = c(site$metadata$admin_level, "year"))
-
 
 diagnostic_prev$name <- apply(diagnostic_prev[,group_names, drop = FALSE], 1, paste, collapse = " | ")
 saveRDS(diagnostic_prev, "diagnostic_prev.rds")
@@ -192,6 +190,8 @@ saveRDS(national_epi, "national_epi.rds")
 # ------------------------------------------------------------------------------
 
 # Bias corrections -------------------------------------------------------------
+# Multiplicative corrections that scale modelled national cases/deaths onto the
+# WHO WMR totals; stored on the site and applied downstream.
 bias_correction <- national_epi |>
   dplyr::left_join(site$cases_deaths, by = "year") |>
   dplyr::mutate(
