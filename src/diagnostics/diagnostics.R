@@ -178,25 +178,38 @@ maps2 <- smc_cov_map /
 # ------------------------------------------------------------------------------
 
 # Population -------------------------------------------------------------------
-pop_dat <- sitefile$population$population_by_age |>
-  summarise(
-    pop = sum(pop),
-    par = sum(par),
-    .by = c("year", "urban_rural", "age_lower", "age_upper")
-  ) |>
-  filter(year <= 2050)
-pop_plot <- site::plot_age_distribution_stacked(pop_dat, title = "Population age distribution")
+if("urban_rural" %in% colnames(sitefile$population$population_by_age)){
+  pop_dat <- sitefile$population$population_by_age |>
+    summarise(
+      pop = sum(pop),
+      par = sum(par),
+      .by = c("year", "urban_rural", "age_lower", "age_upper")
+    ) |>
+    filter(year <= 2050)
+  pop_plot <- site::plot_age_distribution_stacked(pop_dat, title = "Population age distribution")
+  
+  urban_rural_pop_dat <- sitefile$population$population_by_age |>
+    summarise(
+      pop = sum(pop),
+      par = sum(par),
+      .by = c("year", "urban_rural")
+    ) |>
+    filter(year <= 2050)
+  urban_rural_plot <- plot_urban_rural(pop_dat, title = "Population urbanicity")
+  
+  pops <- (pop_plot / urban_rural_plot)
+} else {
+  pop_dat <- sitefile$population$population_by_age |>
+    summarise(
+      pop = sum(pop),
+      par = sum(par),
+      .by = c("year", "age_lower", "age_upper")
+    ) |>
+    filter(year <= 2050)
+  pop_plot <- site::plot_age_distribution_stacked(pop_dat, title = "Population age distribution")
 
-urban_rural_pop_dat <- sitefile$population$population_by_age |>
-  summarise(
-    pop = sum(pop),
-    par = sum(par),
-    .by = c("year", "urban_rural")
-  ) |>
-  filter(year <= 2050)
-urban_rural_plot <- plot_urban_rural(pop_dat, title = "Population urbanicity")
-
-pops <- (pop_plot / urban_rural_plot)
+  pops <- (pop_plot)
+}
 # ------------------------------------------------------------------------------
 
 # Accessibility ----------------------------------------------------------------
