@@ -19,24 +19,6 @@ hipercow::hipercow_configure(driver = 'dide-windows')
 
 # PHASE 1: GLOBAL DATA (once per refresh) ======================================
 
-## Malaria-endemic ISOs --------------------------------------------------------
-# Used by the demography loop below and by src/data_worldpop/download_worldpop.R
-# (which expects this object in the session).
-malaria_endemic_isos <- c(
-  "DZA", "AGO", "BEN", "BWA", "BFA", "BDI", "CPV", "CMR", "CAF",
-  "TCD", "COM", "COG", "CIV", "COD", "GNQ", "ERI", "SWZ", "ETH",
-  "GAB", "GMB", "GHA", "GIN", "GNB", "KEN", "LBR", "MDG", "MWI",
-  "MLI", "MRT", "MOZ", "NAM", "NER", "NGA", "RWA", "STP", "SEN",
-  "SLE", "ZAF", "SSD", "TGO", "UGA", "TZA", "ZMB", "ZWE", "ARG",
-  "BLZ", "BOL", "BRA", "COL", "CRI", "DOM", "ECU", "SLV", "GUF",
-  "GTM", "GUY", "HTI", "HND", "MEX", "NIC", "PAN", "PRY", "PER",
-  "SUR", "VEN", "AFG", "DJI", "EGY", "IRN", "IRQ", "MAR", "OMN",
-  "PAK", "SAU", "SOM", "SDN", "SYR", "ARE", "YEM", "ARM", "AZE",
-  "GEO", "KAZ", "KGZ", "TJK", "TUR", "TKM", "UZB", "BGD", "BTN",
-  "PRK", "IND", "IDN", "MMR", "NPL", "LKA", "THA", "TLS", "KHM",
-  "CHN", "LAO", "MYS", "PNG", "PHL", "KOR", "SLB", "VUT", "VNM"
-)
-
 ## Data inputs -----------------------------------------------------------------
 orderly::orderly_run(
   name = "extents",
@@ -66,8 +48,9 @@ orderly::orderly_run(
 )
 
 ## Demography adjustment (cluster) ---------------------------------------------
+source("shared/malaria_endemic_isos.R")
 demog_task_ids <- list()
-for(iso in malaria_endemic_isos){
+for(iso in malaria_endemic_isos()){
   demog_task_ids[[iso]] <- hipercow::task_create_expr(
     orderly::orderly_run(
       name = "demography",

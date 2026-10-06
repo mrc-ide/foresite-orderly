@@ -102,10 +102,11 @@ codebase; the data-download scripts hit public endpoints unauthenticated.
 
 | Path | Role |
 |---|---|
-| [`mission_control.R`](mission_control.R) | **Master orchestrator.** Defines the ISO list, configures the cluster, and runs every report in dependency order (local + HPC). Start here. |
+| [`mission_control.R`](mission_control.R) | **Master orchestrator.** Configures the cluster and runs every report in dependency order (local + HPC). Start here. |
 | [`provision.R`](provision.R) | Package install list used to build the R environment (locally and on the cluster). |
 | [`orderly_config.json`](orderly_config.json) | Orderly root marker (`{"minimum_orderly_version":"1.99.90"}`). |
 | `src/` | The **18 orderly reports** (see [§4](#4-the-pipeline)). |
+| `shared/malaria_endemic_isos.R` | `malaria_endemic_isos()`: the ~108 countries the pipeline covers. Single source of truth, used by `mission_control.R`, `download_worldpop.R` and the `extents` report (which checks `extents.csv` matches it). |
 | `shared/utils.R` | Shared resource (raster helpers + all diagnostic plotting functions), pulled into reports via `orderly::orderly_shared_resource("utils.R")` (used by `data_map`, `data_chirps`, `data_vectors`, `data_interventions_manual`, `site_file`, `diagnostics`). |
 | `operations/push_packit.R` | Publishes a calibration packet (and its dependency tree) to the packit server. |
 | `operations/extract_files.R` | Copies named artefacts (diagnostic PDFs, site files, …) out of the archive into local `operations/<version>/` folders for inspection or ad-hoc sharing. |
@@ -242,7 +243,7 @@ re-running one country in isolation is safe provided its upstream packets exist.
 
 | Report | Purpose | Params | Key artefacts |
 |---|---|---|---|
-| `extents` | Publishes hand-curated per-country bounding boxes used to clip rasters. | — | ships `extents.csv` (resource) |
+| `extents` | Publishes hand-curated per-country bounding boxes used to clip rasters; errors if they don't match `malaria_endemic_isos()`. | — | ships `extents.csv` (resource) |
 | `data_un` | Publishes raw UN source files. | — | (resource `data/`) |
 | `data_who` | Reshapes WHO World Malaria Report annex data. | — | `wmr_cases_deaths.csv`, `wmr_itns_distributed.csv`, `wmr_irs_people_protected.csv` (+ `.png`) |
 | `data_dhs` | Publishes DHS-derived treatment fractions. | — | (resource `data/`) |
@@ -328,23 +329,22 @@ It is split into **Phase 1** (global data, run once per refresh) and **Phase 2**
 1. **Configure the cluster** — `hipercow::hipercow_init()` +
    `hipercow_configure(driver = 'dide-windows')`. (First-time setup also runs
    `hipercow_provision()`; see [§7](#7-hpc-execution).)
-2. **Define the ISO list** — `malaria_endemic_isos` (~108 ISO3 codes), used by the
-   `demography` loop and `download_worldpop.R`.
-3. **Phase 1: global data layer (local)** — `extents`, `data_un`, `data_worldpop`,
+2. **Phase 1: global data layer (local)** — `extents`, `data_un`, `data_worldpop`,
    `data_dhs`, `data_who`, `un_wpp`.
-4. **`demography` (HPC)** — one task per ISO, bundled and monitored.
-5. **Remaining global data (local)** — `data_map`, `data_interventions_manual`,
+3. **`demography` (HPC)** — one task per ISO in `malaria_endemic_isos()`, bundled and
+   monitored.
+4. **Remaining global data (local)** — `data_map`, `data_interventions_manual`,
    `data_chirps`, `data_vectors`.
-6. **Phase 2: set run options** — `boundary`, `admin`, `urban_rural`, `version`; derive
+5. **Phase 2: set run options** — `boundary`, `admin`, `urban_rural`, `version`; derive
    `isos` from the boundaries folder, drop any ISO lacking the requested admin level,
    and compute `n_sites` per ISO (for calibration core requests).
-7. **`data_boundaries` (local)** — publish the boundary set.
-8. **Per-country build (local)** — loop `spatial` → `population` → `site_file` →
+6. **`data_boundaries` (local)** — publish the boundary set.
+7. **Per-country build (local)** — loop `spatial` → `population` → `site_file` →
    `diagnostics(calibration = FALSE)`.
-9. **`calibration` (HPC)** — one task per ISO (cores scaled to site count), bundled
+8. **`calibration` (HPC)** — one task per ISO (cores scaled to site count), bundled
    and monitored.
-10. **Post-calibration diagnostics (local)** — loop `diagnostics(calibration = TRUE)`.
-11. **`stats` (local)** — cross-country calibration summary.
+9. **Post-calibration diagnostics (local)** — loop `diagnostics(calibration = TRUE)`.
+10. **`stats` (local)** — cross-country calibration summary.
 
 **Local vs HPC:** everything runs locally with `orderly::orderly_run(...)` **except**
 `demography` and `calibration`, which are dispatched to the cluster. A full local run
