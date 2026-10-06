@@ -1,6 +1,27 @@
-# Mission control --------------------------------------------------------------
+# Mission control ==============================================================
+#
+# Runs the full site-file build. Step through it section by section; don't
+# source() it in one go. Use the RStudio outline (Ctrl+Shift+O) to jump around.
+#
+#   Phase 1: Global data       run once per data refresh
+#   Phase 2: Site files        loop over countries for a given boundary set
+#
+# demography and calibration go to the DIDE cluster via hipercow; everything
+# else runs locally. See README §6-7 for more detail.
 
-# ISOs -------------------------------------------------------------------------
+# Setup: cluster ===============================================================
+# setwd("P://Pete/foresite-orderly")
+hipercow::hipercow_init()
+hipercow::hipercow_configure(driver = 'dide-windows')
+# hipercow::hipercow_provision()
+# hipercow::hipercow_configuration()
+
+
+# PHASE 1: GLOBAL DATA (once per refresh) ======================================
+
+## Malaria-endemic ISOs --------------------------------------------------------
+# Used by the demography loop below and by src/data_worldpop/download_worldpop.R
+# (which expects this object in the session).
 malaria_endemic_isos <- c(
   "DZA", "AGO", "BEN", "BWA", "BFA", "BDI", "CPV", "CMR", "CAF",
   "TCD", "COM", "COG", "CIV", "COD", "GNQ", "ERI", "SWZ", "ETH",
@@ -15,21 +36,8 @@ malaria_endemic_isos <- c(
   "PRK", "IND", "IDN", "MMR", "NPL", "LKA", "THA", "TLS", "KHM",
   "CHN", "LAO", "MYS", "PNG", "PHL", "KOR", "SLB", "VUT", "VNM"
 )
-# ------------------------------------------------------------------------------
 
-# Set up cluster ---------------------------------------------------------------
-# setwd("P://Pete/foresite-orderly")
-hipercow::hipercow_init()
-hipercow::hipercow_configure(driver = 'dide-windows')
-# hipercow::hipercow_provision()
-# hipercow::hipercow_configuration()
-# ------------------------------------------------------------------------------
-
-# ------------------------------------------------------------------------------
-# Data get, data prep ----------------------------------------------------------
-# ------------------------------------------------------------------------------
-
-# Data inputs
+## Data inputs -----------------------------------------------------------------
 orderly::orderly_run(
   name = "extents",
   echo = FALSE
@@ -50,12 +58,14 @@ orderly::orderly_run(
   name = "data_who",
   echo = FALSE
 )
-# UN population and demography
+
+## UN population and demography ------------------------------------------------
 orderly::orderly_run(
   name = "un_wpp",
   echo = FALSE
 )
-# Demography adjustment - on cluster
+
+## Demography adjustment (cluster) ---------------------------------------------
 demog_task_ids <- list()
 for(iso in malaria_endemic_isos){
   demog_task_ids[[iso]] <- hipercow::task_create_expr(
@@ -75,6 +85,7 @@ d <- hipercow::hipercow_bundle_create(
 )
 table(hipercow::hipercow_bundle_status(d))
 
+## Remaining data inputs -------------------------------------------------------
 orderly::orderly_run(
   name = "data_map",
   echo = FALSE
@@ -91,34 +102,33 @@ orderly::orderly_run(
   name = "data_vectors",
   echo = FALSE
 )
-# ------------------------------------------------------------------------------
-# ------------------------------------------------------------------------------
-# ------------------------------------------------------------------------------
 
-# ------------------------------------------------------------------------------
-# Parameterised site file creation ---------------------------------------------
-# ------------------------------------------------------------------------------
 
-# Run options ------------------------------------------------------------------
+# PHASE 2: SITE FILES (loop over countries) ====================================
+
+## Run options -----------------------------------------------------------------
+# These parameters together uniquely identify a set of site files.
 boundary <- "GADM_4.1.0"
 isos <- list.files(paste0("src/data_boundaries/boundaries/", boundary))
+# For a quick test run, set isos <- "TGO" (Togo: high burden, only 5 admin-1
+# units).
 admin <- 1
 urban_rural <- TRUE
 name <- "malariaverse"
 formatted_date <- format(Sys.Date(), "%m_%Y")
 version <- paste(name, formatted_date, sep = "_")
-# ------------------------------------------------------------------------------
 
-# Check ISOs have appropriate admin level defined.
+## Checks ----------------------------------------------------------------------
+# Drop ISOs without the requested admin level
 boundary_files <- paste0("src/data_boundaries/boundaries/", boundary, "/", isos, "/", isos, "_", admin, ".RDS")
 admin_level_available <- file.exists(boundary_files)
 if(!all((admin_level_available))){
   missing_isos <- paste0(isos[!admin_level_available], collapse = ", ")
   warning(missing_isos, " do not have requested admin level, dropping")
-  `isos` <- isos[admin_level_available]
+  isos <- isos[admin_level_available]
   boundary_files <- boundary_files[admin_level_available]
 }
-# Check number of sites (for parallelism resource requirement)
+# Number of sites per ISO (sets calibration cores)
 n_sites <- sapply(boundary_files, function(x, admin, urban_rural){
   sites <- nrow(readRDS(x))
   if(urban_rural) sites <- sites * 2
@@ -126,15 +136,11 @@ n_sites <- sapply(boundary_files, function(x, admin, urban_rural){
 }, admin = admin, urban_rural = urban_rural)
 names(n_sites) <- isos
 
-# Boundaries
-# WARNING: never orderly_cleanup("data_boundaries"). The GADM RDS files under
-# src/data_boundaries/boundaries/<boundary>/ are large, hand-placed inputs - gitignored
-# (so unrecoverable from git) and not regenerated by the pipeline - yet they also drive
-# the run list (isos <- list.files(...) above). orderly will NOT protect them: they are
-# declared as resources/artefacts via a computed list.files() value, so orderly's static
-# cleanup scan cannot see them and treats them as deletable. Cleaning wipes the boundary
-# set and breaks every downstream per-country report. If unsure, preview first with
-# orderly_cleanup_status("data_boundaries") or orderly_cleanup(..., dry_run = TRUE).
+## Boundaries ------------------------------------------------------------------
+# WARNING: never orderly_cleanup("data_boundaries"). The boundary RDS files are
+# hand-placed, gitignored and not regenerated, but orderly can't see them as
+# protected, so cleanup deletes them and breaks every downstream report.
+# Preview with orderly_cleanup(..., dry_run = TRUE) if unsure.
 orderly::orderly_run(
   name = "data_boundaries",
   parameters = list(
@@ -143,7 +149,7 @@ orderly::orderly_run(
   echo = FALSE
 )
 
-# Spatial processing
+## Spatial processing ----------------------------------------------------------
 for(iso in isos){
   orderly::orderly_run(
     name = "spatial",
@@ -155,7 +161,7 @@ for(iso in isos){
   )
 }
 
-# Population projections
+## Population projections ------------------------------------------------------
 for(iso in isos){
   orderly::orderly_run(
     name = "population",
@@ -167,7 +173,7 @@ for(iso in isos){
   )
 }
 
-# Site file creation
+## Site file assembly ----------------------------------------------------------
 for(iso in isos){
   orderly::orderly_run(
     name = "site_file",
@@ -182,7 +188,7 @@ for(iso in isos){
   )
 }
 
-# Diagnostics
+## Diagnostics: pre-calibration ------------------------------------------------
 for(iso in isos){
   orderly::orderly_run(
     name = "diagnostics",
@@ -198,7 +204,7 @@ for(iso in isos){
   )
 }
 
-# Calibration
+## Calibration (cluster) -------------------------------------------------------
 cali_task_ids <- list()
 for(iso in isos){
   cali_task_ids[[paste0(iso, "_", admin)]] <- hipercow::task_create_expr(
@@ -217,14 +223,16 @@ for(iso in isos){
     resources = hipercow::hipercow_resources(cores = max(2, min(32, n_sites[iso])))
   )
 }
-#hipercow::task_status(cali_task_ids[[1]])
-#hipercow::task_log_show(cali_task_ids[[1]])
 x <- hipercow::hipercow_bundle_create(
   ids = unlist(cali_task_ids),
   name = paste0("Calibration_", format(Sys.time(), "%Y-%m-%d_%H-%M-%S"))
 )
 table(hipercow::hipercow_bundle_status(x))
+# Inspect a single task:
+# hipercow::task_status(cali_task_ids[[1]])
+# hipercow::task_log_show(cali_task_ids[[1]])
 
+## Diagnostics: post-calibration -----------------------------------------------
 for(iso in isos){
   orderly::orderly_run(
     name = "diagnostics",
@@ -240,6 +248,7 @@ for(iso in isos){
   )
 }
 
+## Cross-country stats ---------------------------------------------------------
 orderly::orderly_run(
   name = "stats",
   parameters = list(
@@ -250,3 +259,9 @@ orderly::orderly_run(
   ),
   echo = FALSE
 )
+
+
+# NEXT =========================================================================
+# - Inspect locally:  operations/extract_files.R copies diagnostics and site
+#                     files out of the archive into operations/<version>/
+# - Release:          operations/push_packit.R (see README §11)

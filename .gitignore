@@ -9,10 +9,8 @@ draft/
 orderly_envir.yml
 data/
 hipercow/
-operations/extracted/
-operations/custom_requests/
-operations/malariaverse_06_2026/
-operations/2026_08_07_Maggie/
+# Local extraction output (operations/ scripts stay tracked)
+operations/*/
 backup/
 
 # ---VVV--- added by orderly ---VVV----------------

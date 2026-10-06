@@ -108,10 +108,10 @@ codebase; the data-download scripts hit public endpoints unauthenticated.
 | `src/` | The **18 orderly reports** (see [§4](#4-the-pipeline)). |
 | `shared/utils.R` | Shared resource (raster helpers + all diagnostic plotting functions), pulled into reports via `orderly::orderly_shared_resource("utils.R")` (used by `data_map`, `data_chirps`, `data_vectors`, `data_interventions_manual`, `site_file`, `diagnostics`). |
 | `operations/push_packit.R` | Publishes a calibration packet (and its dependency tree) to the packit server. |
-| `operations/extract_files.R` | Stop-gap: copies named artefacts out of the archive for ad-hoc distribution. |
+| `operations/extract_files.R` | Copies named artefacts (diagnostic PDFs, site files, …) out of the archive into local `operations/<version>/` folders for inspection or ad-hoc sharing. |
 | `README.md` | This documentation — the repo's single, hand-edited Markdown entry point. |
 | `release_log.csv` | One-line-per-release notes. |
-| `.gitignore` | Ignores orderly internals (`.outpack/`, `draft/`, `archive/`, `orderly_envir.yml`) and local-only dirs (`data/`, `hipercow/`, `operations/extracted/`, `backup/`, …). |
+| `.gitignore` | Ignores orderly internals (`.outpack/`, `draft/`, `archive/`, `orderly_envir.yml`) and local-only dirs (`data/`, `hipercow/`, `operations/*/`, `backup/`, …). |
 
 **Not in the repo (must exist locally before a run):**
 
@@ -323,18 +323,20 @@ clipping), shipped as a committed `extents.csv` — not an external dataset.
 ## 6. Running the pipeline
 
 The canonical run is a top-to-bottom execution of [`mission_control.R`](mission_control.R).
-Its sequence:
+It is split into **Phase 1** (global data, run once per refresh) and **Phase 2**
+(site files, looped over countries). Its sequence:
 
-1. **Define the ISO list** — `malaria_endemic_isos` (~108 ISO3 codes).
-2. **Configure the cluster** — `hipercow::hipercow_init()` +
+1. **Configure the cluster** — `hipercow::hipercow_init()` +
    `hipercow_configure(driver = 'dide-windows')`. (First-time setup also runs
    `hipercow_provision()`; see [§7](#7-hpc-execution).)
-3. **Global data layer (local)** — `extents`, `data_un`, `data_worldpop`,
+2. **Define the ISO list** — `malaria_endemic_isos` (~108 ISO3 codes), used by the
+   `demography` loop and `download_worldpop.R`.
+3. **Phase 1: global data layer (local)** — `extents`, `data_un`, `data_worldpop`,
    `data_dhs`, `data_who`, `un_wpp`.
 4. **`demography` (HPC)** — one task per ISO, bundled and monitored.
 5. **Remaining global data (local)** — `data_map`, `data_interventions_manual`,
    `data_chirps`, `data_vectors`.
-6. **Set run options** — `boundary`, `admin`, `urban_rural`, `version`; derive
+6. **Phase 2: set run options** — `boundary`, `admin`, `urban_rural`, `version`; derive
    `isos` from the boundaries folder, drop any ISO lacking the requested admin level,
    and compute `n_sites` per ISO (for calibration core requests).
 7. **`data_boundaries` (local)** — publish the boundary set.
@@ -475,9 +477,12 @@ Publishing is done from [`operations/push_packit.R`](operations/push_packit.R) u
   its entire dependency tree** (site_file → spatial/population → the `data_*` reports),
   which includes large raster files. Pushes are therefore **per ISO**, not a single
   bulk sync. A `find_largest_file()` helper is included for debugging push size.
-- **Ad-hoc distribution:** `operations/extract_files.R` is a stop-gap that copies named
-  artefacts (the diagnostic PDF and the calibrated site file) out of the archive into
-  `operations/extracted/<iso>/`.
+- **Local extraction:** `operations/extract_files.R` defines `extract_files()`, which
+  copies a named artefact from the latest matching packet for each ISO into a local
+  folder (`operations/<version>/<type>/<iso>_<file>`). It ships with examples for pre-
+  and post-calibration diagnostics, calibration epi output and calibrated site files.
+  It is also the stop-gap for ad-hoc distribution. All `operations/` subfolders are
+  gitignored.
 - **Versioning:** the `version` string is auto-built from the date in
   `mission_control.R`, but it is **hard-coded** in `push_packit.R` and `extract_files.R`
   (both currently `malariaverse_06_2026`). These must be updated by hand to the release
