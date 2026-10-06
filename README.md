@@ -86,10 +86,10 @@ To run the full pipeline you need:
 
 | Requirement | Detail |
 |---|---|
-| **R toolchain** | R + the package stack below. |
-| **mrc-ide package stack** | Installed by [`provision.R`](provision.R). The mrc-ide packages (`site`, `netz`, `postie`, `malariasimulation`, `cali`, `scene`, `peeps`) are installed from GitHub via `remotes` and track their **default branch**; the remainder are CRAN packages (`orderly`, `sf`, `dplyr`, `ggplot2`, `knitr`, `rmarkdown`, `quarto`). |
+| **R toolchain** | R plus the packages the reports call. CRAN packages install as normal; the mrc-ide packages (`site`, `netz`, `postie`, `malariasimulation`, `cali`, `peeps`, `umbrella`, …) come from GitHub and track their **default branch**. |
+| **Cluster environment** | [`provision.R`](provision.R) lists only what the two cluster steps (`demography`, `calibration`) need, installed via `hipercow::hipercow_provision()`. It is not a full local install list. |
 | **DIDE cluster account** | The two heavy steps (`demography`, `calibration`) run on the Imperial DIDE **Windows** cluster via `hipercow` (driver `dide-windows`). See [§7](#7-hpc-execution). |
-| **DIDE network share** | The project must live on the DIDE network share — the **malaria drive** (`\\projects.dide.ic.ac.uk\malaria`), mapped locally as the **`P:` drive** — so the cluster nodes can see the orderly root. The maintained, fully-populated copy (including all the large raw-data and boundary inputs that are absent from a git clone) lives in Pete's directory at `\\projects.dide.ic.ac.uk\malaria\pete\foresite-orderly`, i.e. `P://Pete/foresite-orderly` — the commented `setwd(...)` in `mission_control.R:21`. |
+| **DIDE network share** | The project must live on the DIDE network share — the **malaria drive** (`\\projects.dide.ic.ac.uk\malaria`), mapped locally as the **`P:` drive** — so the cluster nodes can see the orderly root. The maintained, fully-populated copy (including all the large raw-data and boundary inputs that are absent from a git clone) lives in Pete's directory at `\\projects.dide.ic.ac.uk\malaria\pete\foresite-orderly`, i.e. `P://Pete/foresite-orderly` — the commented `setwd(...)` in the cluster setup section of `mission_control.R`. |
 | **`GITHUB_PAT`** | Required only for publishing to packit ([§11](#11-releasing-site-files-packit)). A GitHub Personal Access Token with the **`read:org`** scope, stored in `.Renviron`. This is the only secret the codebase uses. |
 | **Raw inputs** | Raw data and boundary files are **gitignored and absent from a clone** — they must be supplied locally before a run (see [§3](#3-repository-layout) and [§5](#5-data-sources-operational-view)). |
 
@@ -103,7 +103,7 @@ codebase; the data-download scripts hit public endpoints unauthenticated.
 | Path | Role |
 |---|---|
 | [`mission_control.R`](mission_control.R) | **Master orchestrator.** Configures the cluster and runs every report in dependency order (local + HPC). Start here. |
-| [`provision.R`](provision.R) | Package install list used to build the R environment (locally and on the cluster). |
+| [`provision.R`](provision.R) | Package list for the cluster environment (`hipercow_provision()`); covers `demography` and `calibration` only. |
 | [`orderly_config.json`](orderly_config.json) | Orderly root marker (`{"minimum_orderly_version":"1.99.90"}`). |
 | `src/` | The **18 orderly reports** (see [§4](#4-the-pipeline)). |
 | `shared/malaria_endemic_isos.R` | `malaria_endemic_isos()`: the ~108 countries the pipeline covers. Single source of truth, used by `mission_control.R`, `download_worldpop.R` and the `extents` report (which checks `extents.csv` matches it). |
@@ -232,7 +232,7 @@ re-running one country in isolation is safe provided its upstream packets exist.
 | Parameter | Meaning | Default in `mission_control.R` |
 |---|---|---|
 | `boundary` | Boundary set / provider | `"GADM_4.1.0"` |
-| `iso3c` | ISO3 country code | looped over ~108 malaria-endemic ISOs |
+| `iso3c` | ISO3 country code | Phase 1 (`demography`): `malaria_endemic_isos()`; Phase 2: every ISO in the boundary folder |
 | `admin_level` | Spatial resolution (0/1/2/3) | `1` |
 | `urban_rural` | Split each admin unit into urban & rural (doubles the site count) | `TRUE` |
 | `version` | Release tag, auto-built as `malariaverse_<MM_YYYY>` | date-derived |
@@ -362,13 +362,13 @@ rebuilt, provided its upstream packets are present in the archive.
 > DIDE cluster. This section covers only the project-specific details.
 
 - **Driver:** `dide-windows` (the Imperial DIDE Windows cluster). Configuration is
-  inline in `mission_control.R:20-26` — there is no separate cluster config file.
+  inline in the "Setup: cluster" section of `mission_control.R` — there is no separate cluster config file.
 - **Network share:** the project must live on the DIDE **malaria drive**
   (`\\projects.dide.ic.ac.uk\malaria`, mapped to **`P:`**) so cluster nodes can reach
   the orderly root; the maintained copy is Pete's `...\malaria\pete\foresite-orderly`
   (`P://Pete/foresite-orderly`). This is the single most important undocumented
-  prerequisite; its only trace in code is the commented `setwd(...)` at
-  `mission_control.R:21`.
+  prerequisite; its only trace in code is the commented `setwd(...)` in
+  `mission_control.R`'s cluster setup.
 - **Provisioning:** run `hipercow::hipercow_provision()` once (it auto-detects
   [`provision.R`](provision.R)).
 - **The two HPC steps:**
@@ -466,16 +466,18 @@ The `site` package is the authority on this structure and how it becomes model i
 Publishing is done from [`operations/push_packit.R`](operations/push_packit.R) using
 [`packit`](https://github.com/mrc-ide/packit) via orderly's location helpers.
 
-- **Active target:** location `packit.dide2` →
-  `https://malariaverse-sitefiles.packit.dide.ic.ac.uk/`. (An older `packit.dide`
-  path-style URL is present but guarded behind `add_new_location <- FALSE`; adding the
-  location is a one-time step that "shouldn't need to be done again".)
+- **Target:** location `packit.dide2` →
+  `https://malariaverse-sitefiles.packit.dide.ic.ac.uk/`. The script adds it on first
+  use if it isn't already configured.
 - **Authentication:** a GitHub PAT in `GITHUB_PAT` (scope **`read:org`**), added to
   `.Renviron` via `usethis::edit_r_environ()`. orderly/packit read it implicitly.
 - **What is pushed:** `orderly_location_push` sends a **single calibration packet plus
   its entire dependency tree** (site_file → spatial/population → the `data_*` reports),
-  which includes large raster files. Pushes are therefore **per ISO**, not a single
-  bulk sync. A `find_largest_file()` helper is included for debugging push size.
+  which includes large raster files. `push_sitefiles()` therefore loops **per ISO**,
+  pushing the latest calibration packet matching the release parameters. Missing
+  packets and failed pushes are skipped and returned, so they can be retried. Do a
+  `dry_run = TRUE` on one country first. A `find_largest_file()` helper is included
+  for debugging push size.
 - **Local extraction:** `operations/extract_files.R` defines `extract_files()`, which
   copies a named artefact from the latest matching packet for each ISO into a local
   folder (`operations/<version>/<type>/<iso>_<file>`). It ships with examples for pre-
@@ -520,8 +522,9 @@ and line-ending rules automatically.
 - **Strings:** double quotes. **Pipes:** native `|>`. **Names:** `snake_case`.
 - **Control flow (tight house style):** `if(cond){`, `for(x in y){`, `} else {`.
 - **Function definitions:** `name <- function(args){`.
-- **Sections:** delimit script sections with `# Title ----` banners closed by a `# ----` rule;
-  each report opens with an `# Orderly set-up ----` block (parameters, resources, dependencies,
+- **Sections:** delimit script sections with `# Title ----` banners closed by a `# ----` rule
+  (`mission_control.R` instead uses `# Title ====` / `## Title ----` so RStudio's outline
+  shows the two phases); each report opens with an `# Orderly set-up ----` block (parameters, resources, dependencies,
   artefacts).
 - **Comments:** plain `#` explaining *why*, plus a one-line `#` description above each function.
   No roxygen (`#'`) — this is an orderly project, not a package.
