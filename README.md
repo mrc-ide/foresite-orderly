@@ -110,7 +110,6 @@ codebase; the data-download scripts hit public endpoints unauthenticated.
 | `operations/push_packit.R` | Publishes a calibration packet (and its dependency tree) to the packit server. |
 | `operations/extract_files.R` | Copies named artefacts (diagnostic PDFs, site files, …) out of the archive into local `operations/<version>/` folders for inspection or ad-hoc sharing. |
 | `README.md` | This documentation — the repo's single, hand-edited Markdown entry point. |
-| `release_log.csv` | One-line-per-release notes. |
 | `.gitignore` | Ignores orderly internals (`.outpack/`, `draft/`, `archive/`, `orderly_envir.yml`) and local-only dirs (`data/`, `hipercow/`, `operations/*/`, `backup/`, …). |
 
 **Not in the repo (must exist locally before a run):**
@@ -486,7 +485,8 @@ Publishing is done from [`operations/push_packit.R`](operations/push_packit.R) u
 - **Versioning:** the `version` string is auto-built from the date in
   `mission_control.R`, but it is **hard-coded** in `push_packit.R` and `extract_files.R`
   (both currently `malariaverse_06_2026`). These must be updated by hand to the release
-  you intend to push. Record each release in [`release_log.csv`](release_log.csv).
+  you intend to push. Record each release by tagging this repo
+  with the version name (e.g. `git tag malariaverse_06_2026`).
 
 ---
 
