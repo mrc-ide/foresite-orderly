@@ -10,7 +10,9 @@ boundary_files <- list.files(
   recursive = TRUE
 )
 
-orderly::orderly_resource(boundary_files)
+# Declared as a literal path so orderly_cleanup() recognises the boundary sets
+# as inputs and never deletes them.
+orderly::orderly_resource("boundaries/")
 
 orderly::orderly_artefact(
   description = "Boundary files",

@@ -120,10 +120,6 @@ n_sites <- sapply(boundary_files, function(x, admin, urban_rural){
 names(n_sites) <- isos
 
 ## Boundaries ------------------------------------------------------------------
-# WARNING: never orderly_cleanup("data_boundaries"). The boundary RDS files are
-# hand-placed, gitignored and not regenerated, but orderly can't see them as
-# protected, so cleanup deletes them and breaks every downstream report.
-# Preview with orderly_cleanup(..., dry_run = TRUE) if unsure.
 orderly::orderly_run(
   name = "data_boundaries",
   parameters = list(
