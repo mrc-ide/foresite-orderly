@@ -86,7 +86,7 @@ To run the full pipeline you need:
 
 | Requirement | Detail |
 |---|---|
-| **R toolchain** | R plus the packages the reports call. CRAN packages install as normal; the mrc-ide packages (`site`, `netz`, `postie`, `malariasimulation`, `cali`, `peeps`, `umbrella`, …) come from GitHub and track their **default branch**. |
+| **R toolchain** | R plus the packages the reports call. Run [`check_packages.R`](check_packages.R) to see what's missing or out of date (set `install <- TRUE` to fix it). The mrc-ide packages (`site`, `netz`, `postie`, `malariasimulation`, `cali`, `peeps`, `umbrella`) come from GitHub and track their **default branch**. |
 | **Cluster environment** | [`provision.R`](provision.R) lists only what the two cluster steps (`demography`, `calibration`) need, installed via `hipercow::hipercow_provision()`. It is not a full local install list. |
 | **DIDE cluster account** | The two heavy steps (`demography`, `calibration`) run on the Imperial DIDE **Windows** cluster via `hipercow` (driver `dide-windows`). See [§7](#7-hpc-execution). |
 | **DIDE network share** | The project must live on the DIDE network share — the **malaria drive** (`\\projects.dide.ic.ac.uk\malaria`), mapped locally as the **`P:` drive** — so the cluster nodes can see the orderly root. The maintained, fully-populated copy (including all the large raw-data and boundary inputs that are absent from a git clone) lives in Pete's directory at `\\projects.dide.ic.ac.uk\malaria\pete\foresite-orderly`, i.e. `P://Pete/foresite-orderly` — the commented `setwd(...)` in the cluster setup section of `mission_control.R`. |
@@ -103,6 +103,7 @@ codebase; the data-download scripts hit public endpoints unauthenticated.
 | Path | Role |
 |---|---|
 | [`mission_control.R`](mission_control.R) | **Master orchestrator.** Configures the cluster and runs every report in dependency order (local + HPC). Start here. |
+| [`check_packages.R`](check_packages.R) | Full local package list: reports missing/out-of-date packages (mrc-ide ones against their GitHub default branch), optionally installs them, and warns if the code uses a package the list doesn't include. |
 | [`provision.R`](provision.R) | Package list for the cluster environment (`hipercow_provision()`); covers `demography` and `calibration` only. |
 | [`orderly_config.json`](orderly_config.json) | Orderly root marker (`{"minimum_orderly_version":"1.99.90"}`). |
 | `src/` | The **18 orderly reports** (see [§4](#4-the-pipeline)). |
@@ -323,6 +324,8 @@ clipping), shipped as a committed `extents.csv` — not an external dataset.
 
 ## 6. Running the pipeline
 
+Before a run, check your local packages with [`check_packages.R`](check_packages.R).
+
 The canonical run is a top-to-bottom execution of [`mission_control.R`](mission_control.R).
 It is split into **Phase 1** (global data, run once per refresh) and **Phase 2**
 (site files, looped over countries). Its sequence:
@@ -371,7 +374,10 @@ rebuilt, provided its upstream packets are present in the archive.
   prerequisite; its only trace in code is the commented `setwd(...)` in
   `mission_control.R`'s cluster setup.
 - **Provisioning:** run `hipercow::hipercow_provision()` once (it auto-detects
-  [`provision.R`](provision.R)).
+  [`provision.R`](provision.R)), and again whenever the mrc-ide packages change so the
+  cluster matches your local install. If `demography` or `calibration` start using a
+  new package, add it to `provision.R` by hand first; nothing checks this
+  automatically.
 - **The two HPC steps:**
   - `demography` — one task per ISO, `hipercow_parallel("parallel")`, **16 cores**
     each, collected into a `Demography_<timestamp>` bundle.
